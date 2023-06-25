@@ -13,7 +13,6 @@ interface ContextCredentials {
 
 interface BlobsOptions {
   authentication: APICredentials | ContextCredentials
-  cache?: string
   environment?: string
   fetcher?: typeof globalThis.fetch
   siteID: string
@@ -35,7 +34,7 @@ export class Blobs {
   private fetcher: typeof globalThis.fetch
   private siteID: string
 
-  constructor({ authentication, cache, environment, fetcher, siteID }: BlobsOptions) {
+  constructor({ authentication, environment, fetcher, siteID }: BlobsOptions) {
     this.environment = environment ?? 'production'
     this.fetcher = fetcher ?? globalThis.fetch
     this.siteID = siteID
@@ -108,7 +107,15 @@ export class Blobs {
   async get(key: string) {
     const res = await this.makeStoreRequest(key, HTTPMethod.Get)
 
-    return new Response(await res.blob())
+    if (res.status === 200) {
+      return new Response(await res.blob())
+    }
+
+    if (res.status === 404) {
+      return null
+    }
+
+    throw new Error(`Unexpected response from the blob store: ${res.status}`)
   }
 
   async set(key: string, data: BlobInput) {

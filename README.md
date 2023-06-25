@@ -5,8 +5,6 @@
 
 A JavaScript client for the Netlify Blob Store.
 
-It provides a simplistic API based on  from the Web API.
-
 ## Installation
 
 You can install Netlify Blobs via npm:
@@ -24,7 +22,7 @@ To use the blob store, import the module and create an instance of the `Blobs` c
 | `authentication` | An object containing authentication credentials           | N/A        |
 | `environment`    | A string representing the environment                     | `'production'`|
 | `fetcher`        | An implementation of a fetch-compatible module            | `globalThis.fetch`       |
-| `site ID`        | A string representing the ID of the Netlify site          | N/A        |
+| `siteID`        | A string representing the ID of the Netlify site          | N/A        |
 
 ### Example
 

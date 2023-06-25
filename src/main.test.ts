@@ -38,6 +38,6 @@ describe('With API credentials', () => {
     })
     const val = await blobs.get(key)
 
-    expect(await val.text()).toBe(value)
+    expect(await (val as Response).text()).toBe(value)
   })
 })
