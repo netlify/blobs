@@ -1,4 +1,4 @@
-[![Build](https://github.com/netlify/blobs-client/workflows/Build/badge.svg)](https://github.com/netlify/blobs-client/actions)
+[![Build](https://github.com/netlify/blobs/workflows/Build/badge.svg)](https://github.com/netlify/blobs/actions)
 [![Node](https://img.shields.io/node/v/@netlify/blobs.svg?logo=node.js)](https://www.npmjs.com/package/@netlify/blobs)
 
 # @netlify/blobs
