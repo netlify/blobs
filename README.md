@@ -25,6 +25,26 @@ with the following properties:
 | `fetcher`        | An implementation of a [fetch-compatible]https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API module for making HTTP requests (defaults to `globalThis.fetch`) | No       |
 | `siteID`         | The Netlify site ID                                                                                                                                                  | **Yes**  |
 
+### Example
+
+```javascript
+import assert from 'node:assert'
+import { Blobs } from '@netlify/blobs'
+
+const store = new Blobs({
+  authentication: {
+    token: 'YOUR_NETLIFY_AUTH_TOKEN',
+  },
+  siteID: 'YOUR_NETLIFY_SITE_ID',
+})
+
+await store.set('some-key', 'Hello!')
+
+const item = await store.get('some-key')
+
+assert.strictEqual(await item.text(), 'Hello!')
+```
+
 ### Authentication
 
 Authentication with the blob storage is done in one of two ways:
@@ -58,23 +78,6 @@ Authentication with the blob storage is done in one of two ways:
     })
   }
   ```
-
-### Example
-
-```javascript
-import { Blobs } from '@netlify/blobs'
-
-const store = new Blobs({
-  authentication: {
-    token: 'YOUR_NETLIFY_AUTH_TOKEN',
-  },
-  siteID: 'YOUR_NETLIFY_SITE_ID',
-})
-
-const item = await store.get('some-key')
-
-console.log(await item.json())
-```
 
 ## API
 
