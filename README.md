@@ -21,9 +21,9 @@ with the following properties:
 | Property         | Description                                                                                                                                                            | Required |
 | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
 | `authentication` | An object containing authentication credentials (see [Authentication](#authentication))                                                                                | **Yes**  |
+| `siteID`         | The Netlify site ID                                                                                                                                                    | **Yes**  |
 | `context`        | The [deploy context](https://docs.netlify.com/site-deploys/overview/#deploy-contexts) to use (defaults to `production`)                                                | No       |
 | `fetcher`        | An implementation of a [fetch-compatible](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) module for making HTTP requests (defaults to `globalThis.fetch`) | No       |
-| `siteID`         | The Netlify site ID                                                                                                                                                    | **Yes**  |
 
 ### Example
 
