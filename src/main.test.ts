@@ -14,7 +14,7 @@ describe('With API credentials', () => {
       const [url, options] = args
       const headers = options?.headers as Record<string, string>
 
-      if (url === `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?environment=production`) {
+      if (url === `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`) {
         const data = JSON.stringify({ url: signedURL })
 
         expect(headers.authorization).toBe(`Bearer ${apiToken}`)

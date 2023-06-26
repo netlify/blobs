@@ -13,7 +13,7 @@ interface ContextCredentials {
 
 interface BlobsOptions {
   authentication: APICredentials | ContextCredentials
-  environment?: string
+  context?: string
   fetcher?: typeof globalThis.fetch
   siteID: string
 }
@@ -28,14 +28,12 @@ type BlobInput = ReadableStream | string | ArrayBuffer | Blob
 
 export class Blobs {
   private authentication: APICredentials | ContextCredentials
-  private cache?: Cache
-  private cacheDirectory?: string
-  private environment: string
+  private context: string
   private fetcher: typeof globalThis.fetch
   private siteID: string
 
-  constructor({ authentication, environment, fetcher, siteID }: BlobsOptions) {
-    this.environment = environment ?? 'production'
+  constructor({ authentication, context, fetcher, siteID }: BlobsOptions) {
+    this.context = context ?? 'production'
     this.fetcher = fetcher ?? globalThis.fetch
     this.siteID = siteID
 
@@ -66,11 +64,11 @@ export class Blobs {
           authorization: `Bearer ${this.authentication.token}`,
         },
         method: finalMethod,
-        url: `${this.authentication.contextURL}/${this.siteID}:${this.environment}:${key}`,
+        url: `${this.authentication.contextURL}/${this.siteID}:${this.context}:${key}`,
       }
     }
 
-    const apiURL = `${this.authentication.apiURL}/api/v1/sites/${this.siteID}/blobs/${key}?environment=${this.environment}`
+    const apiURL = `${this.authentication.apiURL}/api/v1/sites/${this.siteID}/blobs/${key}?context=${this.context}`
     const headers = { authorization: `Bearer ${this.authentication.token}` }
     const res = await this.fetcher(apiURL, { headers, method })
     const { url } = await res.json()
@@ -104,7 +102,7 @@ export class Blobs {
     return await this.makeStoreRequest(key, HTTPMethod.Delete)
   }
 
-  async get(key: string) {
+  async get(key: string, metadata?: Record<string, string>) {
     const res = await this.makeStoreRequest(key, HTTPMethod.Get)
 
     if (res.status === 200) {
