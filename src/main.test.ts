@@ -10,11 +10,11 @@ beforeAll(async () => {
   if (semver.lt(nodeVersion, '18.0.0')) {
     const nodeFetch = await import('node-fetch')
 
-    // @ts-ignore Expected type mismatch between native implementation and node-fetch
+    // @ts-expect-error Expected type mismatch between native implementation and node-fetch
     globalThis.fetch = nodeFetch.default
-    // @ts-ignore Expected type mismatch between native implementation and node-fetch
+    // @ts-expect-error Expected type mismatch between native implementation and node-fetch
     globalThis.Request = nodeFetch.Request
-    // @ts-ignore Expected type mismatch between native implementation and node-fetch
+    // @ts-expect-error Expected type mismatch between native implementation and node-fetch
     globalThis.Response = nodeFetch.Response
     globalThis.Headers = nodeFetch.Headers
   }
