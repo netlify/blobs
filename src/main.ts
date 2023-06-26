@@ -21,6 +21,14 @@ enum HTTPMethod {
   Put = 'put',
 }
 
+enum ResponseType {
+  ArrayBuffer = 'arrayBuffer',
+  Blob = 'blob',
+  JSON = 'json',
+  Stream = 'stream',
+  Text = 'text',
+}
+
 type BlobInput = ReadableStream | string | ArrayBuffer | Blob
 
 export class Blobs {
@@ -99,18 +107,39 @@ export class Blobs {
     return await this.makeStoreRequest(key, HTTPMethod.Delete)
   }
 
-  async get(key: string) {
+  async get(key: string): Promise<string>
+  async get(key: string, { type }: { type: ResponseType.ArrayBuffer }): Promise<ArrayBuffer>
+  async get(key: string, { type }: { type: ResponseType.Blob }): Promise<Blob>
+  async get(key: string, { type }: { type: ResponseType.Stream }): Promise<ReadableStream | null>
+  async get(key: string, { type }: { type: ResponseType.Text }): Promise<string>
+  async get(
+    key: string,
+    options?: { type: ResponseType },
+  ): Promise<ArrayBuffer | Blob | ReadableStream | string | null> {
+    const { type } = options ?? {}
     const res = await this.makeStoreRequest(key, HTTPMethod.Get)
 
-    if (res.status === 200) {
-      return new Response(await res.blob())
+    if (type === undefined || type === ResponseType.Text) {
+      return await res.text()
     }
 
-    if (res.status === 404) {
-      return null
+    if (type === ResponseType.ArrayBuffer) {
+      return await res.arrayBuffer()
     }
 
-    throw new Error(`Unexpected response from the blob store: ${res.status}`)
+    if (type === ResponseType.Blob) {
+      return await res.blob()
+    }
+
+    if (type === ResponseType.JSON) {
+      return await res.json()
+    }
+
+    if (type === ResponseType.Stream) {
+      return res.body
+    }
+
+    throw new Error(`Invalid 'type' property: ${type}. Expected: arrayBuffer, blob, json, stream, or text.`)
   }
 
   async set(key: string, data: BlobInput) {

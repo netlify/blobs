@@ -1,6 +1,24 @@
-import { describe, test, expect } from 'vitest'
+import { version as nodeVersion } from 'process'
+
+import semver from 'semver'
+
+import { describe, test, expect, beforeAll } from 'vitest'
 
 import { Blobs } from './main.js'
+
+beforeAll(async () => {
+  if (semver.lt(nodeVersion, '18.0.0')) {
+    const nodeFetch = await import('node-fetch')
+
+    // @ts-expect-error
+    globalThis.fetch = nodeFetch.default
+    globalThis.Headers = nodeFetch.Headers
+    // @ts-expect-error
+    globalThis.Request = nodeFetch.Request
+    // @ts-expect-error
+    globalThis.Response = nodeFetch.Response
+  }
+})
 
 describe('With API credentials', () => {
   test('Reads a key from the blob store', async () => {
@@ -38,6 +56,6 @@ describe('With API credentials', () => {
     })
     const val = await blobs.get(key)
 
-    expect(await (val as Response).text()).toBe(value)
+    expect(val).toBe(value)
   })
 })

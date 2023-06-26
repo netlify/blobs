@@ -42,7 +42,7 @@ await store.set('some-key', 'Hello!')
 
 const item = await store.get('some-key')
 
-assert.strictEqual(await item.text(), 'Hello!')
+assert.strictEqual(item, 'Hello!')
 ```
 
 ### Authentication
@@ -81,23 +81,29 @@ Authentication with the blob storage is done in one of two ways:
 
 ## API
 
-### `get(key: string): Promise<Response | null>`
+### `get(key: string, { type: string }): Promise<any>`
 
 Retrieves an object with the given key.
 
-If an object with the given key is found, a
-[standard `Response` object](https://developer.mozilla.org/en-US/docs/Web/API/Response) is returned, allowing you to use
-methods like `.json()`, `.text()`, or `.blob()` to read the underlying value.
+Depending on the most convenient format for you to access the value, you may choose to supply a `type` property as a
+second parameter, with one of the following values:
 
-Otherwise, `null` is returned.
+- `arrayBuffer`: Returns the entry as an
+  [`ArrayBuffer`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer)
+- `blob`: Returns the entry as a [`Blob`](https://developer.mozilla.org/en-US/docs/Web/API/Blob)
+- `json`: Parses the entry as JSON and returns the resulting object
+- `stream`: Returns the entry as a [`ReadableStream`](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream)
+- `text` (default): Returns the entry as a string of plain text
+
+If an object with the given key is not found, `null` is returned.
 
 ```javascript
-const entry = await blobs.get('some-key')
+const entry = await blobs.get('some-key', { type: 'json' })
 
-console.log(await entry.text())
+console.log(entry)
 ```
 
-### `set(key: string, value: ReadableStream | string | ArrayBuffer | Blob): Promise<void>`
+### `set(key: string, value: ArrayBuffer | Blob | ReadableStream | string): Promise<void>`
 
 Creates an object with the given key and value.
 
