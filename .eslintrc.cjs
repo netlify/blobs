@@ -4,7 +4,6 @@ const { overrides } = require('@netlify/eslint-config-node')
 
 module.exports = {
   extends: '@netlify/eslint-config-node',
-  ignorePatterns: ['deno/**/*.ts', 'test/deno/**/*.ts', 'test/fixtures/**/*.ts'],
   parserOptions: {
     sourceType: 'module',
   },
@@ -19,6 +18,7 @@ module.exports = {
     'no-shadow': 'off',
     'no-use-before-define': 'off',
     'unicorn/prefer-json-parse-buffer': 'off',
+    'unicorn/prefer-ternary': 'off',
     'no-unused-vars': 'off',
     '@typescript-eslint/no-unused-vars': ['error', { ignoreRestSiblings: true }],
   },
@@ -31,6 +31,7 @@ module.exports = {
         'max-nested-callbacks': 'off',
         'max-statements': 'off',
         'no-magic-numbers': 'off',
+        'require-await': 'off',
       },
     },
   ],

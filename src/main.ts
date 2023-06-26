@@ -1,6 +1,3 @@
-import { readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-
 interface APICredentials {
   apiURL?: string
   token: string
@@ -48,7 +45,7 @@ export class Blobs {
 
     if (fetcher) {
       this.fetcher = fetcher
-    } else if (globalThis.fetch !== undefined) {
+    } else if (globalThis.fetch) {
       this.fetcher = globalThis.fetch
     } else {
       throw new Error('You must specify a fetch-compatible `fetcher` parameter when `fetch` is not available globally')
@@ -102,7 +99,7 @@ export class Blobs {
     return await this.makeStoreRequest(key, HTTPMethod.Delete)
   }
 
-  async get(key: string, metadata?: Record<string, string>) {
+  async get(key: string) {
     const res = await this.makeStoreRequest(key, HTTPMethod.Get)
 
     if (res.status === 200) {
