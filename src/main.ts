@@ -102,6 +102,10 @@ export class Blobs {
 
     const res = await this.fetcher(url, { body, headers, method: finalMethod })
 
+    if (res.status === 404 && finalMethod === HTTPMethod.Get) {
+      return null
+    }
+
     if (res.status !== 200) {
       const details = await res.text()
 
@@ -127,8 +131,8 @@ export class Blobs {
     const { type } = options ?? {}
     const res = await this.makeStoreRequest(key, HTTPMethod.Get)
 
-    if (res.status === 404) {
-      return null
+    if (res === null) {
+      return res
     }
 
     if (type === undefined || type === ResponseType.Text) {

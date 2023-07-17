@@ -25,8 +25,8 @@ const value = 'some value'
 const apiToken = 'some token'
 const signedURL = 'https://signed.url/123456789'
 
-describe('With API credentials', () => {
-  test('Reads a key from the blob store', async () => {
+describe('get', () => {
+  test('Reads from the blob store using API credentials', async () => {
     const fetcher = async (...args: Parameters<typeof globalThis.fetch>) => {
       const [url, options] = args
       const headers = options?.headers as Record<string, string>
@@ -56,6 +56,37 @@ describe('With API credentials', () => {
     const val = await blobs.get(key)
 
     expect(val).toBe(value)
+  })
+
+  test('Returns `null` when the pre-signed URL returns a 404', async () => {
+    const fetcher = async (...args: Parameters<typeof globalThis.fetch>) => {
+      const [url, options] = args
+      const headers = options?.headers as Record<string, string>
+
+      if (url === `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`) {
+        const data = JSON.stringify({ url: signedURL })
+
+        expect(headers.authorization).toBe(`Bearer ${apiToken}`)
+
+        return new Response(data)
+      }
+
+      if (url === signedURL) {
+        return new Response('Something went wrong', { status: 404 })
+      }
+
+      throw new Error(`Unexpected fetch call: ${url}`)
+    }
+
+    const blobs = new Blobs({
+      authentication: {
+        token: apiToken,
+      },
+      fetcher,
+      siteID,
+    })
+
+    expect(await blobs.get(key)).toBeNull()
   })
 
   test('Throws when a pre-signed URL returns a non-200 status code', async () => {
