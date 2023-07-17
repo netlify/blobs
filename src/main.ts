@@ -111,8 +111,8 @@ export class Blobs {
     return res
   }
 
-  delete(key: string) {
-    return this.makeStoreRequest(key, HTTPMethod.Delete)
+  async delete(key: string) {
+    await this.makeStoreRequest(key, HTTPMethod.Delete)
   }
 
   async get(key: string): Promise<string>
@@ -154,8 +154,8 @@ export class Blobs {
     throw new Error(`Invalid 'type' property: ${type}. Expected: arrayBuffer, blob, json, stream, or text.`)
   }
 
-  set(key: string, data: BlobInput) {
-    return this.makeStoreRequest(key, HTTPMethod.Put, {}, data)
+  async set(key: string, data: BlobInput) {
+    await this.makeStoreRequest(key, HTTPMethod.Put, {}, data)
   }
 
   async setJSON(key: string, data: unknown) {
