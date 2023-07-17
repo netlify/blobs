@@ -31,6 +31,8 @@ enum ResponseType {
 
 type BlobInput = ReadableStream | string | ArrayBuffer | Blob
 
+const EXPIRY_HEADER = 'x-nf-expires-at'
+
 export class Blobs {
   private authentication: APICredentials | ContextCredentials
   private context: string
@@ -69,7 +71,7 @@ export class Blobs {
           authorization: `Bearer ${this.authentication.token}`,
         },
         method: finalMethod,
-        url: `${this.authentication.contextURL}/${this.siteID}:${this.context}:${key}`,
+        url: `${this.authentication.contextURL}/${this.siteID}/${this.context}/${key}`,
       }
     }
 
@@ -100,11 +102,23 @@ export class Blobs {
       headers['cache-control'] = 'max-age=0, stale-while-revalidate=60'
     }
 
-    return await this.fetcher(url, { body, headers, method: finalMethod })
+    const res = await this.fetcher(url, { body, headers, method: finalMethod })
+
+    if (res.status === 404 && finalMethod === HTTPMethod.Get) {
+      return null
+    }
+
+    if (res.status !== 200) {
+      const details = await res.text()
+
+      throw new Error(`${method} operation has failed: ${details}`)
+    }
+
+    return res
   }
 
   async delete(key: string) {
-    return await this.makeStoreRequest(key, HTTPMethod.Delete)
+    await this.makeStoreRequest(key, HTTPMethod.Delete)
   }
 
   async get(key: string): Promise<string>
@@ -118,21 +132,34 @@ export class Blobs {
   ): Promise<ArrayBuffer | Blob | ReadableStream | string | null> {
     const { type } = options ?? {}
     const res = await this.makeStoreRequest(key, HTTPMethod.Get)
+    const expiry = res?.headers.get(EXPIRY_HEADER)
+
+    if (typeof expiry === 'string') {
+      const expiryTS = Number.parseInt(expiry)
+
+      if (!Number.isNaN(expiryTS) && expiryTS <= Date.now()) {
+        return null
+      }
+    }
+
+    if (res === null) {
+      return res
+    }
 
     if (type === undefined || type === ResponseType.Text) {
-      return await res.text()
+      return res.text()
     }
 
     if (type === ResponseType.ArrayBuffer) {
-      return await res.arrayBuffer()
+      return res.arrayBuffer()
     }
 
     if (type === ResponseType.Blob) {
-      return await res.blob()
+      return res.blob()
     }
 
     if (type === ResponseType.JSON) {
-      return await res.json()
+      return res.json()
     }
 
     if (type === ResponseType.Stream) {
@@ -142,8 +169,18 @@ export class Blobs {
     throw new Error(`Invalid 'type' property: ${type}. Expected: arrayBuffer, blob, json, stream, or text.`)
   }
 
-  async set(key: string, data: BlobInput) {
-    await this.makeStoreRequest(key, HTTPMethod.Put, {}, data)
+  async set(key: string, data: BlobInput, { ttl }: { ttl?: Date | number } = {}) {
+    const headers: Record<string, string> = {}
+
+    if (typeof ttl === 'number') {
+      headers[EXPIRY_HEADER] = (Date.now() + ttl).toString()
+    } else if (ttl instanceof Date) {
+      headers[EXPIRY_HEADER] = ttl.getTime().toString()
+    } else if (ttl !== undefined) {
+      throw new TypeError(`'ttl' value must be a number or a Date, ${typeof ttl} found.`)
+    }
+
+    await this.makeStoreRequest(key, HTTPMethod.Put, headers, data)
   }
 
   async setJSON(key: string, data: unknown) {
