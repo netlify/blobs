@@ -69,7 +69,7 @@ export class Blobs {
           authorization: `Bearer ${this.authentication.token}`,
         },
         method: finalMethod,
-        url: `${this.authentication.contextURL}/${this.siteID}:${this.context}:${key}`,
+        url: `${this.authentication.contextURL}/${this.siteID}/${this.context}/${key}`,
       }
     }
 
@@ -100,11 +100,19 @@ export class Blobs {
       headers['cache-control'] = 'max-age=0, stale-while-revalidate=60'
     }
 
-    return await this.fetcher(url, { body, headers, method: finalMethod })
+    const res = await this.fetcher(url, { body, headers, method: finalMethod })
+
+    if (res.status !== 200) {
+      const details = await res.text()
+
+      throw new Error(`${method} operation has failed: ${details}`)
+    }
+
+    return res
   }
 
-  async delete(key: string) {
-    return await this.makeStoreRequest(key, HTTPMethod.Delete)
+  delete(key: string) {
+    return this.makeStoreRequest(key, HTTPMethod.Delete)
   }
 
   async get(key: string): Promise<string>
@@ -119,20 +127,24 @@ export class Blobs {
     const { type } = options ?? {}
     const res = await this.makeStoreRequest(key, HTTPMethod.Get)
 
+    if (res.status === 404) {
+      return null
+    }
+
     if (type === undefined || type === ResponseType.Text) {
-      return await res.text()
+      return res.text()
     }
 
     if (type === ResponseType.ArrayBuffer) {
-      return await res.arrayBuffer()
+      return res.arrayBuffer()
     }
 
     if (type === ResponseType.Blob) {
-      return await res.blob()
+      return res.blob()
     }
 
     if (type === ResponseType.JSON) {
-      return await res.json()
+      return res.json()
     }
 
     if (type === ResponseType.Stream) {
@@ -142,8 +154,8 @@ export class Blobs {
     throw new Error(`Invalid 'type' property: ${type}. Expected: arrayBuffer, blob, json, stream, or text.`)
   }
 
-  async set(key: string, data: BlobInput) {
-    await this.makeStoreRequest(key, HTTPMethod.Put, {}, data)
+  set(key: string, data: BlobInput) {
+    return this.makeStoreRequest(key, HTTPMethod.Put, {}, data)
   }
 
   async setJSON(key: string, data: unknown) {
