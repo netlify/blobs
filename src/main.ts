@@ -31,6 +31,8 @@ enum ResponseType {
 
 type BlobInput = ReadableStream | string | ArrayBuffer | Blob
 
+const EXPIRY_HEADER = 'x-nf-expires-at'
+
 export class Blobs {
   private authentication: APICredentials | ContextCredentials
   private context: string
@@ -130,6 +132,15 @@ export class Blobs {
   ): Promise<ArrayBuffer | Blob | ReadableStream | string | null> {
     const { type } = options ?? {}
     const res = await this.makeStoreRequest(key, HTTPMethod.Get)
+    const expiry = res?.headers.get(EXPIRY_HEADER)
+
+    if (typeof expiry === 'string') {
+      const expiryTS = Number.parseInt(expiry)
+
+      if (!Number.isNaN(expiryTS) && expiryTS <= Date.now()) {
+        return null
+      }
+    }
 
     if (res === null) {
       return res
@@ -158,8 +169,18 @@ export class Blobs {
     throw new Error(`Invalid 'type' property: ${type}. Expected: arrayBuffer, blob, json, stream, or text.`)
   }
 
-  async set(key: string, data: BlobInput) {
-    await this.makeStoreRequest(key, HTTPMethod.Put, {}, data)
+  async set(key: string, data: BlobInput, { ttl }: { ttl?: Date | number } = {}) {
+    const headers: Record<string, string> = {}
+
+    if (typeof ttl === 'number') {
+      headers[EXPIRY_HEADER] = (Date.now() + ttl).toString()
+    } else if (ttl instanceof Date) {
+      headers[EXPIRY_HEADER] = ttl.getMilliseconds().toString()
+    } else if (ttl !== undefined) {
+      throw new TypeError(`'ttl' value must be a number or a Date, ${typeof ttl} found.`)
+    }
+
+    await this.makeStoreRequest(key, HTTPMethod.Put, headers, data)
   }
 
   async setJSON(key: string, data: unknown) {

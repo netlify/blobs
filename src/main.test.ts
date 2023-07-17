@@ -31,6 +31,8 @@ describe('get', () => {
       const [url, options] = args
       const headers = options?.headers as Record<string, string>
 
+      expect(options?.method).toBe('get')
+
       if (url === `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`) {
         const data = JSON.stringify({ url: signedURL })
 
@@ -63,6 +65,8 @@ describe('get', () => {
       const [url, options] = args
       const headers = options?.headers as Record<string, string>
 
+      expect(options?.method).toBe('get')
+
       if (url === `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`) {
         const data = JSON.stringify({ url: signedURL })
 
@@ -94,6 +98,8 @@ describe('get', () => {
       const [url, options] = args
       const headers = options?.headers as Record<string, string>
 
+      expect(options?.method).toBe('get')
+
       if (url === `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`) {
         const data = JSON.stringify({ url: signedURL })
 
@@ -118,5 +124,122 @@ describe('get', () => {
     })
 
     expect(async () => await blobs.get(key)).rejects.toThrowError('get operation has failed: Something went wrong')
+  })
+
+  test('Returns `null` when the blob entry contains an expiry date in the past', async () => {
+    const fetcher = async (...args: Parameters<typeof globalThis.fetch>) => {
+      const [url, options] = args
+      const headers = options?.headers as Record<string, string>
+
+      expect(options?.method).toBe('get')
+
+      if (url === `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`) {
+        const data = JSON.stringify({ url: signedURL })
+
+        expect(headers.authorization).toBe(`Bearer ${apiToken}`)
+
+        return new Response(data)
+      }
+
+      if (url === signedURL) {
+        return new Response(value, {
+          headers: {
+            'x-nf-expires-at': (Date.now() - 1000).toString(),
+          },
+        })
+      }
+
+      throw new Error(`Unexpected fetch call: ${url}`)
+    }
+
+    const blobs = new Blobs({
+      authentication: {
+        token: apiToken,
+      },
+      fetcher,
+      siteID,
+    })
+
+    expect(await blobs.get(key)).toBeNull()
+  })
+})
+
+describe('set', () => {
+  test('Writes to the blob store using API credentials', async () => {
+    expect.assertions(5)
+
+    const fetcher = async (...args: Parameters<typeof globalThis.fetch>) => {
+      const [url, options] = args
+      const headers = options?.headers as Record<string, string>
+
+      expect(options?.method).toBe('put')
+
+      if (url === `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`) {
+        const data = JSON.stringify({ url: signedURL })
+
+        expect(headers.authorization).toBe(`Bearer ${apiToken}`)
+
+        return new Response(data)
+      }
+
+      if (url === signedURL) {
+        expect(options?.body).toBe(value)
+        expect(headers['cache-control']).toBe('max-age=0, stale-while-revalidate=60')
+
+        return new Response(value)
+      }
+
+      throw new Error(`Unexpected fetch call: ${url}`)
+    }
+
+    const blobs = new Blobs({
+      authentication: {
+        token: apiToken,
+      },
+      fetcher,
+      siteID,
+    })
+
+    await blobs.set(key, value)
+  })
+
+  test('Accepts a TTL parameter', async () => {
+    expect.assertions(6)
+
+    const ttl = new Date(Date.now() + 15_000)
+    const fetcher = async (...args: Parameters<typeof globalThis.fetch>) => {
+      const [url, options] = args
+      const headers = options?.headers as Record<string, string>
+
+      expect(options?.method).toBe('put')
+
+      if (url === `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`) {
+        const data = JSON.stringify({ url: signedURL })
+
+        expect(headers.authorization).toBe(`Bearer ${apiToken}`)
+
+        return new Response(data)
+      }
+
+      if (url === signedURL) {
+        expect(options?.body).toBe(value)
+        expect(headers['cache-control']).toBe('max-age=0, stale-while-revalidate=60')
+        expect(headers['x-nf-expires-at']).toBe(ttl.getMilliseconds().toString())
+
+        return new Response(value)
+      }
+
+      throw new Error(`Unexpected fetch call: ${url}`)
+    }
+
+    const blobs = new Blobs({
+      authentication: {
+        token: apiToken,
+      },
+      fetcher,
+      siteID,
+    })
+
+    await blobs.set(key, value, { ttl })
   })
 })
