@@ -243,3 +243,42 @@ describe('set', () => {
     await blobs.set(key, value, { ttl })
   })
 })
+
+describe('delete', () => {
+  test('Deletes from the blob store using API credentials', async () => {
+    expect.assertions(4)
+
+    const fetcher = async (...args: Parameters<typeof globalThis.fetch>) => {
+      const [url, options] = args
+      const headers = options?.headers as Record<string, string>
+
+      expect(options?.method).toBe('delete')
+
+      if (url === `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`) {
+        const data = JSON.stringify({ url: signedURL })
+
+        expect(headers.authorization).toBe(`Bearer ${apiToken}`)
+
+        return new Response(data)
+      }
+
+      if (url === signedURL) {
+        expect(options?.body).toBeUndefined()
+
+        return new Response(value)
+      }
+
+      throw new Error(`Unexpected fetch call: ${url}`)
+    }
+
+    const blobs = new Blobs({
+      authentication: {
+        token: apiToken,
+      },
+      fetcher,
+      siteID,
+    })
+
+    await blobs.delete(key)
+  })
+})
