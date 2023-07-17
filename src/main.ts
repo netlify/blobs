@@ -175,7 +175,7 @@ export class Blobs {
     if (typeof ttl === 'number') {
       headers[EXPIRY_HEADER] = (Date.now() + ttl).toString()
     } else if (ttl instanceof Date) {
-      headers[EXPIRY_HEADER] = ttl.getMilliseconds().toString()
+      headers[EXPIRY_HEADER] = ttl.getTime().toString()
     } else if (ttl !== undefined) {
       throw new TypeError(`'ttl' value must be a number or a Date, ${typeof ttl} found.`)
     }

@@ -224,7 +224,7 @@ describe('set', () => {
       if (url === signedURL) {
         expect(options?.body).toBe(value)
         expect(headers['cache-control']).toBe('max-age=0, stale-while-revalidate=60')
-        expect(headers['x-nf-expires-at']).toBe(ttl.getMilliseconds().toString())
+        expect(headers['x-nf-expires-at']).toBe(ttl.getTime().toString())
 
         return new Response(value)
       }
