@@ -272,7 +272,7 @@ describe('set', () => {
     await blobs.set(key, value, { ttl })
   })
 
-  test('Throws when a pre-signed URL returns a non-200 status code', async () => {
+  test('Throws when the API returns a non-200 status code', async () => {
     const fetcher = async (...args: Parameters<typeof globalThis.fetch>) => {
       const [url, options] = args
       const headers = options?.headers as Record<string, string>
@@ -346,7 +346,7 @@ describe('delete', () => {
     await blobs.delete(key)
   })
 
-  test('Throws when a pre-signed URL returns a non-200 status code', async () => {
+  test('Throws when the API returns a non-200 status code', async () => {
     const fetcher = async (...args: Parameters<typeof globalThis.fetch>) => {
       const [url, options] = args
       const headers = options?.headers as Record<string, string>
