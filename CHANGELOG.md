@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/netlify/blobs/compare/v1.1.0...v1.2.0) (2023-07-18)
+
+
+### Miscellaneous Chores
+
+* release 1.2.0 ([88173ae](https://github.com/netlify/blobs/commit/88173aeaba04cc90c3a9b9c47fc4fbc7e2f2a99c))
+
 ## [1.1.0](https://github.com/netlify/blobs/compare/v1.0.0...v1.1.0) (2023-07-18)
 
 
