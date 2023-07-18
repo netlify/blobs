@@ -280,15 +280,9 @@ describe('set', () => {
       expect(options?.method).toBe('put')
 
       if (url === `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`) {
-        const data = JSON.stringify({ url: signedURL })
-
         expect(headers.authorization).toBe(`Bearer ${apiToken}`)
 
-        return new Response(data)
-      }
-
-      if (url === signedURL) {
-        return new Response('Something went wrong', { status: 401 })
+        return new Response(null, { status: 401 })
       }
 
       throw new Error(`Unexpected fetch call: ${url}`)
@@ -303,7 +297,7 @@ describe('set', () => {
     })
 
     expect(async () => await blobs.set(key, 'value')).rejects.toThrowError(
-      'put operation has failed: Something went wrong',
+      'put operation has failed: API returned a 401 response',
     )
   })
 })
@@ -354,11 +348,9 @@ describe('delete', () => {
       expect(options?.method).toBe('delete')
 
       if (url === `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`) {
-        const data = JSON.stringify({ url: signedURL })
-
         expect(headers.authorization).toBe(`Bearer ${apiToken}`)
 
-        return new Response(data)
+        return new Response(null, { status: 401 })
       }
 
       if (url === signedURL) {
@@ -377,7 +369,7 @@ describe('delete', () => {
     })
 
     expect(async () => await blobs.delete(key)).rejects.toThrowError(
-      'delete operation has failed: Something went wrong',
+      'delete operation has failed: API returned a 401 response',
     )
   })
 })
