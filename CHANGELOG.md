@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/netlify/blobs/compare/v1.0.0...v1.1.0) (2023-07-18)
+
+
+### Features
+
+* throw when API returns an error code ([#12](https://github.com/netlify/blobs/issues/12)) ([a6573b2](https://github.com/netlify/blobs/commit/a6573b2acb218e9bb12cdde3b1a83d64214aa864))
+
 ## 1.0.0 (2023-07-18)
 
 
