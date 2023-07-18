@@ -78,6 +78,11 @@ export class Blobs {
     const apiURL = `${this.authentication.apiURL}/api/v1/sites/${this.siteID}/blobs/${key}?context=${this.context}`
     const headers = { authorization: `Bearer ${this.authentication.token}` }
     const res = await this.fetcher(apiURL, { headers, method })
+
+    if (res.status !== 200) {
+      throw new Error(`${method} operation has failed: API returned a ${res.status} response`)
+    }
+
     const { url } = await res.json()
 
     return {
