@@ -29,6 +29,10 @@ enum ResponseType {
   Text = 'text',
 }
 
+interface SetOptions {
+  ttl?: Date | number
+}
+
 type BlobInput = ReadableStream | string | ArrayBuffer | Blob
 
 const EXPIRY_HEADER = 'x-nf-expires-at'
@@ -89,6 +93,26 @@ export class Blobs {
       method: finalMethod,
       url,
     }
+  }
+
+  private static getTTLHeaders(ttl: Date | number | undefined): Record<string, string> {
+    if (typeof ttl === 'number') {
+      return {
+        [EXPIRY_HEADER]: (Date.now() + ttl).toString(),
+      }
+    }
+
+    if (ttl instanceof Date) {
+      return {
+        [EXPIRY_HEADER]: ttl.getTime().toString(),
+      }
+    }
+
+    if (ttl === undefined) {
+      return {}
+    }
+
+    throw new TypeError(`'ttl' value must be a number or a Date, ${typeof ttl} found.`)
   }
 
   private isConfigured() {
@@ -180,23 +204,16 @@ export class Blobs {
     throw new Error(`Invalid 'type' property: ${type}. Expected: arrayBuffer, blob, json, stream, or text.`)
   }
 
-  async set(key: string, data: BlobInput, { ttl }: { ttl?: Date | number } = {}) {
-    const headers: Record<string, string> = {}
-
-    if (typeof ttl === 'number') {
-      headers[EXPIRY_HEADER] = (Date.now() + ttl).toString()
-    } else if (ttl instanceof Date) {
-      headers[EXPIRY_HEADER] = ttl.getTime().toString()
-    } else if (ttl !== undefined) {
-      throw new TypeError(`'ttl' value must be a number or a Date, ${typeof ttl} found.`)
-    }
+  async set(key: string, data: BlobInput, { ttl }: SetOptions = {}) {
+    const headers = Blobs.getTTLHeaders(ttl)
 
     await this.makeStoreRequest(key, HTTPMethod.Put, headers, data)
   }
 
-  async setJSON(key: string, data: unknown) {
+  async setJSON(key: string, data: unknown, { ttl }: SetOptions = {}) {
     const payload = JSON.stringify(data)
     const headers = {
+      ...Blobs.getTTLHeaders(ttl),
       'content-type': 'application/json',
     }
 

@@ -366,6 +366,86 @@ describe('set', () => {
   })
 })
 
+describe('setJSON', () => {
+  test('Writes to the blob store using API credentials', async () => {
+    expect.assertions(5)
+
+    const fetcher = async (...args: Parameters<typeof globalThis.fetch>) => {
+      const [url, options] = args
+      const headers = options?.headers as Record<string, string>
+
+      expect(options?.method).toBe('put')
+
+      if (url === `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`) {
+        const data = JSON.stringify({ url: signedURL })
+
+        expect(headers.authorization).toBe(`Bearer ${apiToken}`)
+
+        return new Response(data)
+      }
+
+      if (url === signedURL) {
+        expect(options?.body).toBe(JSON.stringify({ value }))
+        expect(headers['cache-control']).toBe('max-age=0, stale-while-revalidate=60')
+
+        return new Response(value)
+      }
+
+      throw new Error(`Unexpected fetch call: ${url}`)
+    }
+
+    const blobs = new Blobs({
+      authentication: {
+        token: apiToken,
+      },
+      fetcher,
+      siteID,
+    })
+
+    await blobs.setJSON(key, { value })
+  })
+
+  test('Accepts a TTL parameter', async () => {
+    expect.assertions(6)
+
+    const ttl = new Date(Date.now() + 15_000)
+    const fetcher = async (...args: Parameters<typeof globalThis.fetch>) => {
+      const [url, options] = args
+      const headers = options?.headers as Record<string, string>
+
+      expect(options?.method).toBe('put')
+
+      if (url === `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`) {
+        const data = JSON.stringify({ url: signedURL })
+
+        expect(headers.authorization).toBe(`Bearer ${apiToken}`)
+
+        return new Response(data)
+      }
+
+      if (url === signedURL) {
+        expect(options?.body).toBe(JSON.stringify({ value }))
+        expect(headers['cache-control']).toBe('max-age=0, stale-while-revalidate=60')
+        expect(headers['x-nf-expires-at']).toBe(ttl.getTime().toString())
+
+        return new Response(value)
+      }
+
+      throw new Error(`Unexpected fetch call: ${url}`)
+    }
+
+    const blobs = new Blobs({
+      authentication: {
+        token: apiToken,
+      },
+      fetcher,
+      siteID,
+    })
+
+    await blobs.setJSON(key, { value }, { ttl })
+  })
+})
+
 describe('delete', () => {
   test('Deletes from the blob store using API credentials', async () => {
     expect.assertions(4)
