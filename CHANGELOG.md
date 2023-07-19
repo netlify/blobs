@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/netlify/blobs/compare/v1.2.0...v1.3.0) (2023-07-19)
+
+
+### Features
+
+* throw error on missing config properties ([#15](https://github.com/netlify/blobs/issues/15)) ([10f30a8](https://github.com/netlify/blobs/commit/10f30a89ee3c8614b3a7f8a06a4a4672b9c83937))
+
 ## [1.2.0](https://github.com/netlify/blobs/compare/v1.1.0...v1.2.0) (2023-07-18)
 
 
