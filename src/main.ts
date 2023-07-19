@@ -67,14 +67,11 @@ export class Blobs {
   }
 
   private async getFinalRequest(key: string, method: string) {
-    const finalMethod = method
-
     if ('contextURL' in this.authentication) {
       return {
         headers: {
           authorization: `Bearer ${this.authentication.token}`,
         },
-        method: finalMethod,
         url: `${this.authentication.contextURL}/${this.siteID}/${this.context}/${key}`,
       }
     }
@@ -90,7 +87,6 @@ export class Blobs {
     const { url } = await res.json()
 
     return {
-      method: finalMethod,
       url,
     }
   }
@@ -129,7 +125,7 @@ export class Blobs {
       throw new Error("The blob store is unavailable because it's missing required configuration properties")
     }
 
-    const { headers: baseHeaders = {}, method: finalMethod, url } = await this.getFinalRequest(key, method)
+    const { headers: baseHeaders = {}, url } = await this.getFinalRequest(key, method)
     const headers: Record<string, string> = {
       ...baseHeaders,
       ...extraHeaders,
@@ -139,9 +135,9 @@ export class Blobs {
       headers['cache-control'] = 'max-age=0, stale-while-revalidate=60'
     }
 
-    const res = await this.fetcher(url, { body, headers, method: finalMethod })
+    const res = await this.fetcher(url, { body, headers, method })
 
-    if (res.status === 404 && finalMethod === HTTPMethod.Get) {
+    if (res.status === 404 && method === HTTPMethod.Get) {
       return null
     }
 
