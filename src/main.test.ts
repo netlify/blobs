@@ -191,6 +191,37 @@ describe('get', () => {
 
     expect(await blobs.get(key)).toBeNull()
   })
+
+  test('Throws when the instance is missing required configuration properties', async () => {
+    const fetcher = (...args: Parameters<typeof globalThis.fetch>) => {
+      const [url] = args
+
+      throw new Error(`Unexpected fetch call: ${url}`)
+    }
+
+    const blobs1 = new Blobs({
+      authentication: {
+        token: '',
+      },
+      fetcher,
+      siteID,
+    })
+
+    const blobs2 = new Blobs({
+      authentication: {
+        token: apiToken,
+      },
+      fetcher,
+      siteID: '',
+    })
+
+    expect(async () => await blobs1.get(key)).rejects.toThrowError(
+      `The blob store is unavailable because it's missing required configuration properties`,
+    )
+    expect(async () => await blobs2.get(key)).rejects.toThrowError(
+      `The blob store is unavailable because it's missing required configuration properties`,
+    )
+  })
 })
 
 describe('set', () => {
@@ -300,6 +331,37 @@ describe('set', () => {
       'put operation has failed: API returned a 401 response',
     )
   })
+
+  test('Throws when the instance is missing required configuration properties', async () => {
+    const fetcher = (...args: Parameters<typeof globalThis.fetch>) => {
+      const [url] = args
+
+      throw new Error(`Unexpected fetch call: ${url}`)
+    }
+
+    const blobs1 = new Blobs({
+      authentication: {
+        token: '',
+      },
+      fetcher,
+      siteID,
+    })
+
+    const blobs2 = new Blobs({
+      authentication: {
+        token: apiToken,
+      },
+      fetcher,
+      siteID: '',
+    })
+
+    expect(async () => await blobs1.set(key, value)).rejects.toThrowError(
+      `The blob store is unavailable because it's missing required configuration properties`,
+    )
+    expect(async () => await blobs2.set(key, value)).rejects.toThrowError(
+      `The blob store is unavailable because it's missing required configuration properties`,
+    )
+  })
 })
 
 describe('delete', () => {
@@ -370,6 +432,37 @@ describe('delete', () => {
 
     expect(async () => await blobs.delete(key)).rejects.toThrowError(
       'delete operation has failed: API returned a 401 response',
+    )
+  })
+
+  test('Throws when the instance is missing required configuration properties', async () => {
+    const fetcher = (...args: Parameters<typeof globalThis.fetch>) => {
+      const [url] = args
+
+      throw new Error(`Unexpected fetch call: ${url}`)
+    }
+
+    const blobs1 = new Blobs({
+      authentication: {
+        token: '',
+      },
+      fetcher,
+      siteID,
+    })
+
+    const blobs2 = new Blobs({
+      authentication: {
+        token: apiToken,
+      },
+      fetcher,
+      siteID: '',
+    })
+
+    expect(async () => await blobs1.delete(key)).rejects.toThrowError(
+      `The blob store is unavailable because it's missing required configuration properties`,
+    )
+    expect(async () => await blobs2.delete(key)).rejects.toThrowError(
+      `The blob store is unavailable because it's missing required configuration properties`,
     )
   })
 })

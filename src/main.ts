@@ -91,12 +91,20 @@ export class Blobs {
     }
   }
 
+  private isConfigured() {
+    return Boolean(this.authentication?.token) && Boolean(this.siteID)
+  }
+
   private async makeStoreRequest(
     key: string,
     method: HTTPMethod,
     extraHeaders?: Record<string, string>,
     body?: BlobInput | null,
   ) {
+    if (!this.isConfigured()) {
+      throw new Error("The blob store is unavailable because it's missing required configuration properties")
+    }
+
     const { headers: baseHeaders = {}, method: finalMethod, url } = await this.getFinalRequest(key, method)
     const headers: Record<string, string> = {
       ...baseHeaders,
