@@ -32,6 +32,7 @@ module.exports = {
         'max-statements': 'off',
         'no-magic-numbers': 'off',
         'require-await': 'off',
+        'unicorn/consistent-function-scoping': 'off',
       },
     },
   ],
