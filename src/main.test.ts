@@ -152,7 +152,9 @@ describe('get', () => {
       siteID,
     })
 
-    expect(async () => await blobs.get(key)).rejects.toThrowError('get operation has failed: Something went wrong')
+    expect(async () => await blobs.get(key)).rejects.toThrowError(
+      'get operation has failed: store returned a 401 response',
+    )
   })
 
   test('Returns `null` when the blob entry contains an expiry date in the past', async () => {

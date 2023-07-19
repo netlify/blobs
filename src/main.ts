@@ -122,9 +122,7 @@ export class Blobs {
     }
 
     if (res.status !== 200) {
-      const details = await res.text()
-
-      throw new Error(`${method} operation has failed: ${details}`)
+      throw new Error(`${method} operation has failed: store returned a ${res.status} response`)
     }
 
     return res
