@@ -152,7 +152,9 @@ describe('get', () => {
       siteID,
     })
 
-    expect(async () => await blobs.get(key)).rejects.toThrowError('get operation has failed: Something went wrong')
+    expect(async () => await blobs.get(key)).rejects.toThrowError(
+      'get operation has failed: store returned a 401 response',
+    )
   })
 
   test('Returns `null` when the blob entry contains an expiry date in the past', async () => {
@@ -361,6 +363,86 @@ describe('set', () => {
     expect(async () => await blobs2.set(key, value)).rejects.toThrowError(
       `The blob store is unavailable because it's missing required configuration properties`,
     )
+  })
+})
+
+describe('setJSON', () => {
+  test('Writes to the blob store using API credentials', async () => {
+    expect.assertions(5)
+
+    const fetcher = async (...args: Parameters<typeof globalThis.fetch>) => {
+      const [url, options] = args
+      const headers = options?.headers as Record<string, string>
+
+      expect(options?.method).toBe('put')
+
+      if (url === `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`) {
+        const data = JSON.stringify({ url: signedURL })
+
+        expect(headers.authorization).toBe(`Bearer ${apiToken}`)
+
+        return new Response(data)
+      }
+
+      if (url === signedURL) {
+        expect(options?.body).toBe(JSON.stringify({ value }))
+        expect(headers['cache-control']).toBe('max-age=0, stale-while-revalidate=60')
+
+        return new Response(value)
+      }
+
+      throw new Error(`Unexpected fetch call: ${url}`)
+    }
+
+    const blobs = new Blobs({
+      authentication: {
+        token: apiToken,
+      },
+      fetcher,
+      siteID,
+    })
+
+    await blobs.setJSON(key, { value })
+  })
+
+  test('Accepts a TTL parameter', async () => {
+    expect.assertions(6)
+
+    const ttl = new Date(Date.now() + 15_000)
+    const fetcher = async (...args: Parameters<typeof globalThis.fetch>) => {
+      const [url, options] = args
+      const headers = options?.headers as Record<string, string>
+
+      expect(options?.method).toBe('put')
+
+      if (url === `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`) {
+        const data = JSON.stringify({ url: signedURL })
+
+        expect(headers.authorization).toBe(`Bearer ${apiToken}`)
+
+        return new Response(data)
+      }
+
+      if (url === signedURL) {
+        expect(options?.body).toBe(JSON.stringify({ value }))
+        expect(headers['cache-control']).toBe('max-age=0, stale-while-revalidate=60')
+        expect(headers['x-nf-expires-at']).toBe(ttl.getTime().toString())
+
+        return new Response(value)
+      }
+
+      throw new Error(`Unexpected fetch call: ${url}`)
+    }
+
+    const blobs = new Blobs({
+      authentication: {
+        token: apiToken,
+      },
+      fetcher,
+      siteID,
+    })
+
+    await blobs.setJSON(key, { value }, { ttl })
   })
 })
 
