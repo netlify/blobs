@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/netlify/blobs/compare/v1.3.0...v1.4.0) (2023-07-20)
+
+
+### Features
+
+* support TTL in `setJSON` method ([#17](https://github.com/netlify/blobs/issues/17)) ([392c9e1](https://github.com/netlify/blobs/commit/392c9e1cb00ae32622d32e36c06475706a9bcdf0))
+
 ## [1.3.0](https://github.com/netlify/blobs/compare/v1.2.0...v1.3.0) (2023-07-19)
 
 
