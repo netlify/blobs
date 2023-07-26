@@ -149,7 +149,7 @@ export class Blobs {
   async get(key: string, { type }: { type: 'blob' }): Promise<Blob>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async get(key: string, { type }: { type: 'json' }): Promise<any>
-  async get(key: string, { type }: { type: 'stream' }): Promise<ReadableStream | null>
+  async get(key: string, { type }: { type: 'stream' }): Promise<ReadableStream>
   async get(key: string, { type }: { type: 'text' }): Promise<string>
   async get(
     key: string,
