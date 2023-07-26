@@ -21,14 +21,6 @@ enum HTTPMethod {
   Put = 'put',
 }
 
-enum ResponseType {
-  ArrayBuffer = 'arrayBuffer',
-  Blob = 'blob',
-  JSON = 'json',
-  Stream = 'stream',
-  Text = 'text',
-}
-
 interface SetOptions {
   ttl?: Date | number
 }
@@ -153,13 +145,15 @@ export class Blobs {
   }
 
   async get(key: string): Promise<string>
-  async get(key: string, { type }: { type: ResponseType.ArrayBuffer }): Promise<ArrayBuffer>
-  async get(key: string, { type }: { type: ResponseType.Blob }): Promise<Blob>
-  async get(key: string, { type }: { type: ResponseType.Stream }): Promise<ReadableStream | null>
-  async get(key: string, { type }: { type: ResponseType.Text }): Promise<string>
+  async get(key: string, { type }: { type: 'arrayBuffer' }): Promise<ArrayBuffer>
+  async get(key: string, { type }: { type: 'blob' }): Promise<Blob>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async get(key: string, { type }: { type: 'json' }): Promise<any>
+  async get(key: string, { type }: { type: 'stream' }): Promise<ReadableStream | null>
+  async get(key: string, { type }: { type: 'text' }): Promise<string>
   async get(
     key: string,
-    options?: { type: ResponseType },
+    options?: { type: 'arrayBuffer' | 'blob' | 'json' | 'stream' | 'text' },
   ): Promise<ArrayBuffer | Blob | ReadableStream | string | null> {
     const { type } = options ?? {}
     const res = await this.makeStoreRequest(key, HTTPMethod.Get)
@@ -177,23 +171,23 @@ export class Blobs {
       return res
     }
 
-    if (type === undefined || type === ResponseType.Text) {
+    if (type === undefined || type === 'text') {
       return res.text()
     }
 
-    if (type === ResponseType.ArrayBuffer) {
+    if (type === 'arrayBuffer') {
       return res.arrayBuffer()
     }
 
-    if (type === ResponseType.Blob) {
+    if (type === 'blob') {
       return res.blob()
     }
 
-    if (type === ResponseType.JSON) {
+    if (type === 'json') {
       return res.json()
     }
 
-    if (type === ResponseType.Stream) {
+    if (type === 'stream') {
       return res.body
     }
 
