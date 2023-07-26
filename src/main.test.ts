@@ -57,43 +57,12 @@ describe('get', () => {
       fetcher,
       siteID,
     })
-    const val = await blobs.get(key)
 
-    expect(val).toBe(value)
-  })
+    const string = await blobs.get(key)
+    expect(string).toBe(value)
 
-  test('Returns a stream', async () => {
-    const fetcher = async (...args: Parameters<typeof globalThis.fetch>) => {
-      const [url, options] = args
-      const headers = options?.headers as Record<string, string>
-
-      expect(options?.method).toBe('get')
-
-      if (url === `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`) {
-        const data = JSON.stringify({ url: signedURL })
-
-        expect(headers.authorization).toBe(`Bearer ${apiToken}`)
-
-        return new Response(data)
-      }
-
-      if (url === signedURL) {
-        return new Response(value)
-      }
-
-      throw new Error(`Unexpected fetch call: ${url}`)
-    }
-
-    const blobs = new Blobs({
-      authentication: {
-        token: apiToken,
-      },
-      fetcher,
-      siteID,
-    })
-    const val = await blobs.get(key, { type: 'stream' })
-
-    expect(await streamToString(val as unknown as NodeJS.ReadableStream)).toBe(value)
+    const stream = await blobs.get(key, { type: 'stream' })
+    expect(await streamToString(stream as unknown as NodeJS.ReadableStream)).toBe(value)
   })
 
   test('Returns `null` when the pre-signed URL returns a 404', async () => {
