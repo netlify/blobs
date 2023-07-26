@@ -3,6 +3,8 @@ import { version as nodeVersion } from 'process'
 import semver from 'semver'
 import { describe, test, expect, beforeAll } from 'vitest'
 
+import { streamToString } from '../test/util.js'
+
 import { Blobs } from './main.js'
 
 beforeAll(async () => {
@@ -55,9 +57,12 @@ describe('get', () => {
       fetcher,
       siteID,
     })
-    const val = await blobs.get(key)
 
-    expect(val).toBe(value)
+    const string = await blobs.get(key)
+    expect(string).toBe(value)
+
+    const stream = await blobs.get(key, { type: 'stream' })
+    expect(await streamToString(stream as unknown as NodeJS.ReadableStream)).toBe(value)
   })
 
   test('Returns `null` when the pre-signed URL returns a 404', async () => {
