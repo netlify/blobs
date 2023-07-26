@@ -310,6 +310,96 @@ describe('set', () => {
     await blobs.set(key, value, { ttl })
   })
 
+  test('Sets content-length when sending a stream', async () => {
+    const fetcher = async (...args: Parameters<typeof globalThis.fetch>) => {
+      const [url, options] = args
+      const headers = options?.headers as Record<string, string>
+
+      if (url === `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`) {
+        const data = JSON.stringify({ url: signedURL })
+
+        expect(headers.authorization).toBe(`Bearer ${apiToken}`)
+
+        return new Response(data)
+      }
+      expect(headers['content-length']).toBe('100')
+      return new Response('OK')
+    }
+
+    const blobs = new Blobs({
+      authentication: {
+        token: apiToken,
+      },
+      fetcher,
+      siteID,
+    })
+
+    const stream = new ReadableStream()
+
+    await blobs.set(key, stream, { contentLength: 100 })
+  })
+
+  test('Throws if a stream is passed with no contentLength', async () => {
+    const fetcher = async (...args: Parameters<typeof globalThis.fetch>) => {
+      const [url, options] = args
+      const headers = options?.headers as Record<string, string>
+
+      if (url === `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`) {
+        const data = JSON.stringify({ url: signedURL })
+
+        expect(headers.authorization).toBe(`Bearer ${apiToken}`)
+
+        return new Response(data)
+      }
+      expect(headers['content-length']).toBe('100')
+      return new Response('OK')
+    }
+
+    const blobs = new Blobs({
+      authentication: {
+        token: apiToken,
+      },
+      fetcher,
+      siteID,
+    })
+
+    const stream = new ReadableStream()
+    // @ts-expect-error - we're testing the error case
+    await expect(blobs.set(key, stream)).rejects.toThrowError(
+      'You must specify a `contentLength` parameter when `data` is a ReadableStream',
+    )
+  })
+
+  test('Ignores content-length when data is not a stream', async () => {
+    const fetcher = async (...args: Parameters<typeof globalThis.fetch>) => {
+      const [url, options] = args
+      const headers = options?.headers as Record<string, string>
+
+      expect(options?.method).toBe('put')
+
+      if (url === `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`) {
+        const data = JSON.stringify({ url: signedURL })
+
+        expect(headers.authorization).toBe(`Bearer ${apiToken}`)
+
+        return new Response(data)
+      }
+
+      expect(headers['content-length']).toBeUndefined()
+      return new Response('OK')
+    }
+
+    const blobs = new Blobs({
+      authentication: {
+        token: apiToken,
+      },
+      fetcher,
+      siteID,
+    })
+    // @ts-expect-error - we're testing the error case
+    await blobs.set(key, 'value', { contentLength: 100 })
+  })
+
   test('Throws when the API returns a non-200 status code', async () => {
     const fetcher = async (...args: Parameters<typeof globalThis.fetch>) => {
       const [url, options] = args

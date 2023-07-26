@@ -23,6 +23,11 @@ enum HTTPMethod {
 
 interface SetOptions {
   ttl?: Date | number
+  contentLength?: number
+}
+
+interface StreamSetOptions extends SetOptions {
+  contentLength: number
 }
 
 type BlobInput = ReadableStream | string | ArrayBuffer | Blob
@@ -194,9 +199,23 @@ export class Blobs {
     throw new Error(`Invalid 'type' property: ${type}. Expected: arrayBuffer, blob, json, stream, or text.`)
   }
 
-  async set(key: string, data: BlobInput, { ttl }: SetOptions = {}) {
-    const headers = Blobs.getTTLHeaders(ttl)
+  async set(
+    key: string,
+    data: Exclude<BlobInput, ReadableStream>,
+    options?: Omit<SetOptions, 'contentLength'>,
+  ): Promise<void>
 
+  async set(key: string, data: ReadableStream, options: StreamSetOptions): Promise<void>
+  async set(key: string, data: BlobInput, { ttl, contentLength }: SetOptions = {}) {
+    const headers = Blobs.getTTLHeaders(ttl)
+    // Doing this rather than instanceof so it works even if ReadableStream isn't available
+    if (typeof data === 'object' && 'locked' in data) {
+      if (contentLength) {
+        headers['content-length'] = String(contentLength)
+      } else {
+        throw new Error('You must specify a `contentLength` parameter when `data` is a ReadableStream')
+      }
+    }
     await this.makeStoreRequest(key, HTTPMethod.Put, headers, data)
   }
 
