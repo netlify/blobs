@@ -2,6 +2,8 @@ import { createReadStream } from 'node:fs'
 import { stat } from 'node:fs/promises'
 import { Readable } from 'node:stream'
 
+import { fetchAndRetry } from './retry.ts'
+
 interface APICredentials {
   apiURL?: string
   token: string
@@ -143,7 +145,7 @@ export class Blobs {
       options.duplex = 'half'
     }
 
-    const res = await this.fetcher(url, options)
+    const res = await fetchAndRetry(this.fetcher, url, options)
 
     if (res.status === 404 && method === HTTPMethod.Get) {
       return null
