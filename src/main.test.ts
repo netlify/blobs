@@ -312,49 +312,52 @@ describe('set', () => {
     await blobs.set(key, value, { ttl })
   })
 
-  test('Accepts a file', async () => {
-    expect.assertions(5)
+  // We need `Readable.fromWeb` to be available, which needs Node 16+.
+  if (semver.gte(nodeVersion, '16.0.0')) {
+    test('Accepts a file', async () => {
+      expect.assertions(5)
 
-    const fileContents = 'Hello from a file'
-    const fetcher = async (...args: Parameters<typeof globalThis.fetch>) => {
-      const [url, options] = args
-      const headers = options?.headers as Record<string, string>
+      const fileContents = 'Hello from a file'
+      const fetcher = async (...args: Parameters<typeof globalThis.fetch>) => {
+        const [url, options] = args
+        const headers = options?.headers as Record<string, string>
 
-      expect(options?.method).toBe('put')
+        expect(options?.method).toBe('put')
 
-      if (url === `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`) {
-        const data = JSON.stringify({ url: signedURL })
+        if (url === `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`) {
+          const data = JSON.stringify({ url: signedURL })
 
-        expect(headers.authorization).toBe(`Bearer ${apiToken}`)
+          expect(headers.authorization).toBe(`Bearer ${apiToken}`)
 
-        return new Response(data)
+          return new Response(data)
+        }
+
+        if (url === signedURL) {
+          expect(await streamToString(options?.body as unknown as NodeJS.ReadableStream)).toBe(fileContents)
+          expect(headers['cache-control']).toBe('max-age=0, stale-while-revalidate=60')
+
+          return new Response(value)
+        }
+
+        throw new Error(`Unexpected fetch call: ${url}`)
       }
 
-      if (url === signedURL) {
-        expect(await streamToString(options?.body as unknown as NodeJS.ReadableStream)).toBe(fileContents)
-        expect(headers['cache-control']).toBe('max-age=0, stale-while-revalidate=60')
+      const { cleanup, path } = await tmp.file()
 
-        return new Response(value)
-      }
+      await writeFile(path, fileContents)
 
-      throw new Error(`Unexpected fetch call: ${url}`)
-    }
+      const blobs = new Blobs({
+        authentication: {
+          token: apiToken,
+        },
+        fetcher,
+        siteID,
+      })
 
-    const { cleanup, path } = await tmp.file()
-
-    await writeFile(path, fileContents)
-
-    const blobs = new Blobs({
-      authentication: {
-        token: apiToken,
-      },
-      fetcher,
-      siteID,
+      await blobs.setFile(key, path)
+      await cleanup()
     })
-
-    await blobs.setFile(key, path)
-    await cleanup()
-  })
+  }
 
   test('Throws when the API returns a non-200 status code', async () => {
     const fetcher = async (...args: Parameters<typeof globalThis.fetch>) => {
