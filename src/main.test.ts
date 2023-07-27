@@ -312,7 +312,7 @@ describe('set', () => {
     await blobs.set(key, value, { ttl })
   })
 
-  // We need `Readable.fromWeb` to be available, which needs Node 16+.
+  // We need `Readable.toWeb` to be available, which needs Node 16+.
   if (semver.gte(nodeVersion, '16.0.0')) {
     test('Accepts a file', async () => {
       expect.assertions(5)
