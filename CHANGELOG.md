@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.5.0](https://github.com/netlify/blobs/compare/v1.4.0...v1.5.0) (2023-07-27)
+
+
+### Features
+
+* add `setFile()` method ([#26](https://github.com/netlify/blobs/issues/26)) ([b8dc848](https://github.com/netlify/blobs/commit/b8dc848aa74adc3c8d37314a0b6c00a4e2c0e28a))
+* add retry logic ([#27](https://github.com/netlify/blobs/issues/27)) ([c824f0d](https://github.com/netlify/blobs/commit/c824f0d6db06b87bed9e9509ca0301d72d307b67))
+* build with esbuild ([#22](https://github.com/netlify/blobs/issues/22)) ([23c6576](https://github.com/netlify/blobs/commit/23c6576dd336c0d87fbc32608c30fbcbd625139f))
+* update `get` signature ([#23](https://github.com/netlify/blobs/issues/23)) ([e817d59](https://github.com/netlify/blobs/commit/e817d590c1bea56925147571aa1506988fee9905))
+
 ## [1.4.0](https://github.com/netlify/blobs/compare/v1.3.0...v1.4.0) (2023-07-20)
 
 
