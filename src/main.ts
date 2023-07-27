@@ -1,3 +1,7 @@
+import { createReadStream } from 'node:fs'
+import { stat } from 'node:fs/promises'
+import { Readable } from 'node:stream'
+
 interface APICredentials {
   apiURL?: string
   token: string
@@ -127,7 +131,19 @@ export class Blobs {
       headers['cache-control'] = 'max-age=0, stale-while-revalidate=60'
     }
 
-    const res = await this.fetcher(url, { body, headers, method })
+    const options: RequestInit = {
+      body,
+      headers,
+      method,
+    }
+
+    if (body instanceof ReadableStream) {
+      // @ts-expect-error Part of the spec, but not typed:
+      // https://fetch.spec.whatwg.org/#enumdef-requestduplex
+      options.duplex = 'half'
+    }
+
+    const res = await this.fetcher(url, options)
 
     if (res.status === 404 && method === HTTPMethod.Get) {
       return null
@@ -198,6 +214,17 @@ export class Blobs {
     const headers = Blobs.getTTLHeaders(ttl)
 
     await this.makeStoreRequest(key, HTTPMethod.Put, headers, data)
+  }
+
+  async setFile(key: string, path: string, { ttl }: SetOptions = {}) {
+    const { size } = await stat(path)
+    const file = Readable.toWeb(createReadStream(path))
+    const headers = {
+      ...Blobs.getTTLHeaders(ttl),
+      'content-length': size.toString(),
+    }
+
+    await this.makeStoreRequest(key, HTTPMethod.Put, headers, file as ReadableStream)
   }
 
   async setJSON(key: string, data: unknown, { ttl }: SetOptions = {}) {

@@ -1,6 +1,8 @@
-import { version as nodeVersion } from 'process'
+import { writeFile } from 'node:fs/promises'
+import { version as nodeVersion } from 'node:process'
 
 import semver from 'semver'
+import tmp from 'tmp-promise'
 import { describe, test, expect, beforeAll } from 'vitest'
 
 import { streamToString } from '../test/util.js'
@@ -308,6 +310,50 @@ describe('set', () => {
     })
 
     await blobs.set(key, value, { ttl })
+  })
+
+  test('Accepts a file', async () => {
+    expect.assertions(5)
+
+    const fileContents = 'Hello from a file'
+    const fetcher = async (...args: Parameters<typeof globalThis.fetch>) => {
+      const [url, options] = args
+      const headers = options?.headers as Record<string, string>
+
+      expect(options?.method).toBe('put')
+
+      if (url === `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`) {
+        const data = JSON.stringify({ url: signedURL })
+
+        expect(headers.authorization).toBe(`Bearer ${apiToken}`)
+
+        return new Response(data)
+      }
+
+      if (url === signedURL) {
+        expect(await streamToString(options?.body as unknown as NodeJS.ReadableStream)).toBe(fileContents)
+        expect(headers['cache-control']).toBe('max-age=0, stale-while-revalidate=60')
+
+        return new Response(value)
+      }
+
+      throw new Error(`Unexpected fetch call: ${url}`)
+    }
+
+    const { cleanup, path } = await tmp.file()
+
+    await writeFile(path, fileContents)
+
+    const blobs = new Blobs({
+      authentication: {
+        token: apiToken,
+      },
+      fetcher,
+      siteID,
+    })
+
+    await blobs.setFile(key, path)
+    await cleanup()
   })
 
   test('Throws when the API returns a non-200 status code', async () => {
