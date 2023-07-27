@@ -1,3 +1,5 @@
+import { fetchAndRetry } from './retry.ts'
+
 interface APICredentials {
   apiURL?: string
   token: string
@@ -127,7 +129,7 @@ export class Blobs {
       headers['cache-control'] = 'max-age=0, stale-while-revalidate=60'
     }
 
-    const res = await this.fetcher(url, { body, headers, method })
+    const res = await fetchAndRetry(this.fetcher, url, { body, method, headers })
 
     if (res.status === 404 && method === HTTPMethod.Get) {
       return null
