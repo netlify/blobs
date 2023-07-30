@@ -29,6 +29,8 @@ const key = '54321'
 const value = 'some value'
 const apiToken = 'some token'
 const signedURL = 'https://signed.url/123456789'
+const edgeToken = 'some other token'
+const edgeURL = 'https://cloudfront.url'
 
 describe('get', () => {
   test('Reads from the blob store using API credentials', async () => {
@@ -69,6 +71,37 @@ describe('get', () => {
     expect(store.fulfilled).toBeTruthy()
   })
 
+  test('Reads from the blob store using context credentials', async () => {
+    const store = new MockFetch()
+      .get({
+        headers: { authorization: `Bearer ${edgeToken}` },
+        response: new Response(value),
+        url: `${edgeURL}/${siteID}/production/${key}`,
+      })
+      .get({
+        headers: { authorization: `Bearer ${edgeToken}` },
+        response: new Response(value),
+        url: `${edgeURL}/${siteID}/production/${key}`,
+      })
+
+    const blobs = new Blobs({
+      authentication: {
+        contextURL: edgeURL,
+        token: edgeToken,
+      },
+      fetcher: store.fetcher,
+      siteID,
+    })
+
+    const string = await blobs.get(key)
+    expect(string).toBe(value)
+
+    const stream = await blobs.get(key, { type: 'stream' })
+    expect(await streamToString(stream as unknown as NodeJS.ReadableStream)).toBe(value)
+
+    expect(store.fulfilled).toBeTruthy()
+  })
+
   test('Returns `null` when the pre-signed URL returns a 404', async () => {
     const store = new MockFetch()
       .get({
@@ -84,6 +117,26 @@ describe('get', () => {
     const blobs = new Blobs({
       authentication: {
         token: apiToken,
+      },
+      fetcher: store.fetcher,
+      siteID,
+    })
+
+    expect(await blobs.get(key)).toBeNull()
+    expect(store.fulfilled).toBeTruthy()
+  })
+
+  test('Returns `null` when the edge URL returns a 404', async () => {
+    const store = new MockFetch().get({
+      headers: { authorization: `Bearer ${edgeToken}` },
+      response: new Response(null, { status: 404 }),
+      url: `${edgeURL}/${siteID}/production/${key}`,
+    })
+
+    const blobs = new Blobs({
+      authentication: {
+        contextURL: edgeURL,
+        token: edgeToken,
       },
       fetcher: store.fetcher,
       siteID,
@@ -129,6 +182,29 @@ describe('get', () => {
     const blobs = new Blobs({
       authentication: {
         token: apiToken,
+      },
+      fetcher: store.fetcher,
+      siteID,
+    })
+
+    await expect(async () => await blobs.get(key)).rejects.toThrowError(
+      'get operation has failed: store returned a 401 response',
+    )
+
+    expect(store.fulfilled).toBeTruthy()
+  })
+
+  test('Throws when an edge URL returns a non-200 status code', async () => {
+    const store = new MockFetch().get({
+      headers: { authorization: `Bearer ${edgeToken}` },
+      response: new Response(null, { status: 401 }),
+      url: `${edgeURL}/${siteID}/production/${key}`,
+    })
+
+    const blobs = new Blobs({
+      authentication: {
+        contextURL: edgeURL,
+        token: edgeToken,
       },
       fetcher: store.fetcher,
       siteID,
@@ -215,6 +291,28 @@ describe('set', () => {
     const blobs = new Blobs({
       authentication: {
         token: apiToken,
+      },
+      fetcher: store.fetcher,
+      siteID,
+    })
+
+    await blobs.set(key, value)
+
+    expect(store.fulfilled).toBeTruthy()
+  })
+
+  test('Writes to the blob store using context credentials', async () => {
+    const store = new MockFetch().put({
+      body: value,
+      headers: { authorization: `Bearer ${edgeToken}`, 'cache-control': 'max-age=0, stale-while-revalidate=60' },
+      response: new Response(null),
+      url: `${edgeURL}/${siteID}/production/${key}`,
+    })
+
+    const blobs = new Blobs({
+      authentication: {
+        contextURL: edgeURL,
+        token: edgeToken,
       },
       fetcher: store.fetcher,
       siteID,
@@ -398,6 +496,30 @@ describe('set', () => {
     expect(store.fulfilled).toBeTruthy()
   })
 
+  test('Throws when the edge URL returns a non-200 status code', async () => {
+    const store = new MockFetch().put({
+      body: value,
+      headers: { authorization: `Bearer ${edgeToken}`, 'cache-control': 'max-age=0, stale-while-revalidate=60' },
+      response: new Response(null, { status: 401 }),
+      url: `${edgeURL}/${siteID}/production/${key}`,
+    })
+
+    const blobs = new Blobs({
+      authentication: {
+        contextURL: edgeURL,
+        token: edgeToken,
+      },
+      fetcher: store.fetcher,
+      siteID,
+    })
+
+    await expect(async () => await blobs.set(key, value)).rejects.toThrowError(
+      'put operation has failed: store returned a 401 response',
+    )
+
+    expect(store.fulfilled).toBeTruthy()
+  })
+
   test('Throws when the instance is missing required configuration properties', async () => {
     const { fetcher } = new MockFetch()
 
@@ -425,7 +547,7 @@ describe('set', () => {
     )
   })
 
-  test('Retries failed operations', async () => {
+  test('Retries failed operations when using API credentials', async () => {
     const store = new MockFetch()
       .put({
         headers: { authorization: `Bearer ${apiToken}` },
@@ -477,6 +599,47 @@ describe('set', () => {
 
     expect(store.fulfilled).toBeTruthy()
   })
+
+  test('Retries failed operations when using context credentials', async () => {
+    const store = new MockFetch()
+      .put({
+        body: value,
+        headers: { authorization: `Bearer ${edgeToken}`, 'cache-control': 'max-age=0, stale-while-revalidate=60' },
+        response: new Response(null, { status: 500 }),
+        url: `${edgeURL}/${siteID}/production/${key}`,
+      })
+      .put({
+        body: value,
+        headers: { authorization: `Bearer ${edgeToken}`, 'cache-control': 'max-age=0, stale-while-revalidate=60' },
+        response: new Error('Some network problem'),
+        url: `${edgeURL}/${siteID}/production/${key}`,
+      })
+      .put({
+        body: value,
+        headers: { authorization: `Bearer ${edgeToken}`, 'cache-control': 'max-age=0, stale-while-revalidate=60' },
+        response: new Response(null, { headers: { 'X-RateLimit-Reset': '10' }, status: 429 }),
+        url: `${edgeURL}/${siteID}/production/${key}`,
+      })
+      .put({
+        body: value,
+        headers: { authorization: `Bearer ${edgeToken}`, 'cache-control': 'max-age=0, stale-while-revalidate=60' },
+        response: new Response(null),
+        url: `${edgeURL}/${siteID}/production/${key}`,
+      })
+
+    const blobs = new Blobs({
+      authentication: {
+        contextURL: edgeURL,
+        token: edgeToken,
+      },
+      fetcher: store.fetcher,
+      siteID,
+    })
+
+    await blobs.set(key, value)
+
+    expect(store.fulfilled).toBeTruthy()
+  })
 })
 
 describe('setJSON', () => {
@@ -499,6 +662,28 @@ describe('setJSON', () => {
     const blobs = new Blobs({
       authentication: {
         token: apiToken,
+      },
+      fetcher: store.fetcher,
+      siteID,
+    })
+
+    await blobs.setJSON(key, { value })
+
+    expect(store.fulfilled).toBeTruthy()
+  })
+
+  test('Writes to the blob store using context credentials', async () => {
+    const store = new MockFetch().put({
+      body: JSON.stringify({ value }),
+      headers: { authorization: `Bearer ${edgeToken}`, 'cache-control': 'max-age=0, stale-while-revalidate=60' },
+      response: new Response(null),
+      url: `${edgeURL}/${siteID}/production/${key}`,
+    })
+
+    const blobs = new Blobs({
+      authentication: {
+        contextURL: edgeURL,
+        token: edgeToken,
       },
       fetcher: store.fetcher,
       siteID,
@@ -567,6 +752,27 @@ describe('delete', () => {
     expect(store.fulfilled).toBeTruthy()
   })
 
+  test('Deletes from the blob store using context credentials', async () => {
+    const store = new MockFetch().delete({
+      headers: { authorization: `Bearer ${edgeToken}` },
+      response: new Response(null),
+      url: `${edgeURL}/${siteID}/production/${key}`,
+    })
+
+    const blobs = new Blobs({
+      authentication: {
+        contextURL: edgeURL,
+        token: edgeToken,
+      },
+      fetcher: store.fetcher,
+      siteID,
+    })
+
+    await blobs.delete(key)
+
+    expect(store.fulfilled).toBeTruthy()
+  })
+
   test('Throws when the API returns a non-200 status code', async () => {
     const store = new MockFetch().delete({
       headers: { authorization: `Bearer ${apiToken}` },
@@ -585,6 +791,29 @@ describe('delete', () => {
     expect(async () => await blobs.delete(key)).rejects.toThrowError(
       'delete operation has failed: API returned a 401 response',
     )
+    expect(store.fulfilled).toBeTruthy()
+  })
+
+  test('Throws when the edge URL returns a non-200 status code', async () => {
+    const store = new MockFetch().delete({
+      headers: { authorization: `Bearer ${edgeToken}` },
+      response: new Response(null, { status: 401 }),
+      url: `${edgeURL}/${siteID}/production/${key}`,
+    })
+
+    const blobs = new Blobs({
+      authentication: {
+        contextURL: edgeURL,
+        token: edgeToken,
+      },
+      fetcher: store.fetcher,
+      siteID,
+    })
+
+    await expect(async () => await blobs.delete(key)).rejects.toThrowError(
+      'delete operation has failed: store returned a 401 response',
+    )
+
     expect(store.fulfilled).toBeTruthy()
   })
 
