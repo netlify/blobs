@@ -295,6 +295,86 @@ describe('set', () => {
 
       await cleanup()
     })
+
+    test('Accepts multiple files concurrently', async () => {
+      const contents = ['Hello from key-0', 'Hello from key-1', 'Hello from key-2']
+      const signedURLs = ['https://signed-url.aws/0', 'https://signed-url.aws/1', 'https://signed-url.aws/2']
+
+      const store = new MockFetch()
+        .put({
+          headers: { authorization: `Bearer ${apiToken}` },
+          response: new Response(JSON.stringify({ url: signedURLs[0] })),
+          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/key-0?context=production`,
+        })
+        .put({
+          body: async (body) => {
+            expect(await streamToString(body as unknown as NodeJS.ReadableStream)).toBe(contents[0])
+          },
+          headers: {
+            'cache-control': 'max-age=0, stale-while-revalidate=60',
+          },
+          response: new Response(null),
+          url: signedURLs[0],
+        })
+        .put({
+          headers: { authorization: `Bearer ${apiToken}` },
+          response: new Response(JSON.stringify({ url: signedURLs[1] })),
+          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/key-1?context=production`,
+        })
+        .put({
+          body: async (body) => {
+            expect(await streamToString(body as unknown as NodeJS.ReadableStream)).toBe(contents[1])
+          },
+          headers: {
+            'cache-control': 'max-age=0, stale-while-revalidate=60',
+          },
+          response: new Response(null),
+          url: signedURLs[1],
+        })
+        .put({
+          headers: { authorization: `Bearer ${apiToken}` },
+          response: new Response(JSON.stringify({ url: signedURLs[2] })),
+          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/key-2?context=production`,
+        })
+        .put({
+          body: async (body) => {
+            expect(await streamToString(body as unknown as NodeJS.ReadableStream)).toBe(contents[2])
+          },
+          headers: {
+            'cache-control': 'max-age=0, stale-while-revalidate=60',
+          },
+          response: new Response(null),
+          url: signedURLs[2],
+        })
+
+      const writes = await Promise.all(
+        contents.map(async (content) => {
+          const { cleanup, path } = await tmp.file()
+
+          await writeFile(path, content)
+
+          return { cleanup, path }
+        }),
+      )
+      const files = writes.map(({ path }, idx) => ({
+        key: `key-${idx}`,
+        path,
+      }))
+
+      const blobs = new Blobs({
+        authentication: {
+          token: apiToken,
+        },
+        fetcher: store.fetcher,
+        siteID,
+      })
+
+      await blobs.setFiles(files)
+
+      expect(store.fulfilled).toBeTruthy()
+
+      await Promise.all(writes.map(({ cleanup }) => cleanup()))
+    })
   }
 
   test('Throws when the API returns a non-200 status code', async () => {

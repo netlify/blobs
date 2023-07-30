@@ -2,6 +2,8 @@ import { createReadStream } from 'node:fs'
 import { stat } from 'node:fs/promises'
 import { Readable } from 'node:stream'
 
+import pMap from 'p-map'
+
 import { fetchAndRetry } from './retry.ts'
 
 interface APICredentials {
@@ -29,6 +31,15 @@ enum HTTPMethod {
 
 interface SetOptions {
   ttl?: Date | number
+}
+
+interface SetFilesItem extends SetOptions {
+  key: string
+  path: string
+}
+
+interface SetFilesOptions {
+  concurrency?: number
 }
 
 type BlobInput = ReadableStream | string | ArrayBuffer | Blob
@@ -227,6 +238,10 @@ export class Blobs {
     }
 
     await this.makeStoreRequest(key, HTTPMethod.Put, headers, file as ReadableStream)
+  }
+
+  setFiles(files: SetFilesItem[], { concurrency = 5 }: SetFilesOptions = {}) {
+    return pMap(files, ({ key, path, ...options }) => this.setFile(key, path, options), { concurrency })
   }
 
   async setJSON(key: string, data: unknown, { ttl }: SetOptions = {}) {
