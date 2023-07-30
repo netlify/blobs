@@ -323,8 +323,8 @@ describe('set', () => {
     expect(store.fulfilled).toBeTruthy()
   })
 
-  test('Accepts a TTL parameter', async () => {
-    const ttl = new Date(Date.now() + 15_000)
+  test('Accepts an `expiration` parameter', async () => {
+    const expiration = new Date(Date.now() + 15_000)
     const store = new MockFetch()
       .put({
         headers: { authorization: `Bearer ${apiToken}` },
@@ -335,7 +335,7 @@ describe('set', () => {
         body: value,
         headers: {
           'cache-control': 'max-age=0, stale-while-revalidate=60',
-          'x-nf-expires-at': ttl.getTime().toString(),
+          'x-nf-expires-at': expiration.getTime().toString(),
         },
         response: new Response(null),
         url: signedURL,
@@ -349,7 +349,7 @@ describe('set', () => {
       siteID,
     })
 
-    await blobs.set(key, value, { ttl })
+    await blobs.set(key, value, { expiration })
 
     expect(store.fulfilled).toBeTruthy()
   })
@@ -694,8 +694,8 @@ describe('setJSON', () => {
     expect(store.fulfilled).toBeTruthy()
   })
 
-  test('Accepts a TTL parameter', async () => {
-    const ttl = new Date(Date.now() + 15_000)
+  test('Accepts an `expiration` parameter', async () => {
+    const expiration = new Date(Date.now() + 15_000)
     const store = new MockFetch()
       .put({
         headers: { authorization: `Bearer ${apiToken}` },
@@ -706,7 +706,7 @@ describe('setJSON', () => {
         body: JSON.stringify({ value }),
         headers: {
           'cache-control': 'max-age=0, stale-while-revalidate=60',
-          'x-nf-expires-at': ttl.getTime().toString(),
+          'x-nf-expires-at': expiration.getTime().toString(),
         },
         response: new Response(null),
         url: signedURL,
@@ -720,7 +720,7 @@ describe('setJSON', () => {
       siteID,
     })
 
-    await blobs.setJSON(key, { value }, { ttl })
+    await blobs.setJSON(key, { value }, { expiration })
 
     expect(store.fulfilled).toBeTruthy()
   })

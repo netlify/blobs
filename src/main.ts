@@ -30,7 +30,7 @@ enum HTTPMethod {
 }
 
 interface SetOptions {
-  ttl?: Date | number
+  expiration?: Date | number
 }
 
 interface SetFilesItem extends SetOptions {
@@ -100,7 +100,7 @@ export class Blobs {
     }
   }
 
-  private static getTTLHeaders(ttl: Date | number | undefined): Record<string, string> {
+  private static getExpirationeaders(ttl: Date | number | undefined): Record<string, string> {
     if (typeof ttl === 'number') {
       return {
         [EXPIRY_HEADER]: (Date.now() + ttl).toString(),
@@ -186,12 +186,12 @@ export class Blobs {
   ): Promise<ArrayBuffer | Blob | ReadableStream | string | null> {
     const { type } = options ?? {}
     const res = await this.makeStoreRequest(key, HTTPMethod.Get)
-    const expiry = res?.headers.get(EXPIRY_HEADER)
+    const expiration = res?.headers.get(EXPIRY_HEADER)
 
-    if (typeof expiry === 'string') {
-      const expiryTS = Number.parseInt(expiry)
+    if (typeof expiration === 'string') {
+      const expirationTS = Number.parseInt(expiration)
 
-      if (!Number.isNaN(expiryTS) && expiryTS <= Date.now()) {
+      if (!Number.isNaN(expirationTS) && expirationTS <= Date.now()) {
         return null
       }
     }
@@ -223,17 +223,17 @@ export class Blobs {
     throw new Error(`Invalid 'type' property: ${type}. Expected: arrayBuffer, blob, json, stream, or text.`)
   }
 
-  async set(key: string, data: BlobInput, { ttl }: SetOptions = {}) {
-    const headers = Blobs.getTTLHeaders(ttl)
+  async set(key: string, data: BlobInput, { expiration }: SetOptions = {}) {
+    const headers = Blobs.getExpirationeaders(expiration)
 
     await this.makeStoreRequest(key, HTTPMethod.Put, headers, data)
   }
 
-  async setFile(key: string, path: string, { ttl }: SetOptions = {}) {
+  async setFile(key: string, path: string, { expiration }: SetOptions = {}) {
     const { size } = await stat(path)
     const file = Readable.toWeb(createReadStream(path))
     const headers = {
-      ...Blobs.getTTLHeaders(ttl),
+      ...Blobs.getExpirationeaders(expiration),
       'content-length': size.toString(),
     }
 
@@ -244,10 +244,10 @@ export class Blobs {
     return pMap(files, ({ key, path, ...options }) => this.setFile(key, path, options), { concurrency })
   }
 
-  async setJSON(key: string, data: unknown, { ttl }: SetOptions = {}) {
+  async setJSON(key: string, data: unknown, { expiration }: SetOptions = {}) {
     const payload = JSON.stringify(data)
     const headers = {
-      ...Blobs.getTTLHeaders(ttl),
+      ...Blobs.getExpirationeaders(expiration),
       'content-type': 'application/json',
     }
 
