@@ -100,24 +100,24 @@ export class Blobs {
     }
   }
 
-  private static getExpirationeaders(ttl: Date | number | undefined): Record<string, string> {
-    if (typeof ttl === 'number') {
+  private static getExpirationeaders(expiration: Date | number | undefined): Record<string, string> {
+    if (typeof expiration === 'number') {
       return {
-        [EXPIRY_HEADER]: (Date.now() + ttl).toString(),
+        [EXPIRY_HEADER]: (Date.now() + expiration).toString(),
       }
     }
 
-    if (ttl instanceof Date) {
+    if (expiration instanceof Date) {
       return {
-        [EXPIRY_HEADER]: ttl.getTime().toString(),
+        [EXPIRY_HEADER]: expiration.getTime().toString(),
       }
     }
 
-    if (ttl === undefined) {
+    if (expiration === undefined) {
       return {}
     }
 
-    throw new TypeError(`'ttl' value must be a number or a Date, ${typeof ttl} found.`)
+    throw new TypeError(`'expiration' value must be a number or a Date, ${typeof expiration} found.`)
   }
 
   private isConfigured() {
