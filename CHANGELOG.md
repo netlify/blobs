@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.6.0](https://github.com/netlify/blobs/compare/v1.5.0...v1.6.0) (2023-07-31)
+
+
+### Features
+
+* add `setFiles()` method ([#28](https://github.com/netlify/blobs/issues/28)) ([fd769de](https://github.com/netlify/blobs/commit/fd769dec65a215bf3de74dcf279ab2484e4f3a70))
+
+
+### Bug Fixes
+
+* **deps:** update dependency esbuild to v0.18.17 ([ad0d7e3](https://github.com/netlify/blobs/commit/ad0d7e3b2757dabad1c1e43e2f9a912317b72d8f))
+
 ## [1.5.0](https://github.com/netlify/blobs/compare/v1.4.0...v1.5.0) (2023-07-27)
 
 

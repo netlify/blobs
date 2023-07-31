@@ -1,6 +1,6 @@
 {
   "name": "@netlify/blobs",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "A JavaScript client for the Netlify Blob Store",
   "type": "module",
   "main": "./dist/src/main.js",
