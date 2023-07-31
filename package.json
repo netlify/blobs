@@ -52,6 +52,7 @@
     "@commitlint/config-conventional": "^17.0.0",
     "@netlify/eslint-config-node": "^7.0.1",
     "c8": "^7.11.0",
+    "esbuild": "^0.18.17",
     "husky": "^8.0.0",
     "node-fetch": "^3.3.1",
     "semver": "^7.5.3",
@@ -63,6 +64,6 @@
     "node": "^14.16.0 || >=16.0.0"
   },
   "dependencies": {
-    "esbuild": "0.18.17"
+    "p-map": "^6.0.0"
   }
 }

@@ -2,6 +2,8 @@ import { createReadStream } from 'node:fs'
 import { stat } from 'node:fs/promises'
 import { Readable } from 'node:stream'
 
+import pMap from 'p-map'
+
 import { fetchAndRetry } from './retry.ts'
 
 interface APICredentials {
@@ -28,7 +30,16 @@ enum HTTPMethod {
 }
 
 interface SetOptions {
-  ttl?: Date | number
+  expiration?: Date | number
+}
+
+interface SetFilesItem extends SetOptions {
+  key: string
+  path: string
+}
+
+interface SetFilesOptions {
+  concurrency?: number
 }
 
 type BlobInput = ReadableStream | string | ArrayBuffer | Blob
@@ -89,24 +100,24 @@ export class Blobs {
     }
   }
 
-  private static getTTLHeaders(ttl: Date | number | undefined): Record<string, string> {
-    if (typeof ttl === 'number') {
+  private static getExpirationHeaders(expiration: Date | number | undefined): Record<string, string> {
+    if (typeof expiration === 'number') {
       return {
-        [EXPIRY_HEADER]: (Date.now() + ttl).toString(),
+        [EXPIRY_HEADER]: (Date.now() + expiration).toString(),
       }
     }
 
-    if (ttl instanceof Date) {
+    if (expiration instanceof Date) {
       return {
-        [EXPIRY_HEADER]: ttl.getTime().toString(),
+        [EXPIRY_HEADER]: expiration.getTime().toString(),
       }
     }
 
-    if (ttl === undefined) {
+    if (expiration === undefined) {
       return {}
     }
 
-    throw new TypeError(`'ttl' value must be a number or a Date, ${typeof ttl} found.`)
+    throw new TypeError(`'expiration' value must be a number or a Date, ${typeof expiration} found.`)
   }
 
   private isConfigured() {
@@ -175,12 +186,12 @@ export class Blobs {
   ): Promise<ArrayBuffer | Blob | ReadableStream | string | null> {
     const { type } = options ?? {}
     const res = await this.makeStoreRequest(key, HTTPMethod.Get)
-    const expiry = res?.headers.get(EXPIRY_HEADER)
+    const expiration = res?.headers.get(EXPIRY_HEADER)
 
-    if (typeof expiry === 'string') {
-      const expiryTS = Number.parseInt(expiry)
+    if (typeof expiration === 'string') {
+      const expirationTS = Number.parseInt(expiration)
 
-      if (!Number.isNaN(expiryTS) && expiryTS <= Date.now()) {
+      if (!Number.isNaN(expirationTS) && expirationTS <= Date.now()) {
         return null
       }
     }
@@ -212,27 +223,31 @@ export class Blobs {
     throw new Error(`Invalid 'type' property: ${type}. Expected: arrayBuffer, blob, json, stream, or text.`)
   }
 
-  async set(key: string, data: BlobInput, { ttl }: SetOptions = {}) {
-    const headers = Blobs.getTTLHeaders(ttl)
+  async set(key: string, data: BlobInput, { expiration }: SetOptions = {}) {
+    const headers = Blobs.getExpirationHeaders(expiration)
 
     await this.makeStoreRequest(key, HTTPMethod.Put, headers, data)
   }
 
-  async setFile(key: string, path: string, { ttl }: SetOptions = {}) {
+  async setFile(key: string, path: string, { expiration }: SetOptions = {}) {
     const { size } = await stat(path)
     const file = Readable.toWeb(createReadStream(path))
     const headers = {
-      ...Blobs.getTTLHeaders(ttl),
+      ...Blobs.getExpirationHeaders(expiration),
       'content-length': size.toString(),
     }
 
     await this.makeStoreRequest(key, HTTPMethod.Put, headers, file as ReadableStream)
   }
 
-  async setJSON(key: string, data: unknown, { ttl }: SetOptions = {}) {
+  setFiles(files: SetFilesItem[], { concurrency = 5 }: SetFilesOptions = {}) {
+    return pMap(files, ({ key, path, ...options }) => this.setFile(key, path, options), { concurrency })
+  }
+
+  async setJSON(key: string, data: unknown, { expiration }: SetOptions = {}) {
     const payload = JSON.stringify(data)
     const headers = {
-      ...Blobs.getTTLHeaders(ttl),
+      ...Blobs.getExpirationHeaders(expiration),
       'content-type': 'application/json',
     }
 
