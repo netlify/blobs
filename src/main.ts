@@ -100,7 +100,7 @@ export class Blobs {
     }
   }
 
-  private static getExpirationeaders(expiration: Date | number | undefined): Record<string, string> {
+  private static getExpirationHeaders(expiration: Date | number | undefined): Record<string, string> {
     if (typeof expiration === 'number') {
       return {
         [EXPIRY_HEADER]: (Date.now() + expiration).toString(),
@@ -224,7 +224,7 @@ export class Blobs {
   }
 
   async set(key: string, data: BlobInput, { expiration }: SetOptions = {}) {
-    const headers = Blobs.getExpirationeaders(expiration)
+    const headers = Blobs.getExpirationHeaders(expiration)
 
     await this.makeStoreRequest(key, HTTPMethod.Put, headers, data)
   }
@@ -233,7 +233,7 @@ export class Blobs {
     const { size } = await stat(path)
     const file = Readable.toWeb(createReadStream(path))
     const headers = {
-      ...Blobs.getExpirationeaders(expiration),
+      ...Blobs.getExpirationHeaders(expiration),
       'content-length': size.toString(),
     }
 
@@ -247,7 +247,7 @@ export class Blobs {
   async setJSON(key: string, data: unknown, { expiration }: SetOptions = {}) {
     const payload = JSON.stringify(data)
     const headers = {
-      ...Blobs.getExpirationeaders(expiration),
+      ...Blobs.getExpirationHeaders(expiration),
       'content-type': 'application/json',
     }
 
