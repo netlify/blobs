@@ -1,18 +1,15 @@
 {
   "compilerOptions": {
-    "allowImportingTsExtensions": true,
-    "emitDeclarationOnly": true,
     "incremental": true,
     "target": "ES2020",
-    "module": "es2020",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "allowJs": true,
-    "declaration": true,
     "declarationMap": false,
     "sourceMap": false,
     "outDir": "./dist",
     "removeComments": false,
     "strict": true,
-    "moduleResolution": "node",
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true

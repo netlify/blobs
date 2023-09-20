@@ -20,6 +20,7 @@ beforeAll(async () => {
     globalThis.Request = nodeFetch.Request
     // @ts-expect-error Expected type mismatch between native implementation and node-fetch
     globalThis.Response = nodeFetch.Response
+    // @ts-expect-error Expected type mismatch between native implementation and node-fetch
     globalThis.Headers = nodeFetch.Headers
   }
 })
