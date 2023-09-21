@@ -9,16 +9,16 @@
   "exports": {
     ".": {
       "require": {
-        "path": "./dist/main.cjs",
-        "types": "./dist/main.d.cts"
+        "types": "./dist/main.d.cts",
+        "path": "./dist/main.cjs"
       },
       "import": {
-        "path": "./dist/main.js",
-        "types": "./dist/main.d.ts"
+        "types": "./dist/main.d.ts",
+        "path": "./dist/main.js"
       },
       "default": {
-        "path": "./dist/main.js",
-        "types": "./dist/main.d.ts"
+        "types": "./dist/main.d.ts",
+        "path": "./dist/main.js"
       }
     }
   },
