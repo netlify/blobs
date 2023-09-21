@@ -21,6 +21,7 @@
   "scripts": {
     "prebuild": "rm -rf dist",
     "build": "tsc -b tsconfig.esm.json tsconfig.cjs.json tsconfig.types.json",
+    "postbuild": "echo '{\"type\":\"commonjs\"}' > dist/cjs/package.json",
     "dev": "npm run build -- --watch",
     "prepare": "husky install node_modules/@netlify/eslint-config-node/.husky/",
     "prepublishOnly": "npm ci && npm test",
