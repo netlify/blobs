@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.1](https://github.com/netlify/blobs/compare/v1.6.0...v1.6.1) (2023-09-21)
+
+
+### Bug Fixes
+
+* workaround for a cloudfront issue where it throws on a 403 ([c0fd160](https://github.com/netlify/blobs/commit/c0fd160d49c95205b577b031e3b3aee622e003af))
+
 ## [1.6.0](https://github.com/netlify/blobs/compare/v1.5.0...v1.6.0) (2023-07-31)
 
 
