@@ -158,10 +158,7 @@ export class Blobs {
 
     const res = await fetchAndRetry(this.fetcher, url, options)
 
-    // Temp fix for:
-    // Cloudfront currently returns a 403 if it cannot find the artefact instead of returning a 404
-    // Workaround for: https://github.com/netlify/pod-dev-foundations/issues/592
-    if ((res.status === 403 || res.status === 404) && method === HTTPMethod.Get) {
+    if (res.status === 404 && method === HTTPMethod.Get) {
       return null
     }
 
