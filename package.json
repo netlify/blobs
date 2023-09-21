@@ -3,25 +3,31 @@
   "version": "1.6.0",
   "description": "A JavaScript client for the Netlify Blob Store",
   "type": "module",
-  "main": "./dist/cjs/index.js",
-  "module": "./dist/esm/index.js",
-  "types": "./dist/types/index.d.ts",
+  "main": "./dist/main.cjs",
+  "module": "./dist/main.js",
+  "types": "./dist/main.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/types/index.d.ts",
-      "require": "./dist/cjs/index.js",
-      "import": "./dist/esm/index.js",
-      "default": "./dist/esm/index.js"
+      "require": {
+        "path": "./dist/main.cjs",
+        "types": "./dist/main.d.cts"
+      },
+      "import": {
+        "path": "./dist/main.js",
+        "types": "./dist/main.d.ts"
+      },
+      "default": {
+        "path": "./dist/main.js",
+        "types": "./dist/main.d.ts"
+      }
     }
   },
   "files": [
-    "dist/**/*.js",
-    "dist/**/*.d.ts"
+    "dist/**"
   ],
   "scripts": {
     "prebuild": "rm -rf dist",
-    "build": "tsc -b tsconfig.esm.json tsconfig.cjs.json tsconfig.types.json",
-    "postbuild": "echo '{\"type\":\"commonjs\"}' > dist/cjs/package.json",
+    "build": "tsup src/main.ts --d ./dist --format esm,cjs --dts --target es2021",
     "dev": "npm run build -- --watch",
     "prepare": "husky install node_modules/@netlify/eslint-config-node/.husky/",
     "prepublishOnly": "npm ci && npm test",
@@ -64,6 +70,7 @@
     "node-fetch": "^3.3.1",
     "semver": "^7.5.3",
     "tmp-promise": "^3.0.3",
+    "tsup": "^7.2.0",
     "typescript": "^5.0.0",
     "vitest": "^0.34.0"
   },
