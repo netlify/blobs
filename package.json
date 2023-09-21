@@ -4,13 +4,14 @@
   "description": "A JavaScript client for the Netlify Blob Store",
   "type": "module",
   "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
   "types": "./dist/types/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",
-      "require": "./dist/esm/index.js",
-      "import": "./dist/cjs/index.js",
-      "default": "./dist/cjs/index.js"
+      "require": "./dist/cjs/index.js",
+      "import": "./dist/esm/index.js",
+      "default": "./dist/esm/index.js"
     }
   },
   "files": [
