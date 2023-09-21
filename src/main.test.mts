@@ -5,10 +5,10 @@ import semver from 'semver'
 import tmp from 'tmp-promise'
 import { describe, test, expect, beforeAll } from 'vitest'
 
-import { MockFetch } from '../test/mock_fetch.js'
-import { streamToString } from '../test/util.js'
+import { MockFetch } from '../test/mock_fetch.mjs'
+import { streamToString } from '../test/util.mjs'
 
-import { Blobs } from './main.js'
+import { Blobs } from './main.mjs'
 
 beforeAll(async () => {
   if (semver.lt(nodeVersion, '18.0.0')) {

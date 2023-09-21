@@ -25,7 +25,7 @@ module.exports = {
   overrides: [
     ...overrides,
     {
-      files: ['src/**/*.test.ts', 'vitest.config.ts'],
+      files: ['src/**/*.test.{ts,mts}', 'vitest.config.ts'],
       rules: {
         'max-lines-per-function': 'off',
         'max-nested-callbacks': 'off',

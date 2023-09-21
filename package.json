@@ -2,23 +2,22 @@
   "name": "@netlify/blobs",
   "version": "1.6.0",
   "description": "A JavaScript client for the Netlify Blob Store",
-  "type": "module",
-  "main": "./dist/main.cjs",
-  "module": "./dist/main.js",
+  "main": "./dist/main.js",
+  "module": "./dist/main.mjs",
   "types": "./dist/main.d.ts",
   "exports": {
     ".": {
       "require": {
-        "types": "./dist/main.d.cts",
-        "path": "./dist/main.cjs"
+        "types": "./dist/main.d.ts",
+        "path": "./dist/main.js"
       },
       "import": {
-        "types": "./dist/main.d.ts",
-        "path": "./dist/main.js"
+        "types": "./dist/main.d.mts",
+        "path": "./dist/main.mjs"
       },
       "default": {
-        "types": "./dist/main.d.ts",
-        "path": "./dist/main.js"
+        "types": "./dist/main.d.mts",
+        "path": "./dist/main.mjs"
       }
     }
   },
@@ -27,7 +26,7 @@
   ],
   "scripts": {
     "prebuild": "rm -rf dist",
-    "build": "tsup src/main.ts --d ./dist --format esm,cjs --dts --target es2021",
+    "build": "tsup src/main.mts --d ./dist --format esm,cjs --dts --target es2021",
     "dev": "npm run build -- --watch",
     "prepare": "husky install node_modules/@netlify/eslint-config-node/.husky/",
     "prepublishOnly": "npm ci && npm test",
@@ -48,8 +47,8 @@
     "test:ci:vitest": "vitest run"
   },
   "config": {
-    "eslint": "--ignore-path .gitignore --cache --format=codeframe --max-warnings=0 \"{src,scripts,.github}/**/*.{js,ts,md,html}\" \"*.{js,ts,md,html}\"",
-    "prettier": "--ignore-path .gitignore --loglevel=warn \"{src,scripts,.github}/**/*.{js,ts,md,yml,json,html}\" \"*.{js,ts,yml,json,html}\" \".*.{js,ts,yml,json,html}\" \"!**/package-lock.json\" \"!package-lock.json\""
+    "eslint": "--ignore-path .gitignore --cache --format=codeframe --max-warnings=0 \"{src,scripts,.github}/**/*.{js,mts,cts,ts,md,html}\" \"*.{js,mts,cts,ts,md,html}\"",
+    "prettier": "--ignore-path .gitignore --loglevel=warn \"{src,scripts,.github}/**/*.{js,mts,cts,ts,md,yml,json,html}\" \"*.{js,mts,cts,ts,yml,json,html}\" \".*.{js,mts,cts,ts,yml,json,html}\" \"!**/package-lock.json\" \"!package-lock.json\""
   },
   "keywords": [],
   "license": "MIT",

@@ -4,7 +4,7 @@ import { Readable } from 'node:stream'
 
 import pMap from 'p-map'
 
-import { fetchAndRetry } from './retry.js'
+import { fetchAndRetry } from './retry.mjs'
 
 interface APICredentials {
   apiURL?: string
