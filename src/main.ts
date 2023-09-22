@@ -76,16 +76,18 @@ export class Blobs {
   }
 
   private async getFinalRequest(key: string, method: string) {
+    const encodedKey = encodeURIComponent(key)
+
     if ('contextURL' in this.authentication) {
       return {
         headers: {
           authorization: `Bearer ${this.authentication.token}`,
         },
-        url: `${this.authentication.contextURL}/${this.siteID}/${this.context}/${key}`,
+        url: `${this.authentication.contextURL}/${this.siteID}/${this.context}/${encodedKey}`,
       }
     }
 
-    const apiURL = `${this.authentication.apiURL}/api/v1/sites/${this.siteID}/blobs/${key}?context=${this.context}`
+    const apiURL = `${this.authentication.apiURL}/api/v1/sites/${this.siteID}/blobs/${encodedKey}?context=${this.context}`
     const headers = { authorization: `Bearer ${this.authentication.token}` }
     const res = await this.fetcher(apiURL, { headers, method })
 

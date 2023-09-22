@@ -27,6 +27,7 @@ beforeAll(async () => {
 
 const siteID = '12345'
 const key = '54321'
+const complexKey = '/artista/canção'
 const value = 'some value'
 const apiToken = 'some token'
 const signedURL = 'https://signed.url/123456789'
@@ -55,6 +56,17 @@ describe('get', () => {
           response: new Response(value),
           url: signedURL,
         })
+        .get({
+          headers: { authorization: `Bearer ${apiToken}` },
+          response: new Response(JSON.stringify({ url: signedURL })),
+          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${encodeURIComponent(
+            complexKey,
+          )}?context=production`,
+        })
+        .get({
+          response: new Response(value),
+          url: signedURL,
+        })
 
       const blobs = new Blobs({
         authentication: {
@@ -69,6 +81,9 @@ describe('get', () => {
 
       const stream = await blobs.get(key, { type: 'stream' })
       expect(await streamToString(stream as unknown as NodeJS.ReadableStream)).toBe(value)
+
+      const string2 = await blobs.get(complexKey)
+      expect(string2).toBe(value)
 
       expect(store.fulfilled).toBeTruthy()
     })
@@ -293,6 +308,19 @@ describe('set', () => {
           response: new Response(null),
           url: signedURL,
         })
+        .put({
+          headers: { authorization: `Bearer ${apiToken}` },
+          response: new Response(JSON.stringify({ url: signedURL })),
+          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${encodeURIComponent(
+            complexKey,
+          )}?context=production`,
+        })
+        .put({
+          body: value,
+          headers: { 'cache-control': 'max-age=0, stale-while-revalidate=60' },
+          response: new Response(null),
+          url: signedURL,
+        })
 
       const blobs = new Blobs({
         authentication: {
@@ -303,6 +331,7 @@ describe('set', () => {
       })
 
       await blobs.set(key, value)
+      await blobs.set(complexKey, value)
 
       expect(store.fulfilled).toBeTruthy()
     })
@@ -536,12 +565,19 @@ describe('set', () => {
 
   describe('With context credentials', () => {
     test('Writes to the blob store', async () => {
-      const store = new MockFetch().put({
-        body: value,
-        headers: { authorization: `Bearer ${edgeToken}`, 'cache-control': 'max-age=0, stale-while-revalidate=60' },
-        response: new Response(null),
-        url: `${edgeURL}/${siteID}/production/${key}`,
-      })
+      const store = new MockFetch()
+        .put({
+          body: value,
+          headers: { authorization: `Bearer ${edgeToken}`, 'cache-control': 'max-age=0, stale-while-revalidate=60' },
+          response: new Response(null),
+          url: `${edgeURL}/${siteID}/production/${key}`,
+        })
+        .put({
+          body: value,
+          headers: { authorization: `Bearer ${edgeToken}`, 'cache-control': 'max-age=0, stale-while-revalidate=60' },
+          response: new Response(null),
+          url: `${edgeURL}/${siteID}/production/${encodeURIComponent(complexKey)}`,
+        })
 
       const blobs = new Blobs({
         authentication: {
@@ -553,6 +589,7 @@ describe('set', () => {
       })
 
       await blobs.set(key, value)
+      await blobs.set(complexKey, value)
 
       expect(store.fulfilled).toBeTruthy()
     })
@@ -752,6 +789,17 @@ describe('delete', () => {
           response: new Response(null),
           url: signedURL,
         })
+        .delete({
+          headers: { authorization: `Bearer ${apiToken}` },
+          response: new Response(JSON.stringify({ url: signedURL })),
+          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${encodeURIComponent(
+            complexKey,
+          )}?context=production`,
+        })
+        .delete({
+          response: new Response(null),
+          url: signedURL,
+        })
 
       const blobs = new Blobs({
         authentication: {
@@ -762,6 +810,7 @@ describe('delete', () => {
       })
 
       await blobs.delete(key)
+      await blobs.delete(complexKey)
 
       expect(store.fulfilled).toBeTruthy()
     })
