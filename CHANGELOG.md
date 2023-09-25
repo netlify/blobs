@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0](https://github.com/netlify/blobs/compare/v1.6.1...v2.0.0) (2023-09-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* use URI-encoded keys ([#50](https://github.com/netlify/blobs/issues/50))
+
+### Features
+
+* use URI-encoded keys ([#50](https://github.com/netlify/blobs/issues/50)) ([fd8e1c6](https://github.com/netlify/blobs/commit/fd8e1c6b0f30714e0e0649a22b0b615bc48dbabe))
+
 ## [1.6.1](https://github.com/netlify/blobs/compare/v1.6.0...v1.6.1) (2023-09-21)
 
 
