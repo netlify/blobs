@@ -1,5 +1,6 @@
+import { Buffer } from 'node:buffer'
 import { writeFile } from 'node:fs/promises'
-import { version as nodeVersion } from 'node:process'
+import { env, version as nodeVersion } from 'node:process'
 
 import semver from 'semver'
 import tmp from 'tmp-promise'
@@ -8,7 +9,7 @@ import { describe, test, expect, beforeAll } from 'vitest'
 import { MockFetch } from '../test/mock_fetch.js'
 import { streamToString } from '../test/util.js'
 
-import { Blobs } from './main.js'
+import { getStore } from './main.js'
 
 beforeAll(async () => {
   if (semver.lt(nodeVersion, '18.0.0')) {
@@ -25,6 +26,7 @@ beforeAll(async () => {
   }
 })
 
+const deployID = 'abcdef'
 const siteID = '12345'
 const key = '54321'
 const complexKey = '/artista/canção'
@@ -37,7 +39,7 @@ const edgeURL = 'https://cloudfront.url'
 describe('get', () => {
   describe('With API credentials', () => {
     test('Reads from the blob store', async () => {
-      const store = new MockFetch()
+      const mockStore = new MockFetch()
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
@@ -68,11 +70,11 @@ describe('get', () => {
           url: signedURL,
         })
 
-      const blobs = new Blobs({
-        authentication: {
-          token: apiToken,
-        },
-        fetcher: store.fetcher,
+      globalThis.fetch = mockStore.fetcher
+
+      const blobs = getStore({
+        name: 'production',
+        token: apiToken,
         siteID,
       })
 
@@ -85,11 +87,11 @@ describe('get', () => {
       const string2 = await blobs.get(complexKey)
       expect(string2).toBe(value)
 
-      expect(store.fulfilled).toBeTruthy()
+      expect(mockStore.fulfilled).toBeTruthy()
     })
 
     test('Returns `null` when the pre-signed URL returns a 404', async () => {
-      const store = new MockFetch()
+      const mockStore = new MockFetch()
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
@@ -100,41 +102,41 @@ describe('get', () => {
           url: signedURL,
         })
 
-      const blobs = new Blobs({
-        authentication: {
-          token: apiToken,
-        },
-        fetcher: store.fetcher,
+      globalThis.fetch = mockStore.fetcher
+
+      const blobs = getStore({
+        name: 'production',
+        token: apiToken,
         siteID,
       })
 
       expect(await blobs.get(key)).toBeNull()
-      expect(store.fulfilled).toBeTruthy()
+      expect(mockStore.fulfilled).toBeTruthy()
     })
 
     test('Throws when the API returns a non-200 status code', async () => {
-      const store = new MockFetch().get({
+      const mockStore = new MockFetch().get({
         headers: { authorization: `Bearer ${apiToken}` },
         response: new Response(null, { status: 401 }),
         url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
       })
 
-      const blobs = new Blobs({
-        authentication: {
-          token: apiToken,
-        },
-        fetcher: store.fetcher,
+      globalThis.fetch = mockStore.fetcher
+
+      const blobs = getStore({
+        name: 'production',
+        token: apiToken,
         siteID,
       })
 
       expect(async () => await blobs.get(key)).rejects.toThrowError(
         'get operation has failed: API returned a 401 response',
       )
-      expect(store.fulfilled).toBeTruthy()
+      expect(mockStore.fulfilled).toBeTruthy()
     })
 
     test('Throws when a pre-signed URL returns a non-200 status code', async () => {
-      const store = new MockFetch()
+      const mockStore = new MockFetch()
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
@@ -145,11 +147,11 @@ describe('get', () => {
           url: signedURL,
         })
 
-      const blobs = new Blobs({
-        authentication: {
-          token: apiToken,
-        },
-        fetcher: store.fetcher,
+      globalThis.fetch = mockStore.fetcher
+
+      const blobs = getStore({
+        name: 'production',
+        token: apiToken,
         siteID,
       })
 
@@ -157,11 +159,11 @@ describe('get', () => {
         'get operation has failed: store returned a 401 response',
       )
 
-      expect(store.fulfilled).toBeTruthy()
+      expect(mockStore.fulfilled).toBeTruthy()
     })
 
     test('Returns `null` when the blob entry contains an expiry date in the past', async () => {
-      const store = new MockFetch()
+      const mockStore = new MockFetch()
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
@@ -176,22 +178,22 @@ describe('get', () => {
           url: signedURL,
         })
 
-      const blobs = new Blobs({
-        authentication: {
-          token: apiToken,
-        },
-        fetcher: store.fetcher,
+      globalThis.fetch = mockStore.fetcher
+
+      const blobs = getStore({
+        name: 'production',
+        token: apiToken,
         siteID,
       })
 
       expect(await blobs.get(key)).toBeNull()
-      expect(store.fulfilled).toBeTruthy()
+      expect(mockStore.fulfilled).toBeTruthy()
     })
   })
 
   describe('With context credentials', () => {
     test('Reads from the blob store', async () => {
-      const store = new MockFetch()
+      const mockStore = new MockFetch()
         .get({
           headers: { authorization: `Bearer ${edgeToken}` },
           response: new Response(value),
@@ -203,12 +205,12 @@ describe('get', () => {
           url: `${edgeURL}/${siteID}/production/${key}`,
         })
 
-      const blobs = new Blobs({
-        authentication: {
-          contextURL: edgeURL,
-          token: edgeToken,
-        },
-        fetcher: store.fetcher,
+      globalThis.fetch = mockStore.fetcher
+
+      const blobs = getStore({
+        edgeURL,
+        name: 'production',
+        token: edgeToken,
         siteID,
       })
 
@@ -218,42 +220,42 @@ describe('get', () => {
       const stream = await blobs.get(key, { type: 'stream' })
       expect(await streamToString(stream as unknown as NodeJS.ReadableStream)).toBe(value)
 
-      expect(store.fulfilled).toBeTruthy()
+      expect(mockStore.fulfilled).toBeTruthy()
     })
 
     test('Returns `null` when the edge URL returns a 404', async () => {
-      const store = new MockFetch().get({
+      const mockStore = new MockFetch().get({
         headers: { authorization: `Bearer ${edgeToken}` },
         response: new Response(null, { status: 404 }),
         url: `${edgeURL}/${siteID}/production/${key}`,
       })
 
-      const blobs = new Blobs({
-        authentication: {
-          contextURL: edgeURL,
-          token: edgeToken,
-        },
-        fetcher: store.fetcher,
+      globalThis.fetch = mockStore.fetcher
+
+      const blobs = getStore({
+        edgeURL,
+        name: 'production',
+        token: edgeToken,
         siteID,
       })
 
       expect(await blobs.get(key)).toBeNull()
-      expect(store.fulfilled).toBeTruthy()
+      expect(mockStore.fulfilled).toBeTruthy()
     })
 
     test('Throws when an edge URL returns a non-200 status code', async () => {
-      const store = new MockFetch().get({
+      const mockStore = new MockFetch().get({
         headers: { authorization: `Bearer ${edgeToken}` },
         response: new Response(null, { status: 401 }),
         url: `${edgeURL}/${siteID}/production/${key}`,
       })
 
-      const blobs = new Blobs({
-        authentication: {
-          contextURL: edgeURL,
-          token: edgeToken,
-        },
-        fetcher: store.fetcher,
+      globalThis.fetch = mockStore.fetcher
+
+      const blobs = getStore({
+        edgeURL,
+        name: 'production',
+        token: edgeToken,
         siteID,
       })
 
@@ -261,32 +263,27 @@ describe('get', () => {
         'get operation has failed: store returned a 401 response',
       )
 
-      expect(store.fulfilled).toBeTruthy()
+      expect(mockStore.fulfilled).toBeTruthy()
     })
   })
 
   test('Throws when the instance is missing required configuration properties', async () => {
     const { fetcher } = new MockFetch()
 
-    const blobs1 = new Blobs({
-      authentication: {
-        token: '',
-      },
-      fetcher,
-      siteID,
-    })
+    globalThis.fetch = fetcher
 
-    const blobs2 = new Blobs({
-      authentication: {
-        token: apiToken,
-      },
-      fetcher,
-      siteID: '',
-    })
+    const blobs1 = getStore('production')
 
     expect(async () => await blobs1.get(key)).rejects.toThrowError(
       `The blob store is unavailable because it's missing required configuration properties`,
     )
+
+    const blobs2 = getStore({
+      name: 'production',
+      token: apiToken,
+      siteID: '',
+    })
+
     expect(async () => await blobs2.get(key)).rejects.toThrowError(
       `The blob store is unavailable because it's missing required configuration properties`,
     )
@@ -296,7 +293,7 @@ describe('get', () => {
 describe('set', () => {
   describe('With API credentials', () => {
     test('Writes to the blob store', async () => {
-      const store = new MockFetch()
+      const mockStore = new MockFetch()
         .put({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
@@ -322,23 +319,23 @@ describe('set', () => {
           url: signedURL,
         })
 
-      const blobs = new Blobs({
-        authentication: {
-          token: apiToken,
-        },
-        fetcher: store.fetcher,
+      globalThis.fetch = mockStore.fetcher
+
+      const blobs = getStore({
+        name: 'production',
+        token: apiToken,
         siteID,
       })
 
       await blobs.set(key, value)
       await blobs.set(complexKey, value)
 
-      expect(store.fulfilled).toBeTruthy()
+      expect(mockStore.fulfilled).toBeTruthy()
     })
 
     test('Accepts an `expiration` parameter', async () => {
       const expiration = new Date(Date.now() + 15_000)
-      const store = new MockFetch()
+      const mockStore = new MockFetch()
         .put({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
@@ -354,24 +351,24 @@ describe('set', () => {
           url: signedURL,
         })
 
-      const blobs = new Blobs({
-        authentication: {
-          token: apiToken,
-        },
-        fetcher: store.fetcher,
+      globalThis.fetch = mockStore.fetcher
+
+      const blobs = getStore({
+        name: 'production',
+        token: apiToken,
         siteID,
       })
 
       await blobs.set(key, value, { expiration })
 
-      expect(store.fulfilled).toBeTruthy()
+      expect(mockStore.fulfilled).toBeTruthy()
     })
 
     // We need `Readable.toWeb` to be available, which needs Node 16+.
     if (semver.gte(nodeVersion, '16.0.0')) {
       test('Accepts a file', async () => {
         const fileContents = 'Hello from a file'
-        const store = new MockFetch()
+        const mockStore = new MockFetch()
           .put({
             headers: { authorization: `Bearer ${apiToken}` },
             response: new Response(JSON.stringify({ url: signedURL })),
@@ -388,21 +385,21 @@ describe('set', () => {
             url: signedURL,
           })
 
+        globalThis.fetch = mockStore.fetcher
+
         const { cleanup, path } = await tmp.file()
 
         await writeFile(path, fileContents)
 
-        const blobs = new Blobs({
-          authentication: {
-            token: apiToken,
-          },
-          fetcher: store.fetcher,
+        const blobs = getStore({
+          name: 'production',
+          token: apiToken,
           siteID,
         })
 
         await blobs.setFile(key, path)
 
-        expect(store.fulfilled).toBeTruthy()
+        expect(mockStore.fulfilled).toBeTruthy()
 
         await cleanup()
       })
@@ -411,7 +408,7 @@ describe('set', () => {
         const contents = ['Hello from key-0', 'Hello from key-1', 'Hello from key-2']
         const signedURLs = ['https://signed-url.aws/0', 'https://signed-url.aws/1', 'https://signed-url.aws/2']
 
-        const store = new MockFetch()
+        const mockStore = new MockFetch()
           .put({
             headers: { authorization: `Bearer ${apiToken}` },
             response: new Response(JSON.stringify({ url: signedURLs[0] })),
@@ -458,6 +455,8 @@ describe('set', () => {
             url: signedURLs[2],
           })
 
+        globalThis.fetch = mockStore.fetcher
+
         const writes = await Promise.all(
           contents.map(async (content) => {
             const { cleanup, path } = await tmp.file()
@@ -472,45 +471,43 @@ describe('set', () => {
           path,
         }))
 
-        const blobs = new Blobs({
-          authentication: {
-            token: apiToken,
-          },
-          fetcher: store.fetcher,
+        const blobs = getStore({
+          name: 'production',
+          token: apiToken,
           siteID,
         })
 
         await blobs.setFiles(files)
 
-        expect(store.fulfilled).toBeTruthy()
+        expect(mockStore.fulfilled).toBeTruthy()
 
         await Promise.all(writes.map(({ cleanup }) => cleanup()))
       })
     }
 
     test('Throws when the API returns a non-200 status code', async () => {
-      const store = new MockFetch().put({
+      const mockStore = new MockFetch().put({
         headers: { authorization: `Bearer ${apiToken}` },
         response: new Response(null, { status: 401 }),
         url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
       })
 
-      const blobs = new Blobs({
-        authentication: {
-          token: apiToken,
-        },
-        fetcher: store.fetcher,
+      globalThis.fetch = mockStore.fetcher
+
+      const blobs = getStore({
+        name: 'production',
+        token: apiToken,
         siteID,
       })
 
       expect(async () => await blobs.set(key, 'value')).rejects.toThrowError(
         'put operation has failed: API returned a 401 response',
       )
-      expect(store.fulfilled).toBeTruthy()
+      expect(mockStore.fulfilled).toBeTruthy()
     })
 
     test('Retries failed operations', async () => {
-      const store = new MockFetch()
+      const mockStore = new MockFetch()
         .put({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
@@ -549,23 +546,23 @@ describe('set', () => {
           url: signedURL,
         })
 
-      const blobs = new Blobs({
-        authentication: {
-          token: apiToken,
-        },
-        fetcher: store.fetcher,
+      globalThis.fetch = mockStore.fetcher
+
+      const blobs = getStore({
+        name: 'production',
+        token: apiToken,
         siteID,
       })
 
       await blobs.set(key, value)
 
-      expect(store.fulfilled).toBeTruthy()
+      expect(mockStore.fulfilled).toBeTruthy()
     })
   })
 
   describe('With context credentials', () => {
     test('Writes to the blob store', async () => {
-      const store = new MockFetch()
+      const mockStore = new MockFetch()
         .put({
           body: value,
           headers: { authorization: `Bearer ${edgeToken}`, 'cache-control': 'max-age=0, stale-while-revalidate=60' },
@@ -579,35 +576,35 @@ describe('set', () => {
           url: `${edgeURL}/${siteID}/production/${encodeURIComponent(complexKey)}`,
         })
 
-      const blobs = new Blobs({
-        authentication: {
-          contextURL: edgeURL,
-          token: edgeToken,
-        },
-        fetcher: store.fetcher,
+      globalThis.fetch = mockStore.fetcher
+
+      const blobs = getStore({
+        edgeURL,
+        name: 'production',
+        token: edgeToken,
         siteID,
       })
 
       await blobs.set(key, value)
       await blobs.set(complexKey, value)
 
-      expect(store.fulfilled).toBeTruthy()
+      expect(mockStore.fulfilled).toBeTruthy()
     })
 
     test('Throws when the edge URL returns a non-200 status code', async () => {
-      const store = new MockFetch().put({
+      const mockStore = new MockFetch().put({
         body: value,
         headers: { authorization: `Bearer ${edgeToken}`, 'cache-control': 'max-age=0, stale-while-revalidate=60' },
         response: new Response(null, { status: 401 }),
         url: `${edgeURL}/${siteID}/production/${key}`,
       })
 
-      const blobs = new Blobs({
-        authentication: {
-          contextURL: edgeURL,
-          token: edgeToken,
-        },
-        fetcher: store.fetcher,
+      globalThis.fetch = mockStore.fetcher
+
+      const blobs = getStore({
+        edgeURL,
+        name: 'production',
+        token: edgeToken,
         siteID,
       })
 
@@ -615,11 +612,11 @@ describe('set', () => {
         'put operation has failed: store returned a 401 response',
       )
 
-      expect(store.fulfilled).toBeTruthy()
+      expect(mockStore.fulfilled).toBeTruthy()
     })
 
     test('Retries failed operations', async () => {
-      const store = new MockFetch()
+      const mockStore = new MockFetch()
         .put({
           body: value,
           headers: { authorization: `Bearer ${edgeToken}`, 'cache-control': 'max-age=0, stale-while-revalidate=60' },
@@ -645,43 +642,38 @@ describe('set', () => {
           url: `${edgeURL}/${siteID}/production/${key}`,
         })
 
-      const blobs = new Blobs({
-        authentication: {
-          contextURL: edgeURL,
-          token: edgeToken,
-        },
-        fetcher: store.fetcher,
+      globalThis.fetch = mockStore.fetcher
+
+      const blobs = getStore({
+        edgeURL,
+        name: 'production',
+        token: edgeToken,
         siteID,
       })
 
       await blobs.set(key, value)
 
-      expect(store.fulfilled).toBeTruthy()
+      expect(mockStore.fulfilled).toBeTruthy()
     })
   })
 
   test('Throws when the instance is missing required configuration properties', async () => {
     const { fetcher } = new MockFetch()
 
-    const blobs1 = new Blobs({
-      authentication: {
-        token: '',
-      },
-      fetcher,
-      siteID,
-    })
+    globalThis.fetch = fetcher
 
-    const blobs2 = new Blobs({
-      authentication: {
-        token: apiToken,
-      },
-      fetcher,
-      siteID: '',
-    })
+    const blobs1 = getStore('production')
 
     expect(async () => await blobs1.set(key, value)).rejects.toThrowError(
       `The blob store is unavailable because it's missing required configuration properties`,
     )
+
+    const blobs2 = getStore({
+      name: 'production',
+      token: apiToken,
+      siteID: '',
+    })
+
     expect(async () => await blobs2.set(key, value)).rejects.toThrowError(
       `The blob store is unavailable because it's missing required configuration properties`,
     )
@@ -691,7 +683,7 @@ describe('set', () => {
 describe('setJSON', () => {
   describe('With API credentials', () => {
     test('Writes to the blob store', async () => {
-      const store = new MockFetch()
+      const mockStore = new MockFetch()
         .put({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
@@ -706,46 +698,46 @@ describe('setJSON', () => {
           url: signedURL,
         })
 
-      const blobs = new Blobs({
-        authentication: {
-          token: apiToken,
-        },
-        fetcher: store.fetcher,
+      globalThis.fetch = mockStore.fetcher
+
+      const blobs = getStore({
+        name: 'production',
+        token: apiToken,
         siteID,
       })
 
       await blobs.setJSON(key, { value })
 
-      expect(store.fulfilled).toBeTruthy()
+      expect(mockStore.fulfilled).toBeTruthy()
     })
   })
 
   describe('With context credentials', () => {
     test('Writes to the blob store', async () => {
-      const store = new MockFetch().put({
+      const mockStore = new MockFetch().put({
         body: JSON.stringify({ value }),
         headers: { authorization: `Bearer ${edgeToken}`, 'cache-control': 'max-age=0, stale-while-revalidate=60' },
         response: new Response(null),
         url: `${edgeURL}/${siteID}/production/${key}`,
       })
 
-      const blobs = new Blobs({
-        authentication: {
-          contextURL: edgeURL,
-          token: edgeToken,
-        },
-        fetcher: store.fetcher,
+      globalThis.fetch = mockStore.fetcher
+
+      const blobs = getStore({
+        edgeURL,
+        name: 'production',
+        token: edgeToken,
         siteID,
       })
 
       await blobs.setJSON(key, { value })
 
-      expect(store.fulfilled).toBeTruthy()
+      expect(mockStore.fulfilled).toBeTruthy()
     })
 
     test('Accepts an `expiration` parameter', async () => {
       const expiration = new Date(Date.now() + 15_000)
-      const store = new MockFetch()
+      const mockStore = new MockFetch()
         .put({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
@@ -761,17 +753,17 @@ describe('setJSON', () => {
           url: signedURL,
         })
 
-      const blobs = new Blobs({
-        authentication: {
-          token: apiToken,
-        },
-        fetcher: store.fetcher,
+      globalThis.fetch = mockStore.fetcher
+
+      const blobs = getStore({
+        name: 'production',
+        token: apiToken,
         siteID,
       })
 
       await blobs.setJSON(key, { value }, { expiration })
 
-      expect(store.fulfilled).toBeTruthy()
+      expect(mockStore.fulfilled).toBeTruthy()
     })
   })
 })
@@ -779,7 +771,7 @@ describe('setJSON', () => {
 describe('delete', () => {
   describe('With API credentials', () => {
     test('Deletes from the blob store', async () => {
-      const store = new MockFetch()
+      const mockStore = new MockFetch()
         .delete({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
@@ -801,77 +793,77 @@ describe('delete', () => {
           url: signedURL,
         })
 
-      const blobs = new Blobs({
-        authentication: {
-          token: apiToken,
-        },
-        fetcher: store.fetcher,
+      globalThis.fetch = mockStore.fetcher
+
+      const blobs = getStore({
+        name: 'production',
+        token: apiToken,
         siteID,
       })
 
       await blobs.delete(key)
       await blobs.delete(complexKey)
 
-      expect(store.fulfilled).toBeTruthy()
+      expect(mockStore.fulfilled).toBeTruthy()
     })
 
     test('Throws when the API returns a non-200 status code', async () => {
-      const store = new MockFetch().delete({
+      const mockStore = new MockFetch().delete({
         headers: { authorization: `Bearer ${apiToken}` },
         response: new Response(null, { status: 401 }),
         url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
       })
 
-      const blobs = new Blobs({
-        authentication: {
-          token: apiToken,
-        },
-        fetcher: store.fetcher,
+      globalThis.fetch = mockStore.fetcher
+
+      const blobs = getStore({
+        name: 'production',
+        token: apiToken,
         siteID,
       })
 
       expect(async () => await blobs.delete(key)).rejects.toThrowError(
         'delete operation has failed: API returned a 401 response',
       )
-      expect(store.fulfilled).toBeTruthy()
+      expect(mockStore.fulfilled).toBeTruthy()
     })
   })
 
   describe('With context credentials', () => {
     test('Deletes from the blob store', async () => {
-      const store = new MockFetch().delete({
+      const mockStore = new MockFetch().delete({
         headers: { authorization: `Bearer ${edgeToken}` },
         response: new Response(null),
         url: `${edgeURL}/${siteID}/production/${key}`,
       })
 
-      const blobs = new Blobs({
-        authentication: {
-          contextURL: edgeURL,
-          token: edgeToken,
-        },
-        fetcher: store.fetcher,
+      globalThis.fetch = mockStore.fetcher
+
+      const blobs = getStore({
+        edgeURL,
+        name: 'production',
+        token: edgeToken,
         siteID,
       })
 
       await blobs.delete(key)
 
-      expect(store.fulfilled).toBeTruthy()
+      expect(mockStore.fulfilled).toBeTruthy()
     })
 
     test('Throws when the edge URL returns a non-200 status code', async () => {
-      const store = new MockFetch().delete({
+      const mockStore = new MockFetch().delete({
         headers: { authorization: `Bearer ${edgeToken}` },
         response: new Response(null, { status: 401 }),
         url: `${edgeURL}/${siteID}/production/${key}`,
       })
 
-      const blobs = new Blobs({
-        authentication: {
-          contextURL: edgeURL,
-          token: edgeToken,
-        },
-        fetcher: store.fetcher,
+      globalThis.fetch = mockStore.fetcher
+
+      const blobs = getStore({
+        edgeURL,
+        name: 'production',
+        token: edgeToken,
         siteID,
       })
 
@@ -879,34 +871,79 @@ describe('delete', () => {
         'delete operation has failed: store returned a 401 response',
       )
 
-      expect(store.fulfilled).toBeTruthy()
+      expect(mockStore.fulfilled).toBeTruthy()
     })
   })
 
   test('Throws when the instance is missing required configuration properties', async () => {
     const { fetcher } = new MockFetch()
 
-    const blobs1 = new Blobs({
-      authentication: {
-        token: '',
-      },
-      fetcher,
-      siteID,
-    })
+    globalThis.fetch = fetcher
 
-    const blobs2 = new Blobs({
-      authentication: {
-        token: apiToken,
-      },
-      fetcher,
-      siteID: '',
-    })
+    const blobs1 = getStore('production')
 
     expect(async () => await blobs1.delete(key)).rejects.toThrowError(
       `The blob store is unavailable because it's missing required configuration properties`,
     )
+
+    const blobs2 = getStore({
+      name: 'production',
+      token: apiToken,
+      siteID: '',
+    })
+
     expect(async () => await blobs2.delete(key)).rejects.toThrowError(
       `The blob store is unavailable because it's missing required configuration properties`,
     )
+  })
+})
+
+describe('Global client', () => {
+  test('Reads from the blob store', async () => {
+    const tokens = ['some-token-1', 'another-token-2']
+    const mockStore = new MockFetch()
+      .get({
+        headers: { authorization: `Bearer ${tokens[0]}` },
+        response: new Response(value),
+        url: `${edgeURL}/${siteID}/images/${key}`,
+      })
+      .get({
+        headers: { authorization: `Bearer ${tokens[0]}` },
+        response: new Response(value),
+        url: `${edgeURL}/${siteID}/images/${key}`,
+      })
+      .get({
+        headers: { authorization: `Bearer ${tokens[1]}` },
+        response: new Response(value),
+        url: `${edgeURL}/${siteID}/images/${key}`,
+      })
+      .get({
+        headers: { authorization: `Bearer ${tokens[1]}` },
+        response: new Response(value),
+        url: `${edgeURL}/${siteID}/images/${key}`,
+      })
+
+    globalThis.fetch = mockStore.fetcher
+
+    for (let index = 0; index <= 1; index++) {
+      const context = {
+        edgeURL,
+        deployID,
+        siteID,
+        token: tokens[index],
+      }
+
+      env.NETLIFY_BLOBS_1 = Buffer.from(JSON.stringify(context)).toString('base64')
+
+      const store = getStore('images')
+
+      const string = await store.get(key)
+      expect(string).toBe(value)
+
+      const stream = await store.get(key, { type: 'stream' })
+      expect(await streamToString(stream as unknown as NodeJS.ReadableStream)).toBe(value)
+    }
+
+    expect(mockStore.fulfilled).toBeTruthy()
   })
 })

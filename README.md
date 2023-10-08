@@ -15,71 +15,134 @@ npm install @netlify/blobs
 
 ## Usage
 
-To use the blob store, import the module and create an instance of the `Blobs` class. The constructor accepts an object
-with the following properties:
+To start reading and writing data, you must first get a reference to a store using the `getStore` method.
 
-| Property         | Description                                                                                                                                                            | Required |
-| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| `authentication` | An object containing authentication credentials (see [Authentication](#authentication))                                                                                | **Yes**  |
-| `siteID`         | The Netlify site ID                                                                                                                                                    | **Yes**  |
-| `context`        | The [deploy context](https://docs.netlify.com/site-deploys/overview/#deploy-contexts) to use (defaults to `production`)                                                | No       |
-| `fetcher`        | An implementation of a [fetch-compatible](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) module for making HTTP requests (defaults to `globalThis.fetch`) | No       |
+This method takes an options object that lets you configure the store for different access modes.
 
-### Example
+### API access
 
-```javascript
-import assert from 'node:assert'
-import { Blobs } from '@netlify/blobs'
+You can interact with the blob store through the [Netlify API](https://docs.netlify.com/api/get-started). This is the
+recommended method if you're looking for a strong-consistency way of accessing data, where latency is not mission
+critical (since requests will always go to a non-distributed origin).
 
-const store = new Blobs({
-  authentication: {
-    token: 'YOUR_NETLIFY_AUTH_TOKEN',
-  },
-  siteID: 'YOUR_NETLIFY_SITE_ID',
+Create a store for API access by calling `getStore` with the following parameters:
+
+- `name` (string): Name of the store
+- `siteID` (string): ID of the Netlify site
+- `token` (string): [Personal access
+  token]([your Netlify API credentials](https://docs.netlify.com/api/get-started/#authentication)) to access the Netlify
+  API
+- `apiURL` (string): URL of the Netlify API (optional, defaults to `https://api.netlify.com`)
+
+```ts
+import { getStore } from '@netlify/blobs'
+
+const store = getStore({
+  name: 'my-store',
+  siteID: 'MY_SITE_ID',
+  token: 'MY_TOKEN',
 })
 
-await store.set('some-key', 'Hello!')
-
-const item = await store.get('some-key')
-
-assert.strictEqual(item, 'Hello!')
+console.log(await store.get('some-key'))
 ```
 
-### Authentication
+### Edge access
 
-Authentication with the blob storage is done in one of two ways:
+You can also interact with the blob store using a distributed network that caches entries at the edge. This is the
+recommended method if you're looking for fast reads across multiple locations, knowing that reads will be
+eventually-consistent with a drift of up to 60 seconds.
 
-- Using a [Netlify API token](https://docs.netlify.com/api/get-started/#authentication)
+Create a store for edge access by calling `getStore` with the following parameters:
 
-  ```javascript
-  import { Blobs } from '@netlify/blobs'
+- `name` (string): Name of the store
+- `siteID` (string): ID of the Netlify site
+- `token` (string): [Personal access
+  token]([your Netlify API credentials](https://docs.netlify.com/api/get-started/#authentication)) to access the Netlify
+  API
+- `edgeURL` (string): URL of the edge endpoint
 
-  const store = new Blobs({
-    authentication: {
-      token: 'YOUR_NETLIFY_API_TOKEN',
-    },
-    siteID: 'YOUR_NETLIFY_SITE_ID',
+```ts
+import { Buffer } from 'node:buffer'
+
+import { getStore } from '@netlify/blobs'
+
+// Serverless function using the Lambda compatibility mode
+export const handler = async (event, context) => {
+  const rawData = Buffer.from(context.clientContext.custom.blobs, 'base64')
+  const data = JSON.parse(rawData.toString('ascii'))
+  const store = getStore({
+    edgeURL: data.url,
+    name: 'my-store',
+    token: data.token,
+    siteID: 'MY_SITE_ID',
   })
-  ```
+  const item = await store.get('some-key')
 
-- Using a context object injected in Netlify Functions
-
-  ```javascript
-  import { Blobs } from '@netlify/blobs'
-  import type { Handler, HandlerEvent, HandlerContext } from '@netlify/functions'
-
-  export const handler: Handler = async (event: HandlerEvent, context: HandlerContext) => {
-    const store = new Blobs({
-      authentication: {
-        contextURL: context.blobs.url,
-        token: context.blobs.token,
-      },
-      siteID: 'YOUR_NETLIFY_SITE_ID',
-    })
+  return {
+    statusCode: 200,
+    body: item,
   }
-  ```
+}
+```
 
-## API
+### Environment-based configuration
+
+Rather than explicitly passing the configuration context to the `getStore` method, it can be read from the execution
+environment. This is particularly useful for setups where the configuration data is held by one system and the data
+needs to be accessed in another system, with no direct communication between the two.
+
+To do this, the system that holds the configuration data should set an environment variable called `NETLIFY_BLOBS_1`
+with a Base64-encoded, JSON-stringified representation of an object with the following properties:
+
+- `apiURL` (optional) or `edgeURL`: URL of the Netlify API (for [API access](#api-access)) or the edge endpoint (for
+  [Edge access](#edge-access))
+- `token`: Access token for the corresponding access mode
+- `siteID`: ID of the Netlify site
+
+With this in place, the `getStore` method can be called just with the store name. No configuration object is required,
+since it'll be read from the environment.
+
+```ts
+import { getStore } from '@netlify/blobs'
+
+const store = getStore('my-store')
+
+console.log(await store.get('my-key'))
+```
+
+### Deploy scope
+
+By default, stores exist at the site level, which means that data can be read and written across different deploys and
+deploy contexts. Users are responsible for managing that data, since the platform doesn't have enough information to
+know whether an item is still relevant or safe to delete.
+
+But sometimes it's useful to have data pegged to a specific deploy, and shift to the platform the responsibility of
+managing that data — keep it as long as the deploy is around, and wipe it if the deploy is deleted.
+
+You can opt-in to this behavior by supplying a `deployID` instead of a `name` to the `getStore` method.
+
+```ts
+import { assert } from 'node:assert'
+
+import { getStore } from '@netlify/blobs'
+
+// Using API access
+const store1 = getStore({
+  deployID: 'MY_DEPLOY_ID',
+  token: 'MY_API_TOKEN',
+})
+
+await store1.set('my-key', 'my value')
+
+// Using environment-based configuration
+const store2 = getStore({
+  deployID: 'MY_DEPLOY_ID',
+})
+
+assert.equal(await store2.get('my-key'), 'my value')
+```
+
+## Store API
 
 ### `get(key: string, { type: string }): Promise<any>`
 
