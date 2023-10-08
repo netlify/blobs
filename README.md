@@ -146,7 +146,7 @@ const store2 = getStore({
 assert.equal(await store2.get('my-key'), 'my value')
 ```
 
-## Store API
+## Store API reference
 
 ### `get(key: string, { type: string }): Promise<any>`
 
