@@ -13,6 +13,12 @@ You can install `@netlify/blobs` via npm:
 npm install @netlify/blobs
 ```
 
+### Requirements
+
+- Deno 1.30 and above or Node.js 16.0.0 and above
+- `fetch` in the global scope with a [fetch-compatible](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
+  interface
+
 ## Usage
 
 To start reading and writing data, you must first get a reference to a store using the `getStore` method.
@@ -29,9 +35,8 @@ Create a store for API access by calling `getStore` with the following parameter
 
 - `name` (string): Name of the store
 - `siteID` (string): ID of the Netlify site
-- `token` (string): [Personal access
-  token]([your Netlify API credentials](https://docs.netlify.com/api/get-started/#authentication)) to access the Netlify
-  API
+- `token` (string): [Personal access token](https://docs.netlify.com/api/get-started/#authentication) to access the
+  Netlify API
 - `apiURL` (string): URL of the Netlify API (optional, defaults to `https://api.netlify.com`)
 
 ```ts
@@ -56,9 +61,8 @@ Create a store for edge access by calling `getStore` with the following paramete
 
 - `name` (string): Name of the store
 - `siteID` (string): ID of the Netlify site
-- `token` (string): [Personal access
-  token]([your Netlify API credentials](https://docs.netlify.com/api/get-started/#authentication)) to access the Netlify
-  API
+- `token` (string): [Personal access token](https://docs.netlify.com/api/get-started/#authentication) to access the
+  Netlify API
 - `edgeURL` (string): URL of the edge endpoint
 
 ```ts
