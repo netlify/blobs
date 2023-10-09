@@ -103,8 +103,7 @@ with a Base64-encoded, JSON-stringified representation of an object with the fol
 - `token`: Access token for the corresponding access mode
 - `siteID`: ID of the Netlify site
 
-This environment variable is automatically populated by Netlify in the execution environment for both serverless and
-edge functions.
+This data is automatically populated by Netlify in the execution environment for both serverless and edge functions.
 
 With this in place, the `getStore` method can be called just with the store name. No configuration object is required,
 since it'll be read from the environment.
