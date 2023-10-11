@@ -31,8 +31,8 @@
   "scripts": {
     "build": "run-s build:*",
     "build:check": "tsc",
-    "build:transpile": "./build.mjs",
-    "dev": "./build.mjs --watch",
+    "build:transpile": "node build.mjs",
+    "dev": "node build.mjs --watch",
     "prepare": "husky install node_modules/@netlify/eslint-config-node/.husky/",
     "prepublishOnly": "npm ci && npm test",
     "prepack": "npm run build",
