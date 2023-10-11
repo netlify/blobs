@@ -2,7 +2,6 @@
   "compilerOptions": {
     "allowImportingTsExtensions": true,
     "emitDeclarationOnly": true,
-    "incremental": true,
     "target": "ES2020",
     "module": "es2020",
     "allowJs": true,
