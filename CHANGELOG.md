@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0](https://github.com/netlify/blobs/compare/v2.0.0...v2.1.0) (2023-10-11)
+
+
+### Features
+
+* export commonjs and esm from package ([#59](https://github.com/netlify/blobs/issues/59)) ([38b9c81](https://github.com/netlify/blobs/commit/38b9c81c280a2bc3b7a348103d94b98fd44f67e9))
+
 ## [2.0.0](https://github.com/netlify/blobs/compare/v1.6.1...v2.0.0) (2023-09-25)
 
 
