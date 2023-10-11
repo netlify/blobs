@@ -6,22 +6,22 @@
   "engines": {
     "node": "^14.16.0 || >=16.0.0"
   },
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/main.cjs",
+  "module": "./dist/main.js",
+  "types": "./dist/main.d.ts",
   "exports": {
     ".": {
       "require": {
-        "types": "./dist/index.d.cts",
-        "path": "./dist/index.cjs"
+        "types": "./dist/main.d.cts",
+        "path": "./dist/main.cjs"
       },
       "import": {
-        "types": "./dist/index.d.ts",
-        "path": "./dist/index.js"
+        "types": "./dist/main.d.ts",
+        "path": "./dist/main.js"
       },
       "default": {
-        "types": "./dist/index.d.ts",
-        "path": "./dist/index.js"
+        "types": "./dist/main.d.ts",
+        "path": "./dist/main.js"
       }
     }
   },
