@@ -16,6 +16,10 @@ interface NamedStoreOptions extends BaseStoreOptions {
 type StoreOptions = DeployStoreOptions | NamedStoreOptions
 
 interface SetOptions {
+  /**
+   * Accepts an absolute date as a `Date` object, or a relative date as the
+   * number of seconds from the current date.
+   */
   expiration?: Date | number
 }
 
