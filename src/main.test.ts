@@ -1,9 +1,7 @@
 import { Buffer } from 'node:buffer'
-import { writeFile } from 'node:fs/promises'
 import { env, version as nodeVersion } from 'node:process'
 
 import semver from 'semver'
-import tmp from 'tmp-promise'
 import { describe, test, expect, beforeAll, afterEach } from 'vitest'
 
 import { MockFetch } from '../test/mock_fetch.js'
@@ -414,127 +412,6 @@ describe('set', () => {
 
       expect(mockStore.fulfilled).toBeTruthy()
     })
-
-    // We need `Readable.toWeb` to be available, which needs Node 16+.
-    if (semver.gte(nodeVersion, '16.0.0')) {
-      test('Accepts a file', async () => {
-        const fileContents = 'Hello from a file'
-        const mockStore = new MockFetch()
-          .put({
-            headers: { authorization: `Bearer ${apiToken}` },
-            response: new Response(JSON.stringify({ url: signedURL })),
-            url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
-          })
-          .put({
-            body: async (body) => {
-              expect(await streamToString(body as unknown as NodeJS.ReadableStream)).toBe(fileContents)
-            },
-            headers: {
-              'cache-control': 'max-age=0, stale-while-revalidate=60',
-            },
-            response: new Response(null),
-            url: signedURL,
-          })
-
-        globalThis.fetch = mockStore.fetcher
-
-        const { cleanup, path } = await tmp.file()
-
-        await writeFile(path, fileContents)
-
-        const blobs = getStore({
-          name: 'production',
-          token: apiToken,
-          siteID,
-        })
-
-        await blobs.setFile(key, path)
-
-        expect(mockStore.fulfilled).toBeTruthy()
-
-        await cleanup()
-      })
-
-      test('Accepts multiple files concurrently', async () => {
-        const contents = ['Hello from key-0', 'Hello from key-1', 'Hello from key-2']
-        const signedURLs = ['https://signed-url.aws/0', 'https://signed-url.aws/1', 'https://signed-url.aws/2']
-
-        const mockStore = new MockFetch()
-          .put({
-            headers: { authorization: `Bearer ${apiToken}` },
-            response: new Response(JSON.stringify({ url: signedURLs[0] })),
-            url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/key-0?context=production`,
-          })
-          .put({
-            body: async (body) => {
-              expect(await streamToString(body as unknown as NodeJS.ReadableStream)).toBe(contents[0])
-            },
-            headers: {
-              'cache-control': 'max-age=0, stale-while-revalidate=60',
-            },
-            response: new Response(null),
-            url: signedURLs[0],
-          })
-          .put({
-            headers: { authorization: `Bearer ${apiToken}` },
-            response: new Response(JSON.stringify({ url: signedURLs[1] })),
-            url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/key-1?context=production`,
-          })
-          .put({
-            body: async (body) => {
-              expect(await streamToString(body as unknown as NodeJS.ReadableStream)).toBe(contents[1])
-            },
-            headers: {
-              'cache-control': 'max-age=0, stale-while-revalidate=60',
-            },
-            response: new Response(null),
-            url: signedURLs[1],
-          })
-          .put({
-            headers: { authorization: `Bearer ${apiToken}` },
-            response: new Response(JSON.stringify({ url: signedURLs[2] })),
-            url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/key-2?context=production`,
-          })
-          .put({
-            body: async (body) => {
-              expect(await streamToString(body as unknown as NodeJS.ReadableStream)).toBe(contents[2])
-            },
-            headers: {
-              'cache-control': 'max-age=0, stale-while-revalidate=60',
-            },
-            response: new Response(null),
-            url: signedURLs[2],
-          })
-
-        globalThis.fetch = mockStore.fetcher
-
-        const writes = await Promise.all(
-          contents.map(async (content) => {
-            const { cleanup, path } = await tmp.file()
-
-            await writeFile(path, content)
-
-            return { cleanup, path }
-          }),
-        )
-        const files = writes.map(({ path }, idx) => ({
-          key: `key-${idx}`,
-          path,
-        }))
-
-        const blobs = getStore({
-          name: 'production',
-          token: apiToken,
-          siteID,
-        })
-
-        await blobs.setFiles(files)
-
-        expect(mockStore.fulfilled).toBeTruthy()
-
-        await Promise.all(writes.map(({ cleanup }) => cleanup()))
-      })
-    }
 
     test('Throws when the API returns a non-200 status code', async () => {
       const mockStore = new MockFetch().put({

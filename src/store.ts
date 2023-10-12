@@ -1,9 +1,3 @@
-import { createReadStream } from 'node:fs'
-import { stat } from 'node:fs/promises'
-import { Readable } from 'node:stream'
-
-import pMap from 'p-map'
-
 import { Client, Context } from './client.js'
 import { BlobInput, Fetcher, HTTPMethod } from './types.js'
 
@@ -23,15 +17,6 @@ type StoreOptions = DeployStoreOptions | NamedStoreOptions
 
 interface SetOptions {
   expiration?: Date | number
-}
-
-interface SetFilesItem extends SetOptions {
-  key: string
-  path: string
-}
-
-interface SetFilesOptions {
-  concurrency?: number
 }
 
 const EXPIRY_HEADER = 'x-nf-expires-at'
@@ -129,27 +114,6 @@ class Store {
       method: HTTPMethod.Put,
       storeName: this.name,
     })
-  }
-
-  async setFile(key: string, path: string, { expiration }: SetOptions = {}) {
-    const { size } = await stat(path)
-    const file = Readable.toWeb(createReadStream(path))
-    const headers = {
-      ...Store.getExpirationHeaders(expiration),
-      'content-length': size.toString(),
-    }
-
-    await this.client.makeRequest({
-      body: file as ReadableStream,
-      headers,
-      key,
-      method: HTTPMethod.Put,
-      storeName: this.name,
-    })
-  }
-
-  setFiles(files: SetFilesItem[], { concurrency = 5 }: SetFilesOptions = {}) {
-    return pMap(files, ({ key, path, ...options }) => this.setFile(key, path, options), { concurrency })
   }
 
   async setJSON(key: string, data: unknown, { expiration }: SetOptions = {}) {
