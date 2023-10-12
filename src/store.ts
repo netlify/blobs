@@ -5,7 +5,7 @@ import { Readable } from 'node:stream'
 import pMap from 'p-map'
 
 import { Client, Context } from './client.js'
-import { BlobInput, HTTPMethod } from './types.js'
+import { BlobInput, Fetcher, HTTPMethod } from './types.js'
 
 interface BaseStoreOptions {
   client: Client
@@ -169,17 +169,15 @@ class Store {
   }
 }
 
-interface GetDeployStoreOptions extends Context {
-  deployID: string
-}
-
-interface GetNamedStoreOptions extends Context {
-  name: string
+interface GetStoreOptions extends Context {
+  deployID?: string
+  fetcher?: Fetcher
+  name?: string
 }
 
 export const getStore: {
   (name: string): Store
-  (options: GetDeployStoreOptions | GetNamedStoreOptions | { deployID: string }): Store
+  (options: GetStoreOptions): Store
 } = (input) => {
   if (typeof input === 'string') {
     const client = new Client()
@@ -187,16 +185,19 @@ export const getStore: {
     return new Store({ client, name: input })
   }
 
-  if ('deployID' in input) {
-    const { deployID, ...otherProps } = input
-    const context = 'siteID' in otherProps && 'token' in otherProps ? otherProps : undefined
-    const client = new Client(context)
+  if (typeof input.name === 'string') {
+    const { fetcher, name, ...context } = input
+    const client = new Client(context, fetcher)
+
+    return new Store({ client, name })
+  }
+
+  if (typeof input.deployID === 'string') {
+    const { fetcher, deployID, ...context } = input
+    const client = new Client(context, fetcher)
 
     return new Store({ client, name: deployID })
   }
 
-  const { name, ...context } = input
-  const client = new Client(context)
-
-  return new Store({ client, name })
+  throw new Error('`getStore()` requires a `name` or `siteID` properties.')
 }

@@ -14,6 +14,7 @@ module.exports = {
     'max-lines-per-function': 'off',
     'max-statements': 'off',
     'node/no-missing-import': 'off',
+    'import/no-unresolved': 'off',
     'n/no-missing-import': 'off',
     'no-magic-numbers': 'off',
     'no-shadow': 'off',

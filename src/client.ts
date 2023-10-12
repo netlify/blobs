@@ -2,7 +2,7 @@ import { Buffer } from 'node:buffer'
 import { env } from 'node:process'
 
 import { fetchAndRetry } from './retry.ts'
-import { BlobInput, HTTPMethod } from './types.ts'
+import { BlobInput, Fetcher, HTTPMethod } from './types.ts'
 
 // The name of the environment variable that holds the context in a Base64,
 // JSON-encoded object. If we ever need to change the encoding or the shape
@@ -14,6 +14,11 @@ export const NETLIFY_CONTEXT_VARIABLE = 'NETLIFY_BLOBS_CONTEXT'
 export interface Context {
   apiURL?: string
   edgeURL?: string
+  siteID?: string
+  token?: string
+}
+
+interface PopulatedContext extends Context {
   siteID: string
   token: string
 }
@@ -28,16 +33,16 @@ interface MakeStoreRequestOptions {
 
 export class Client {
   private context?: Context
+  private fetcher?: Fetcher
 
-  constructor(context?: Context) {
-    this.context = context
+  constructor(context?: Context, fetcher?: Fetcher) {
+    this.context = context ?? {}
+    this.fetcher = fetcher
+
+    console.log('---> FETCHER', this.fetcher)
   }
 
-  private getContext() {
-    if (this.context) {
-      return this.context
-    }
-
+  private static getEnvironmentContext() {
     if (!env[NETLIFY_CONTEXT_VARIABLE]) {
       return
     }
@@ -51,7 +56,21 @@ export class Client {
     }
   }
 
-  private static async getFinalRequest(context: Context, storeName: string, key: string, method: string) {
+  private getContext() {
+    const context = {
+      ...Client.getEnvironmentContext(),
+      ...this.context,
+    }
+
+    if (!context.siteID || !context.token) {
+      throw new Error(`The blob store is unavailable because it's missing required configuration properties`)
+    }
+
+    return context as PopulatedContext
+  }
+
+  private async getFinalRequest(storeName: string, key: string, method: string) {
+    const context = this.getContext()
     const encodedKey = encodeURIComponent(key)
 
     if ('edgeURL' in context) {
@@ -67,7 +86,8 @@ export class Client {
       context.siteID
     }/blobs/${encodedKey}?context=${storeName}`
     const headers = { authorization: `Bearer ${context.token}` }
-    const res = await fetch(apiURL, { headers, method })
+    const fetcher = this.fetcher ?? globalThis.fetch
+    const res = await fetcher(apiURL, { headers, method })
 
     if (res.status !== 200) {
       throw new Error(`${method} operation has failed: API returned a ${res.status} response`)
@@ -81,13 +101,7 @@ export class Client {
   }
 
   async makeRequest({ body, headers: extraHeaders, key, method, storeName }: MakeStoreRequestOptions) {
-    const context = this.getContext()
-
-    if (!context || !context.token || !context.siteID) {
-      throw new Error("The blob store is unavailable because it's missing required configuration properties")
-    }
-
-    const { headers: baseHeaders = {}, url } = await Client.getFinalRequest(context, storeName, key, method)
+    const { headers: baseHeaders = {}, url } = await this.getFinalRequest(storeName, key, method)
     const headers: Record<string, string> = {
       ...baseHeaders,
       ...extraHeaders,
@@ -109,7 +123,8 @@ export class Client {
       options.duplex = 'half'
     }
 
-    const res = await fetchAndRetry(url, options)
+    const fetcher = this.fetcher ?? globalThis.fetch
+    const res = await fetchAndRetry(fetcher, url, options)
 
     if (res.status === 404 && method === HTTPMethod.Get) {
       return null

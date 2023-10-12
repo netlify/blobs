@@ -1003,3 +1003,32 @@ describe('Deploy scope', () => {
     expect(mockStore.fulfilled).toBeTruthy()
   })
 })
+
+describe('Customer fetcher', () => {
+  test('Uses a custom implementation of `fetch` if the `fetcher` parameter is supplied', async () => {
+    globalThis.fetch = () => {
+      throw new Error('I should not be called')
+    }
+
+    const mockToken = 'some-token'
+    const mockStore = new MockFetch().get({
+      headers: { authorization: `Bearer ${mockToken}` },
+      response: new Response(value),
+      url: `${edgeURL}/${siteID}/images/${key}`,
+    })
+    const context = {
+      edgeURL,
+      siteID,
+      token: mockToken,
+    }
+
+    env.NETLIFY_BLOBS_CONTEXT = Buffer.from(JSON.stringify(context)).toString('base64')
+
+    const store = getStore({ fetcher: mockStore.fetcher, name: 'images' })
+
+    const string = await store.get(key)
+    expect(string).toBe(value)
+
+    expect(mockStore.fulfilled).toBeTruthy()
+  })
+})
