@@ -38,8 +38,6 @@ export class Client {
   constructor(context?: Context, fetcher?: Fetcher) {
     this.context = context ?? {}
     this.fetcher = fetcher
-
-    console.log('---> FETCHER', this.fetcher)
   }
 
   private static getEnvironmentContext() {

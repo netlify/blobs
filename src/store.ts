@@ -1,5 +1,5 @@
-import { Client, Context } from './client.js'
-import { BlobInput, Fetcher, HTTPMethod } from './types.js'
+import { Client, Context } from './client.ts'
+import { BlobInput, Fetcher, HTTPMethod } from './types.ts'
 
 interface BaseStoreOptions {
   client: Client
