@@ -179,7 +179,7 @@ interface GetNamedStoreOptions extends Context {
 
 export const getStore: {
   (name: string): Store
-  (options: GetDeployStoreOptions | GetNamedStoreOptions): Store
+  (options: GetDeployStoreOptions | GetNamedStoreOptions | { deployID: string }): Store
 } = (input) => {
   if (typeof input === 'string') {
     const client = new Client()
@@ -188,7 +188,8 @@ export const getStore: {
   }
 
   if ('deployID' in input) {
-    const { deployID, ...context } = input
+    const { deployID, ...otherProps } = input
+    const context = 'siteID' in otherProps && 'token' in otherProps ? otherProps : undefined
     const client = new Client(context)
 
     return new Store({ client, name: deployID })

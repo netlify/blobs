@@ -4,7 +4,7 @@ import { env, version as nodeVersion } from 'node:process'
 
 import semver from 'semver'
 import tmp from 'tmp-promise'
-import { describe, test, expect, beforeAll } from 'vitest'
+import { describe, test, expect, beforeAll, afterEach } from 'vitest'
 
 import { MockFetch } from '../test/mock_fetch.js'
 import { streamToString } from '../test/util.js'
@@ -26,8 +26,12 @@ beforeAll(async () => {
   }
 })
 
-const deployID = 'abcdef'
-const siteID = '12345'
+afterEach(() => {
+  delete env.NETLIFY_BLOBS_CONTEXT
+})
+
+const deployID = '6527dfab35be400008332a1d'
+const siteID = '9a003659-aaaa-0000-aaaa-63d3720d8621'
 const key = '54321'
 const complexKey = '/artista/canção'
 const value = 'some value'
@@ -191,7 +195,7 @@ describe('get', () => {
     })
   })
 
-  describe('With context credentials', () => {
+  describe('With edge credentials', () => {
     test('Reads from the blob store', async () => {
       const mockStore = new MockFetch()
         .get({
@@ -262,6 +266,53 @@ describe('get', () => {
       await expect(async () => await blobs.get(key)).rejects.toThrowError(
         'get operation has failed: store returned a 401 response',
       )
+
+      expect(mockStore.fulfilled).toBeTruthy()
+    })
+
+    test('Loads credentials from the environment', async () => {
+      const tokens = ['some-token-1', 'another-token-2']
+      const mockStore = new MockFetch()
+        .get({
+          headers: { authorization: `Bearer ${tokens[0]}` },
+          response: new Response(value),
+          url: `${edgeURL}/${siteID}/images/${key}`,
+        })
+        .get({
+          headers: { authorization: `Bearer ${tokens[0]}` },
+          response: new Response(value),
+          url: `${edgeURL}/${siteID}/images/${key}`,
+        })
+        .get({
+          headers: { authorization: `Bearer ${tokens[1]}` },
+          response: new Response(value),
+          url: `${edgeURL}/${siteID}/images/${key}`,
+        })
+        .get({
+          headers: { authorization: `Bearer ${tokens[1]}` },
+          response: new Response(value),
+          url: `${edgeURL}/${siteID}/images/${key}`,
+        })
+
+      globalThis.fetch = mockStore.fetcher
+
+      for (let index = 0; index <= 1; index++) {
+        const context = {
+          edgeURL,
+          siteID,
+          token: tokens[index],
+        }
+
+        env.NETLIFY_BLOBS_CONTEXT = Buffer.from(JSON.stringify(context)).toString('base64')
+
+        const store = getStore('images')
+
+        const string = await store.get(key)
+        expect(string).toBe(value)
+
+        const stream = await store.get(key, { type: 'stream' })
+        expect(await streamToString(stream as unknown as NodeJS.ReadableStream)).toBe(value)
+      }
 
       expect(mockStore.fulfilled).toBeTruthy()
     })
@@ -560,7 +611,7 @@ describe('set', () => {
     })
   })
 
-  describe('With context credentials', () => {
+  describe('With edge credentials', () => {
     test('Writes to the blob store', async () => {
       const mockStore = new MockFetch()
         .put({
@@ -712,7 +763,7 @@ describe('setJSON', () => {
     })
   })
 
-  describe('With context credentials', () => {
+  describe('With edge credentials', () => {
     test('Writes to the blob store', async () => {
       const mockStore = new MockFetch().put({
         body: JSON.stringify({ value }),
@@ -829,7 +880,7 @@ describe('delete', () => {
     })
   })
 
-  describe('With context credentials', () => {
+  describe('With edge credentials', () => {
     test('Deletes from the blob store', async () => {
       const mockStore = new MockFetch().delete({
         headers: { authorization: `Bearer ${edgeToken}` },
@@ -898,51 +949,56 @@ describe('delete', () => {
   })
 })
 
-describe('Global client', () => {
-  test('Reads from the blob store', async () => {
-    const tokens = ['some-token-1', 'another-token-2']
+describe.only('Deploy scope', () => {
+  test('Returns a deploy-scoped store if the `deployID` parameter is supplied', async () => {
+    const mockToken = 'some-token'
     const mockStore = new MockFetch()
       .get({
-        headers: { authorization: `Bearer ${tokens[0]}` },
+        headers: { authorization: `Bearer ${mockToken}` },
         response: new Response(value),
         url: `${edgeURL}/${siteID}/images/${key}`,
       })
       .get({
-        headers: { authorization: `Bearer ${tokens[0]}` },
+        headers: { authorization: `Bearer ${mockToken}` },
         response: new Response(value),
         url: `${edgeURL}/${siteID}/images/${key}`,
       })
       .get({
-        headers: { authorization: `Bearer ${tokens[1]}` },
+        headers: { authorization: `Bearer ${mockToken}` },
         response: new Response(value),
-        url: `${edgeURL}/${siteID}/images/${key}`,
+        url: `${edgeURL}/${siteID}/${deployID}/${key}`,
       })
       .get({
-        headers: { authorization: `Bearer ${tokens[1]}` },
+        headers: { authorization: `Bearer ${mockToken}` },
         response: new Response(value),
-        url: `${edgeURL}/${siteID}/images/${key}`,
+        url: `${edgeURL}/${siteID}/${deployID}/${key}`,
       })
 
     globalThis.fetch = mockStore.fetcher
 
-    for (let index = 0; index <= 1; index++) {
-      const context = {
-        edgeURL,
-        deployID,
-        siteID,
-        token: tokens[index],
-      }
-
-      env.NETLIFY_BLOBS_1 = Buffer.from(JSON.stringify(context)).toString('base64')
-
-      const store = getStore('images')
-
-      const string = await store.get(key)
-      expect(string).toBe(value)
-
-      const stream = await store.get(key, { type: 'stream' })
-      expect(await streamToString(stream as unknown as NodeJS.ReadableStream)).toBe(value)
+    const context = {
+      edgeURL,
+      siteID,
+      token: mockToken,
     }
+
+    env.NETLIFY_BLOBS_CONTEXT = Buffer.from(JSON.stringify(context)).toString('base64')
+
+    const siteStore = getStore('images')
+
+    const string1 = await siteStore.get(key)
+    expect(string1).toBe(value)
+
+    const stream1 = await siteStore.get(key, { type: 'stream' })
+    expect(await streamToString(stream1 as unknown as NodeJS.ReadableStream)).toBe(value)
+
+    const deployStore = getStore({ deployID })
+
+    const string2 = await deployStore.get(key)
+    expect(string2).toBe(value)
+
+    const stream2 = await deployStore.get(key, { type: 'stream' })
+    expect(await streamToString(stream2 as unknown as NodeJS.ReadableStream)).toBe(value)
 
     expect(mockStore.fulfilled).toBeTruthy()
   })

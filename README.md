@@ -95,8 +95,9 @@ Rather than explicitly passing the configuration context to the `getStore` metho
 environment. This is particularly useful for setups where the configuration data is held by one system and the data
 needs to be accessed in another system, with no direct communication between the two.
 
-To do this, the system that holds the configuration data should set an environment variable called `NETLIFY_BLOBS_1`
-with a Base64-encoded, JSON-stringified representation of an object with the following properties:
+To do this, the system that holds the configuration data should set an environment variable called
+`NETLIFY_BLOBS_CONTEXT` with a Base64-encoded, JSON-stringified representation of an object with the following
+properties:
 
 - `apiURL` (optional) or `edgeURL`: URL of the Netlify API (for [API access](#api-access)) or the edge endpoint (for
   [Edge access](#edge-access))

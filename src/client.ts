@@ -9,7 +9,7 @@ import { BlobInput, HTTPMethod } from './types.ts'
 // of this object, we should bump the version and create a new variable, so
 // that the client knows how to consume the data and can advise the user to
 // update the client if needed.
-export const NETLIFY_CONTEXT_VARIABLE = 'NETLIFY_BLOBS_1'
+export const NETLIFY_CONTEXT_VARIABLE = 'NETLIFY_BLOBS_CONTEXT'
 
 export interface Context {
   apiURL?: string
