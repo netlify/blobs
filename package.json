@@ -1,20 +1,38 @@
 {
   "name": "@netlify/blobs",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "A JavaScript client for the Netlify Blob Store",
   "type": "module",
-  "main": "./dist/src/main.js",
-  "exports": "./dist/src/main.js",
+  "engines": {
+    "node": "^14.16.0 || >=16.0.0"
+  },
+  "main": "./dist/main.cjs",
+  "module": "./dist/main.js",
+  "types": "./dist/main.d.ts",
+  "exports": {
+    ".": {
+      "require": {
+        "types": "./dist/main.d.cts",
+        "path": "./dist/main.cjs"
+      },
+      "import": {
+        "types": "./dist/main.d.ts",
+        "path": "./dist/main.js"
+      },
+      "default": {
+        "types": "./dist/main.d.ts",
+        "path": "./dist/main.js"
+      }
+    }
+  },
   "files": [
-    "dist/src/**/*.js",
-    "dist/src/**/*.d.ts",
-    "!dist/src/**/*.test.d.ts"
+    "dist/**/*"
   ],
   "scripts": {
     "build": "run-s build:*",
     "build:check": "tsc",
-    "build:transpile": "esbuild src/main.ts --bundle --outdir=dist/src --platform=node --format=esm",
-    "dev": "esbuild src/main.ts --bundle --outdir=dist/src --platform=node --format=esm --watch",
+    "build:transpile": "node build.mjs",
+    "dev": "node build.mjs --watch",
     "prepare": "husky install node_modules/@netlify/eslint-config-node/.husky/",
     "prepublishOnly": "npm ci && npm test",
     "prepack": "npm run build",
@@ -55,11 +73,11 @@
     "esbuild": "^0.19.0",
     "husky": "^8.0.0",
     "node-fetch": "^3.3.1",
+    "p-map": "^6.0.0",
     "semver": "^7.5.3",
+    "tmp-promise": "^3.0.3",
+    "tsup": "^7.2.0",
     "typescript": "^5.0.0",
     "vitest": "^0.34.0"
-  },
-  "engines": {
-    "node": "^14.16.0 || >=16.0.0"
   }
 }
