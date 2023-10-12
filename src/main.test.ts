@@ -949,7 +949,7 @@ describe('delete', () => {
   })
 })
 
-describe.only('Deploy scope', () => {
+describe('Deploy scope', () => {
   test('Returns a deploy-scoped store if the `deployID` parameter is supplied', async () => {
     const mockToken = 'some-token'
     const mockStore = new MockFetch()
