@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.1](https://github.com/netlify/blobs/compare/v2.1.0...v2.1.1) (2023-10-13)
+
+
+### Bug Fixes
+
+* adjust export map to be actually importable ([#62](https://github.com/netlify/blobs/issues/62)) ([1bedfde](https://github.com/netlify/blobs/commit/1bedfde6c5ddb368b5789bc1766f7918eac19a8f))
+
 ## [2.1.0](https://github.com/netlify/blobs/compare/v2.0.0...v2.1.0) (2023-10-11)
 
 
