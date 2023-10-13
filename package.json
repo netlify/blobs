@@ -13,15 +13,15 @@
     ".": {
       "require": {
         "types": "./dist/main.d.cts",
-        "path": "./dist/main.cjs"
+        "default": "./dist/main.cjs"
       },
       "import": {
         "types": "./dist/main.d.ts",
-        "path": "./dist/main.js"
+        "default": "./dist/main.js"
       },
       "default": {
         "types": "./dist/main.d.ts",
-        "path": "./dist/main.js"
+        "default": "./dist/main.js"
       }
     }
   },
