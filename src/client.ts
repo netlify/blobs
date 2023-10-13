@@ -105,7 +105,7 @@ export class Client {
       ...extraHeaders,
     }
 
-    if (method === HTTPMethod.Put) {
+    if (method === HTTPMethod.PUT) {
       headers['cache-control'] = 'max-age=0, stale-while-revalidate=60'
     }
 
@@ -124,7 +124,7 @@ export class Client {
     const fetcher = this.fetcher ?? globalThis.fetch
     const res = await fetchAndRetry(fetcher, url, options)
 
-    if (res.status === 404 && method === HTTPMethod.Get) {
+    if (res.status === 404 && method === HTTPMethod.GET) {
       return null
     }
 

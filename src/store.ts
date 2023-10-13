@@ -55,7 +55,7 @@ class Store {
   }
 
   async delete(key: string) {
-    await this.client.makeRequest({ key, method: HTTPMethod.Delete, storeName: this.name })
+    await this.client.makeRequest({ key, method: HTTPMethod.DELETE, storeName: this.name })
   }
 
   async get(key: string): Promise<string>
@@ -70,7 +70,7 @@ class Store {
     options?: { type: 'arrayBuffer' | 'blob' | 'json' | 'stream' | 'text' },
   ): Promise<ArrayBuffer | Blob | ReadableStream | string | null> {
     const { type } = options ?? {}
-    const res = await this.client.makeRequest({ key, method: HTTPMethod.Get, storeName: this.name })
+    const res = await this.client.makeRequest({ key, method: HTTPMethod.GET, storeName: this.name })
     const expiration = res?.headers.get(EXPIRY_HEADER)
 
     if (typeof expiration === 'string') {
@@ -115,7 +115,7 @@ class Store {
       body: data,
       headers,
       key,
-      method: HTTPMethod.Put,
+      method: HTTPMethod.PUT,
       storeName: this.name,
     })
   }
@@ -131,7 +131,7 @@ class Store {
       body: payload,
       headers,
       key,
-      method: HTTPMethod.Put,
+      method: HTTPMethod.PUT,
       storeName: this.name,
     })
   }
