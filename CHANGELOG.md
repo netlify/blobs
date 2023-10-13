@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.0](https://github.com/netlify/blobs/compare/v2.1.1...v2.2.0) (2023-10-13)
+
+
+### Features
+
+* add package.json to export map ([#64](https://github.com/netlify/blobs/issues/64)) ([3ea080e](https://github.com/netlify/blobs/commit/3ea080e9cdde95f14b8d372181be78b208727d0b))
+
 ## [2.1.1](https://github.com/netlify/blobs/compare/v2.1.0...v2.1.1) (2023-10-13)
 
 
