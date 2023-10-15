@@ -1,6 +1,6 @@
 {
   "name": "@netlify/blobs",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "A JavaScript client for the Netlify Blob Store",
   "type": "module",
   "engines": {
@@ -13,17 +13,18 @@
     ".": {
       "require": {
         "types": "./dist/main.d.cts",
-        "path": "./dist/main.cjs"
+        "default": "./dist/main.cjs"
       },
       "import": {
         "types": "./dist/main.d.ts",
-        "path": "./dist/main.js"
+        "default": "./dist/main.js"
       },
       "default": {
         "types": "./dist/main.d.ts",
-        "path": "./dist/main.js"
+        "default": "./dist/main.js"
       }
-    }
+    },
+    "./package.json": "./package.json"
   },
   "files": [
     "dist/**/*"
