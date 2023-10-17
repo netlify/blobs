@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.0.0](https://github.com/netlify/blobs/compare/v2.2.0...v3.0.0) (2023-10-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* add `getStore` method ([#58](https://github.com/netlify/blobs/issues/58))
+
+### Features
+
+* add `getStore` method ([#58](https://github.com/netlify/blobs/issues/58)) ([6507e87](https://github.com/netlify/blobs/commit/6507e87cdebe110b6e5145c7c69f3c1a16b066ee))
+
 ## [2.2.0](https://github.com/netlify/blobs/compare/v2.1.1...v2.2.0) (2023-10-13)
 
 
