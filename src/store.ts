@@ -139,7 +139,7 @@ class Store {
 
 interface GetStoreOptions extends Context {
   deployID?: string
-  fetcher?: Fetcher
+  fetch?: Fetcher
   name?: string
 }
 
@@ -154,15 +154,15 @@ export const getStore: {
   }
 
   if (typeof input.name === 'string') {
-    const { fetcher, name, ...context } = input
-    const client = new Client(context, fetcher)
+    const { fetch, name, ...context } = input
+    const client = new Client(context, fetch)
 
     return new Store({ client, name })
   }
 
   if (typeof input.deployID === 'string') {
-    const { fetcher, deployID, ...context } = input
-    const client = new Client(context, fetcher)
+    const { fetch, deployID, ...context } = input
+    const client = new Client(context, fetch)
 
     return new Store({ client, name: deployID })
   }

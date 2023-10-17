@@ -6,20 +6,20 @@ const MAX_RETRY = 5
 const RATE_LIMIT_HEADER = 'X-RateLimit-Reset'
 
 export const fetchAndRetry = async (
-  fetcher: Fetcher,
+  fetch: Fetcher,
   url: string,
   options: RequestInit,
   attemptsLeft = MAX_RETRY,
 ): ReturnType<typeof globalThis.fetch> => {
   try {
-    const res = await fetcher(url, options)
+    const res = await fetch(url, options)
 
     if (attemptsLeft > 0 && (res.status === 429 || res.status >= 500)) {
       const delay = getDelay(res.headers.get(RATE_LIMIT_HEADER))
 
       await sleep(delay)
 
-      return fetchAndRetry(fetcher, url, options, attemptsLeft - 1)
+      return fetchAndRetry(fetch, url, options, attemptsLeft - 1)
     }
 
     return res
@@ -32,7 +32,7 @@ export const fetchAndRetry = async (
 
     await sleep(delay)
 
-    return fetchAndRetry(fetcher, url, options, attemptsLeft - 1)
+    return fetchAndRetry(fetch, url, options, attemptsLeft - 1)
   }
 }
 

@@ -72,7 +72,7 @@ describe('get', () => {
           url: signedURL,
         })
 
-      globalThis.fetch = mockStore.fetcher
+      globalThis.fetch = mockStore.fetch
 
       const blobs = getStore({
         name: 'production',
@@ -104,7 +104,7 @@ describe('get', () => {
           url: signedURL,
         })
 
-      globalThis.fetch = mockStore.fetcher
+      globalThis.fetch = mockStore.fetch
 
       const blobs = getStore({
         name: 'production',
@@ -123,7 +123,7 @@ describe('get', () => {
         url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
       })
 
-      globalThis.fetch = mockStore.fetcher
+      globalThis.fetch = mockStore.fetch
 
       const blobs = getStore({
         name: 'production',
@@ -149,7 +149,7 @@ describe('get', () => {
           url: signedURL,
         })
 
-      globalThis.fetch = mockStore.fetcher
+      globalThis.fetch = mockStore.fetch
 
       const blobs = getStore({
         name: 'production',
@@ -180,7 +180,7 @@ describe('get', () => {
           url: signedURL,
         })
 
-      globalThis.fetch = mockStore.fetcher
+      globalThis.fetch = mockStore.fetch
 
       const blobs = getStore({
         name: 'production',
@@ -207,7 +207,7 @@ describe('get', () => {
           url: `${edgeURL}/${siteID}/production/${key}`,
         })
 
-      globalThis.fetch = mockStore.fetcher
+      globalThis.fetch = mockStore.fetch
 
       const blobs = getStore({
         edgeURL,
@@ -232,7 +232,7 @@ describe('get', () => {
         url: `${edgeURL}/${siteID}/production/${key}`,
       })
 
-      globalThis.fetch = mockStore.fetcher
+      globalThis.fetch = mockStore.fetch
 
       const blobs = getStore({
         edgeURL,
@@ -252,7 +252,7 @@ describe('get', () => {
         url: `${edgeURL}/${siteID}/production/${key}`,
       })
 
-      globalThis.fetch = mockStore.fetcher
+      globalThis.fetch = mockStore.fetch
 
       const blobs = getStore({
         edgeURL,
@@ -292,7 +292,7 @@ describe('get', () => {
           url: `${edgeURL}/${siteID}/images/${key}`,
         })
 
-      globalThis.fetch = mockStore.fetcher
+      globalThis.fetch = mockStore.fetch
 
       for (let index = 0; index <= 1; index++) {
         const context = {
@@ -317,9 +317,9 @@ describe('get', () => {
   })
 
   test('Throws when the instance is missing required configuration properties', async () => {
-    const { fetcher } = new MockFetch()
+    const { fetch } = new MockFetch()
 
-    globalThis.fetch = fetcher
+    globalThis.fetch = fetch
 
     const blobs1 = getStore('production')
 
@@ -368,7 +368,7 @@ describe('set', () => {
           url: signedURL,
         })
 
-      globalThis.fetch = mockStore.fetcher
+      globalThis.fetch = mockStore.fetch
 
       const blobs = getStore({
         name: 'production',
@@ -400,7 +400,7 @@ describe('set', () => {
           url: signedURL,
         })
 
-      globalThis.fetch = mockStore.fetcher
+      globalThis.fetch = mockStore.fetch
 
       const blobs = getStore({
         name: 'production',
@@ -420,7 +420,7 @@ describe('set', () => {
         url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
       })
 
-      globalThis.fetch = mockStore.fetcher
+      globalThis.fetch = mockStore.fetch
 
       const blobs = getStore({
         name: 'production',
@@ -474,7 +474,7 @@ describe('set', () => {
           url: signedURL,
         })
 
-      globalThis.fetch = mockStore.fetcher
+      globalThis.fetch = mockStore.fetch
 
       const blobs = getStore({
         name: 'production',
@@ -504,7 +504,7 @@ describe('set', () => {
           url: `${edgeURL}/${siteID}/production/${encodeURIComponent(complexKey)}`,
         })
 
-      globalThis.fetch = mockStore.fetcher
+      globalThis.fetch = mockStore.fetch
 
       const blobs = getStore({
         edgeURL,
@@ -527,7 +527,7 @@ describe('set', () => {
         url: `${edgeURL}/${siteID}/production/${key}`,
       })
 
-      globalThis.fetch = mockStore.fetcher
+      globalThis.fetch = mockStore.fetch
 
       const blobs = getStore({
         edgeURL,
@@ -570,7 +570,7 @@ describe('set', () => {
           url: `${edgeURL}/${siteID}/production/${key}`,
         })
 
-      globalThis.fetch = mockStore.fetcher
+      globalThis.fetch = mockStore.fetch
 
       const blobs = getStore({
         edgeURL,
@@ -586,9 +586,9 @@ describe('set', () => {
   })
 
   test('Throws when the instance is missing required configuration properties', async () => {
-    const { fetcher } = new MockFetch()
+    const { fetch } = new MockFetch()
 
-    globalThis.fetch = fetcher
+    globalThis.fetch = fetch
 
     const blobs1 = getStore('production')
 
@@ -626,7 +626,7 @@ describe('setJSON', () => {
           url: signedURL,
         })
 
-      globalThis.fetch = mockStore.fetcher
+      globalThis.fetch = mockStore.fetch
 
       const blobs = getStore({
         name: 'production',
@@ -649,7 +649,7 @@ describe('setJSON', () => {
         url: `${edgeURL}/${siteID}/production/${key}`,
       })
 
-      globalThis.fetch = mockStore.fetcher
+      globalThis.fetch = mockStore.fetch
 
       const blobs = getStore({
         edgeURL,
@@ -681,7 +681,7 @@ describe('setJSON', () => {
           url: signedURL,
         })
 
-      globalThis.fetch = mockStore.fetcher
+      globalThis.fetch = mockStore.fetch
 
       const blobs = getStore({
         name: 'production',
@@ -721,7 +721,7 @@ describe('delete', () => {
           url: signedURL,
         })
 
-      globalThis.fetch = mockStore.fetcher
+      globalThis.fetch = mockStore.fetch
 
       const blobs = getStore({
         name: 'production',
@@ -742,7 +742,7 @@ describe('delete', () => {
         url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
       })
 
-      globalThis.fetch = mockStore.fetcher
+      globalThis.fetch = mockStore.fetch
 
       const blobs = getStore({
         name: 'production',
@@ -765,7 +765,7 @@ describe('delete', () => {
         url: `${edgeURL}/${siteID}/production/${key}`,
       })
 
-      globalThis.fetch = mockStore.fetcher
+      globalThis.fetch = mockStore.fetch
 
       const blobs = getStore({
         edgeURL,
@@ -786,7 +786,7 @@ describe('delete', () => {
         url: `${edgeURL}/${siteID}/production/${key}`,
       })
 
-      globalThis.fetch = mockStore.fetcher
+      globalThis.fetch = mockStore.fetch
 
       const blobs = getStore({
         edgeURL,
@@ -804,9 +804,9 @@ describe('delete', () => {
   })
 
   test('Throws when the instance is missing required configuration properties', async () => {
-    const { fetcher } = new MockFetch()
+    const { fetch } = new MockFetch()
 
-    globalThis.fetch = fetcher
+    globalThis.fetch = fetch
 
     const blobs1 = getStore('production')
 
@@ -851,7 +851,7 @@ describe('Deploy scope', () => {
         url: `${edgeURL}/${siteID}/${deployID}/${key}`,
       })
 
-    globalThis.fetch = mockStore.fetcher
+    globalThis.fetch = mockStore.fetch
 
     const context = {
       edgeURL,
@@ -881,8 +881,8 @@ describe('Deploy scope', () => {
   })
 })
 
-describe('Customer fetcher', () => {
-  test('Uses a custom implementation of `fetch` if the `fetcher` parameter is supplied', async () => {
+describe('Custom `fetch`', () => {
+  test('Uses a custom implementation of `fetch` if the `fetch` parameter is supplied', async () => {
     globalThis.fetch = () => {
       throw new Error('I should not be called')
     }
@@ -901,7 +901,7 @@ describe('Customer fetcher', () => {
 
     env.NETLIFY_BLOBS_CONTEXT = Buffer.from(JSON.stringify(context)).toString('base64')
 
-    const store = getStore({ fetcher: mockStore.fetcher, name: 'images' })
+    const store = getStore({ fetch: mockStore.fetch, name: 'images' })
 
     const string = await store.get(key)
     expect(string).toBe(value)

@@ -35,11 +35,11 @@ interface MakeStoreRequestOptions {
 
 export class Client {
   private context?: Context
-  private fetcher?: Fetcher
+  private fetch?: Fetcher
 
-  constructor(context?: Context, fetcher?: Fetcher) {
+  constructor(context?: Context, fetch?: Fetcher) {
     this.context = context ?? {}
-    this.fetcher = fetcher
+    this.fetch = fetch
   }
 
   private static getEnvironmentContext() {
@@ -86,8 +86,8 @@ export class Client {
       context.siteID
     }/blobs/${encodedKey}?context=${storeName}`
     const headers = { authorization: `Bearer ${context.token}` }
-    const fetcher = this.fetcher ?? globalThis.fetch
-    const res = await fetcher(apiURL, { headers, method })
+    const fetch = this.fetch ?? globalThis.fetch
+    const res = await fetch(apiURL, { headers, method })
 
     if (res.status !== 200) {
       throw new Error(`${method} operation has failed: API returned a ${res.status} response`)
@@ -123,8 +123,8 @@ export class Client {
       options.duplex = 'half'
     }
 
-    const fetcher = this.fetcher ?? globalThis.fetch
-    const res = await fetchAndRetry(fetcher, url, options)
+    const fetch = this.fetch ?? globalThis.fetch
+    const res = await fetchAndRetry(fetch, url, options)
 
     if (res.status === 404 && method === HTTPMethod.GET) {
       return null

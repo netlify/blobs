@@ -53,7 +53,7 @@ export class MockFetch {
     return this.addExpectedRequest({ ...options, method: 'put' })
   }
 
-  get fetcher() {
+  get fetch() {
     // eslint-disable-next-line require-await
     return async (...args: Parameters<typeof globalThis.fetch>) => {
       const [url, options] = args

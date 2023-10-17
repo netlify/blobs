@@ -149,12 +149,12 @@ const store2 = getStore({
 assert.equal(await store2.get('my-key'), 'my value')
 ```
 
-### Custom fetcher
+### Custom `fetch`
 
 The client uses [the web platform `fetch()`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) to make HTTP
 calls. By default, it will use any globally-defined instance of `fetch`, but you can choose to provide your own.
 
-You can do this by supplying a `fetcher` property to the `getStore` method.
+You can do this by supplying a `fetch` property to the `getStore` method.
 
 ```ts
 import { fetch } from 'whatwg-fetch'
@@ -162,7 +162,7 @@ import { fetch } from 'whatwg-fetch'
 import { getStore } from '@netlify/blobs'
 
 const store = getStore({
-  fetcher: fetch,
+  fetch,
   name: 'my-store',
 })
 
