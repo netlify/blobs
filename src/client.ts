@@ -4,11 +4,13 @@ import { env } from 'node:process'
 import { fetchAndRetry } from './retry.ts'
 import { BlobInput, Fetcher, HTTPMethod } from './types.ts'
 
-// The name of the environment variable that holds the context in a Base64,
-// JSON-encoded object. If we ever need to change the encoding or the shape
-// of this object, we should bump the version and create a new variable, so
-// that the client knows how to consume the data and can advise the user to
-// update the client if needed.
+/**
+ * The name of the environment variable that holds the context in a Base64,
+ * JSON-encoded object. If we ever need to change the encoding or the shape
+ * of this object, we should bump the version and create a new variable, so
+ * that the client knows how to consume the data and can advise the user to
+ * update the client if needed.
+ */
 export const NETLIFY_CONTEXT_VARIABLE = 'NETLIFY_BLOBS_CONTEXT'
 
 export interface Context {
