@@ -1,5 +1,6 @@
-import { Client, Context } from './client.ts'
-import { BlobInput, Fetcher, HTTPMethod } from './types.ts'
+import { Client, ClientOptions } from './client.ts'
+import { getEnvironmentContext, MissingBlobsEnvironmentError } from './environment.ts'
+import { BlobInput, HTTPMethod } from './types.ts'
 
 interface BaseStoreOptions {
   client: Client
@@ -137,9 +138,27 @@ class Store {
   }
 }
 
-interface GetStoreOptions extends Context {
+export const getDeployStore = (options: Partial<ClientOptions> = {}): Store => {
+  const context = getEnvironmentContext()
+  const { deployID, ...contextOptions } = context
+  const clientOptions = {
+    ...contextOptions,
+    ...options,
+    siteID: options.siteID ?? context.siteID,
+    token: options.token ?? context.token,
+  }
+
+  if (!deployID || !clientOptions.siteID || !clientOptions.token) {
+    throw new MissingBlobsEnvironmentError(['deployID', 'siteID', 'token'])
+  }
+
+  const client = new Client(clientOptions as ClientOptions)
+
+  return new Store({ client, deployID })
+}
+
+interface GetStoreOptions extends Partial<ClientOptions> {
   deployID?: string
-  fetch?: Fetcher
   name?: string
 }
 
@@ -147,24 +166,57 @@ export const getStore: {
   (name: string): Store
   (options: GetStoreOptions): Store
 } = (input) => {
+  const context = getEnvironmentContext()
+
   if (typeof input === 'string') {
-    const client = new Client()
+    if (!context.siteID || !context.token) {
+      throw new MissingBlobsEnvironmentError(['siteID', 'token'])
+    }
+
+    const client = new Client({
+      apiURL: context.apiURL,
+      edgeURL: context.edgeURL,
+      siteID: context.siteID,
+      token: context.token,
+    })
 
     return new Store({ client, name: input })
   }
 
   if (typeof input.name === 'string') {
-    const { fetch, name, ...context } = input
-    const client = new Client(context, fetch)
+    const { name, ...options } = input
+    const clientOptions = {
+      ...context,
+      ...options,
+      siteID: options.siteID ?? context.siteID,
+      token: options.token ?? context.token,
+    }
+
+    if (!clientOptions.siteID || !clientOptions.token) {
+      throw new MissingBlobsEnvironmentError(['siteID', 'token'])
+    }
+
+    const client = new Client(clientOptions as ClientOptions)
 
     return new Store({ client, name })
   }
 
   if (typeof input.deployID === 'string') {
-    const { fetch, deployID, ...context } = input
-    const client = new Client(context, fetch)
+    const { deployID, name, ...options } = input
+    const clientOptions = {
+      ...context,
+      ...options,
+      siteID: options.siteID ?? context.siteID,
+      token: options.token ?? context.token,
+    }
 
-    return new Store({ client, name: deployID })
+    if (!clientOptions.siteID || !clientOptions.token) {
+      throw new MissingBlobsEnvironmentError(['siteID', 'token'])
+    }
+
+    const client = new Client(clientOptions as ClientOptions)
+
+    return new Store({ client, deployID })
   }
 
   throw new Error('`getStore()` requires a `name` or `siteID` properties.')

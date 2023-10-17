@@ -1,1 +1,1 @@
-export { getStore } from './store.ts'
+export { getDeployStore, getStore } from './store.ts'
