@@ -1,4 +1,4 @@
-import { Client, ClientOptions } from './client.ts'
+import { Client, ClientOptions, getClientOptions } from './client.ts'
 import { getEnvironmentContext, MissingBlobsEnvironmentError } from './environment.ts'
 import { BlobInput, HTTPMethod } from './types.ts'
 
@@ -138,21 +138,19 @@ class Store {
   }
 }
 
+/**
+ * Gets a reference to a deploy-scoped store.
+ */
 export const getDeployStore = (options: Partial<ClientOptions> = {}): Store => {
   const context = getEnvironmentContext()
-  const { deployID, ...contextOptions } = context
-  const clientOptions = {
-    ...contextOptions,
-    ...options,
-    siteID: options.siteID ?? context.siteID,
-    token: options.token ?? context.token,
+  const { deployID } = context
+
+  if (!deployID) {
+    throw new MissingBlobsEnvironmentError(['deployID'])
   }
 
-  if (!deployID || !clientOptions.siteID || !clientOptions.token) {
-    throw new MissingBlobsEnvironmentError(['deployID', 'siteID', 'token'])
-  }
-
-  const client = new Client(clientOptions as ClientOptions)
+  const clientOptions = getClientOptions(options, context)
+  const client = new Client(clientOptions)
 
   return new Store({ client, deployID })
 }
@@ -162,59 +160,44 @@ interface GetStoreOptions extends Partial<ClientOptions> {
   name?: string
 }
 
+/**
+ * Gets a reference to a store.
+ *
+ * @param input Either a string containing the store name or an options object
+ */
 export const getStore: {
   (name: string): Store
   (options: GetStoreOptions): Store
 } = (input) => {
-  const context = getEnvironmentContext()
-
   if (typeof input === 'string') {
-    if (!context.siteID || !context.token) {
-      throw new MissingBlobsEnvironmentError(['siteID', 'token'])
-    }
-
-    const client = new Client({
-      apiURL: context.apiURL,
-      edgeURL: context.edgeURL,
-      siteID: context.siteID,
-      token: context.token,
-    })
+    const clientOptions = getClientOptions({})
+    const client = new Client(clientOptions)
 
     return new Store({ client, name: input })
   }
 
   if (typeof input.name === 'string') {
-    const { name, ...options } = input
-    const clientOptions = {
-      ...context,
-      ...options,
-      siteID: options.siteID ?? context.siteID,
-      token: options.token ?? context.token,
+    const { name } = input
+    const clientOptions = getClientOptions(input)
+
+    if (!name) {
+      throw new MissingBlobsEnvironmentError(['name'])
     }
 
-    if (!clientOptions.siteID || !clientOptions.token) {
-      throw new MissingBlobsEnvironmentError(['siteID', 'token'])
-    }
-
-    const client = new Client(clientOptions as ClientOptions)
+    const client = new Client(clientOptions)
 
     return new Store({ client, name })
   }
 
   if (typeof input.deployID === 'string') {
-    const { deployID, name, ...options } = input
-    const clientOptions = {
-      ...context,
-      ...options,
-      siteID: options.siteID ?? context.siteID,
-      token: options.token ?? context.token,
+    const clientOptions = getClientOptions(input)
+    const { deployID } = input
+
+    if (!deployID) {
+      throw new MissingBlobsEnvironmentError(['deployID'])
     }
 
-    if (!clientOptions.siteID || !clientOptions.token) {
-      throw new MissingBlobsEnvironmentError(['siteID', 'token'])
-    }
-
-    const client = new Client(clientOptions as ClientOptions)
+    const client = new Client(clientOptions)
 
     return new Store({ client, deployID })
   }

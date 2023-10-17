@@ -1,3 +1,4 @@
+import { EnvironmentContext, getEnvironmentContext, MissingBlobsEnvironmentError } from './environment.ts'
 import { fetchAndRetry } from './retry.ts'
 import { BlobInput, Fetcher, HTTPMethod } from './types.ts'
 
@@ -98,4 +99,34 @@ export class Client {
 
     return res
   }
+}
+
+/**
+ * Merges a set of options supplied by the user when getting a reference to a
+ * store with a context object found in the environment.
+ *
+ * @param options User-supplied options
+ * @param contextOverride Context to be used instead of the environment object
+ */
+export const getClientOptions = (
+  options: Partial<ClientOptions>,
+  contextOverride?: EnvironmentContext,
+): ClientOptions => {
+  const context = contextOverride ?? getEnvironmentContext()
+  const siteID = context.siteID ?? options.siteID
+  const token = context.token ?? options.token
+
+  if (!siteID || !token) {
+    throw new MissingBlobsEnvironmentError(['siteID', 'token'])
+  }
+
+  const clientOptions = {
+    apiURL: context.apiURL ?? options.apiURL,
+    edgeURL: context.edgeURL ?? options.edgeURL,
+    fetch: options.fetch,
+    siteID,
+    token,
+  }
+
+  return clientOptions
 }
