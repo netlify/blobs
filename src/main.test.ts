@@ -7,7 +7,8 @@ import { describe, test, expect, beforeAll, afterEach } from 'vitest'
 import { MockFetch } from '../test/mock_fetch.js'
 import { streamToString } from '../test/util.js'
 
-import { getStore } from './main.js'
+import { MissingBlobsEnvironmentError } from './environment.js'
+import { getDeployStore, getStore } from './main.js'
 
 beforeAll(async () => {
   if (semver.lt(nodeVersion, '18.0.0')) {
@@ -315,28 +316,6 @@ describe('get', () => {
       expect(mockStore.fulfilled).toBeTruthy()
     })
   })
-
-  test('Throws when the instance is missing required configuration properties', async () => {
-    const { fetch } = new MockFetch()
-
-    globalThis.fetch = fetch
-
-    const blobs1 = getStore('production')
-
-    expect(async () => await blobs1.get(key)).rejects.toThrowError(
-      `The blob store is unavailable because it's missing required configuration properties`,
-    )
-
-    const blobs2 = getStore({
-      name: 'production',
-      token: apiToken,
-      siteID: '',
-    })
-
-    expect(async () => await blobs2.get(key)).rejects.toThrowError(
-      `The blob store is unavailable because it's missing required configuration properties`,
-    )
-  })
 })
 
 describe('set', () => {
@@ -584,28 +563,6 @@ describe('set', () => {
       expect(mockStore.fulfilled).toBeTruthy()
     })
   })
-
-  test('Throws when the instance is missing required configuration properties', async () => {
-    const { fetch } = new MockFetch()
-
-    globalThis.fetch = fetch
-
-    const blobs1 = getStore('production')
-
-    expect(async () => await blobs1.set(key, value)).rejects.toThrowError(
-      `The blob store is unavailable because it's missing required configuration properties`,
-    )
-
-    const blobs2 = getStore({
-      name: 'production',
-      token: apiToken,
-      siteID: '',
-    })
-
-    expect(async () => await blobs2.set(key, value)).rejects.toThrowError(
-      `The blob store is unavailable because it's missing required configuration properties`,
-    )
-  })
 })
 
 describe('setJSON', () => {
@@ -802,28 +759,6 @@ describe('delete', () => {
       expect(mockStore.fulfilled).toBeTruthy()
     })
   })
-
-  test('Throws when the instance is missing required configuration properties', async () => {
-    const { fetch } = new MockFetch()
-
-    globalThis.fetch = fetch
-
-    const blobs1 = getStore('production')
-
-    expect(async () => await blobs1.delete(key)).rejects.toThrowError(
-      `The blob store is unavailable because it's missing required configuration properties`,
-    )
-
-    const blobs2 = getStore({
-      name: 'production',
-      token: apiToken,
-      siteID: '',
-    })
-
-    expect(async () => await blobs2.delete(key)).rejects.toThrowError(
-      `The blob store is unavailable because it's missing required configuration properties`,
-    )
-  })
 })
 
 describe('Deploy scope', () => {
@@ -843,12 +778,12 @@ describe('Deploy scope', () => {
       .get({
         headers: { authorization: `Bearer ${mockToken}` },
         response: new Response(value),
-        url: `${edgeURL}/${siteID}/${deployID}/${key}`,
+        url: `${edgeURL}/${siteID}/deploy:${deployID}/${key}`,
       })
       .get({
         headers: { authorization: `Bearer ${mockToken}` },
         response: new Response(value),
-        url: `${edgeURL}/${siteID}/${deployID}/${key}`,
+        url: `${edgeURL}/${siteID}/deploy:${deployID}/${key}`,
       })
 
     globalThis.fetch = mockStore.fetch
@@ -876,6 +811,42 @@ describe('Deploy scope', () => {
 
     const stream2 = await deployStore.get(key, { type: 'stream' })
     expect(await streamToString(stream2 as unknown as NodeJS.ReadableStream)).toBe(value)
+
+    expect(mockStore.fulfilled).toBeTruthy()
+  })
+
+  test('Returns a deploy-scoped store if the `getDeployStore` method is called', async () => {
+    const mockToken = 'some-token'
+    const mockStore = new MockFetch()
+      .get({
+        headers: { authorization: `Bearer ${mockToken}` },
+        response: new Response(value),
+        url: `${edgeURL}/${siteID}/deploy:${deployID}/${key}`,
+      })
+      .get({
+        headers: { authorization: `Bearer ${mockToken}` },
+        response: new Response(value),
+        url: `${edgeURL}/${siteID}/deploy:${deployID}/${key}`,
+      })
+
+    globalThis.fetch = mockStore.fetch
+
+    const context = {
+      deployID,
+      edgeURL,
+      siteID,
+      token: mockToken,
+    }
+
+    env.NETLIFY_BLOBS_CONTEXT = Buffer.from(JSON.stringify(context)).toString('base64')
+
+    const deployStore = getDeployStore()
+
+    const string = await deployStore.get(key)
+    expect(string).toBe(value)
+
+    const stream = await deployStore.get(key, { type: 'stream' })
+    expect(await streamToString(stream as unknown as NodeJS.ReadableStream)).toBe(value)
 
     expect(mockStore.fulfilled).toBeTruthy()
   })
@@ -907,5 +878,22 @@ describe('Custom `fetch`', () => {
     expect(string).toBe(value)
 
     expect(mockStore.fulfilled).toBeTruthy()
+  })
+})
+
+describe(`getStore`, () => {
+  test('Throws when the instance is missing required configuration properties', async () => {
+    const { fetch } = new MockFetch()
+
+    globalThis.fetch = fetch
+
+    expect(() => getStore('production')).toThrowError(MissingBlobsEnvironmentError)
+    expect(() =>
+      getStore({
+        name: 'production',
+        token: apiToken,
+        siteID: '',
+      }),
+    ).toThrowError(MissingBlobsEnvironmentError)
   })
 })

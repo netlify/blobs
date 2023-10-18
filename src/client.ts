@@ -1,29 +1,6 @@
-import { Buffer } from 'node:buffer'
-import { env } from 'node:process'
-
+import { EnvironmentContext, getEnvironmentContext, MissingBlobsEnvironmentError } from './environment.ts'
 import { fetchAndRetry } from './retry.ts'
 import { BlobInput, Fetcher, HTTPMethod } from './types.ts'
-
-/**
- * The name of the environment variable that holds the context in a Base64,
- * JSON-encoded object. If we ever need to change the encoding or the shape
- * of this object, we should bump the version and create a new variable, so
- * that the client knows how to consume the data and can advise the user to
- * update the client if needed.
- */
-export const NETLIFY_CONTEXT_VARIABLE = 'NETLIFY_BLOBS_CONTEXT'
-
-export interface Context {
-  apiURL?: string
-  edgeURL?: string
-  siteID?: string
-  token?: string
-}
-
-interface PopulatedContext extends Context {
-  siteID: string
-  token: string
-}
 
 interface MakeStoreRequestOptions {
   body?: BlobInput | null
@@ -33,59 +10,45 @@ interface MakeStoreRequestOptions {
   storeName: string
 }
 
+export interface ClientOptions {
+  apiURL?: string
+  edgeURL?: string
+  fetch?: Fetcher
+  siteID: string
+  token: string
+}
+
 export class Client {
-  private context?: Context
+  private apiURL?: string
+  private edgeURL?: string
   private fetch?: Fetcher
+  private siteID: string
+  private token: string
 
-  constructor(context?: Context, fetch?: Fetcher) {
-    this.context = context ?? {}
+  constructor({ apiURL, edgeURL, fetch, siteID, token }: ClientOptions) {
+    this.apiURL = apiURL
+    this.edgeURL = edgeURL
     this.fetch = fetch
-  }
-
-  private static getEnvironmentContext() {
-    if (!env[NETLIFY_CONTEXT_VARIABLE]) {
-      return
-    }
-
-    const data = Buffer.from(env[NETLIFY_CONTEXT_VARIABLE], 'base64').toString()
-
-    try {
-      return JSON.parse(data) as Context
-    } catch {
-      // no-op
-    }
-  }
-
-  private getContext() {
-    const context = {
-      ...Client.getEnvironmentContext(),
-      ...this.context,
-    }
-
-    if (!context.siteID || !context.token) {
-      throw new Error(`The blob store is unavailable because it's missing required configuration properties`)
-    }
-
-    return context as PopulatedContext
+    this.siteID = siteID
+    this.token = token
   }
 
   private async getFinalRequest(storeName: string, key: string, method: string) {
-    const context = this.getContext()
     const encodedKey = encodeURIComponent(key)
 
-    if ('edgeURL' in context) {
+    if (this.edgeURL) {
       return {
         headers: {
-          authorization: `Bearer ${context.token}`,
+          authorization: `Bearer ${this.token}`,
         },
-        url: `${context.edgeURL}/${context.siteID}/${storeName}/${encodedKey}`,
+        url: `${this.edgeURL}/${this.siteID}/${storeName}/${encodedKey}`,
       }
     }
 
-    const apiURL = `${context.apiURL ?? 'https://api.netlify.com'}/api/v1/sites/${
-      context.siteID
+    const apiURL = `${this.apiURL ?? 'https://api.netlify.com'}/api/v1/sites/${
+      this.siteID
     }/blobs/${encodedKey}?context=${storeName}`
-    const headers = { authorization: `Bearer ${context.token}` }
+    const headers = { authorization: `Bearer ${this.token}` }
     const fetch = this.fetch ?? globalThis.fetch
     const res = await fetch(apiURL, { headers, method })
 
@@ -136,4 +99,34 @@ export class Client {
 
     return res
   }
+}
+
+/**
+ * Merges a set of options supplied by the user when getting a reference to a
+ * store with a context object found in the environment.
+ *
+ * @param options User-supplied options
+ * @param contextOverride Context to be used instead of the environment object
+ */
+export const getClientOptions = (
+  options: Partial<ClientOptions>,
+  contextOverride?: EnvironmentContext,
+): ClientOptions => {
+  const context = contextOverride ?? getEnvironmentContext()
+  const siteID = context.siteID ?? options.siteID
+  const token = context.token ?? options.token
+
+  if (!siteID || !token) {
+    throw new MissingBlobsEnvironmentError(['siteID', 'token'])
+  }
+
+  const clientOptions = {
+    apiURL: context.apiURL ?? options.apiURL,
+    edgeURL: context.edgeURL ?? options.edgeURL,
+    fetch: options.fetch,
+    siteID,
+    token,
+  }
+
+  return clientOptions
 }

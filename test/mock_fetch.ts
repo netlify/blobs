@@ -57,6 +57,7 @@ export class MockFetch {
     // eslint-disable-next-line require-await
     return async (...args: Parameters<typeof globalThis.fetch>) => {
       const [url, options] = args
+      const method = options?.method ?? 'get'
       const headers = options?.headers as Record<string, string>
       const urlString = url.toString()
       const match = this.requests.find(
@@ -64,7 +65,7 @@ export class MockFetch {
       )
 
       if (!match) {
-        throw new Error(`Unexpected fetch call: ${url}`)
+        throw new Error(`Unexpected fetch call: ${method} ${url}`)
       }
 
       for (const key in match.headers) {

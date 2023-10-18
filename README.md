@@ -126,15 +126,15 @@ know whether an item is still relevant or safe to delete.
 But sometimes it's useful to have data pegged to a specific deploy, and shift to the platform the responsibility of
 managing that data — keep it as long as the deploy is around, and wipe it if the deploy is deleted.
 
-You can opt-in to this behavior by supplying a `deployID` instead of a `name` to the `getStore` method.
+You can opt-in to this behavior by creating the store using the `getDeployStore` method.
 
 ```ts
 import { assert } from 'node:assert'
 
-import { getStore } from '@netlify/blobs'
+import { getDeployStore } from '@netlify/blobs'
 
 // Using API access
-const store1 = getStore({
+const store1 = getDeployStore({
   deployID: 'MY_DEPLOY_ID',
   token: 'MY_API_TOKEN',
 })
@@ -142,9 +142,7 @@ const store1 = getStore({
 await store1.set('my-key', 'my value')
 
 // Using environment-based configuration
-const store2 = getStore({
-  deployID: 'MY_DEPLOY_ID',
-})
+const store2 = getDeployStore()
 
 assert.equal(await store2.get('my-key'), 'my value')
 ```
