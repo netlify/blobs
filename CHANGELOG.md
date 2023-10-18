@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.0](https://github.com/netlify/blobs/compare/v3.0.0...v3.1.0) (2023-10-18)
+
+
+### Features
+
+* add `getDeployStore` method ([#68](https://github.com/netlify/blobs/issues/68)) ([5135f3d](https://github.com/netlify/blobs/commit/5135f3d3dfaf55c48c51e8b115ab64c8728e73aa))
+
 ## [3.0.0](https://github.com/netlify/blobs/compare/v2.2.0...v3.0.0) (2023-10-17)
 
 
