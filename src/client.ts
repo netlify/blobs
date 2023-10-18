@@ -1,4 +1,5 @@
 import { EnvironmentContext, getEnvironmentContext, MissingBlobsEnvironmentError } from './environment.ts'
+import { encodeMetadata, Metadata, METADATA_HEADER_EXTERNAL } from './metadata.ts'
 import { fetchAndRetry } from './retry.ts'
 import { BlobInput, Fetcher, HTTPMethod } from './types.ts'
 
@@ -6,6 +7,7 @@ interface MakeStoreRequestOptions {
   body?: BlobInput | null
   headers?: Record<string, string>
   key: string
+  metadata?: Metadata
   method: HTTPMethod
   storeName: string
 }
@@ -33,21 +35,32 @@ export class Client {
     this.token = token
   }
 
-  private async getFinalRequest(storeName: string, key: string, method: string) {
+  private async getFinalRequest(storeName: string, key: string, method: string, metadata?: Metadata) {
     const encodedKey = encodeURIComponent(key)
 
     if (this.edgeURL) {
+      const headers: Record<string, string> = {
+        authorization: `Bearer ${this.token}`,
+      }
+
+      if (metadata) {
+        headers[METADATA_HEADER_EXTERNAL] = encodeMetadata(metadata)
+      }
+
       return {
-        headers: {
-          authorization: `Bearer ${this.token}`,
-        },
+        headers,
         url: `${this.edgeURL}/${this.siteID}/${storeName}/${encodedKey}`,
       }
     }
 
-    const apiURL = `${this.apiURL ?? 'https://api.netlify.com'}/api/v1/sites/${
+    let apiURL = `${this.apiURL ?? 'https://api.netlify.com'}/api/v1/sites/${
       this.siteID
     }/blobs/${encodedKey}?context=${storeName}`
+
+    if (metadata) {
+      apiURL += `&metadata=${encodeMetadata(metadata)}`
+    }
+
     const headers = { authorization: `Bearer ${this.token}` }
     const fetch = this.fetch ?? globalThis.fetch
     const res = await fetch(apiURL, { headers, method })
@@ -63,8 +76,8 @@ export class Client {
     }
   }
 
-  async makeRequest({ body, headers: extraHeaders, key, method, storeName }: MakeStoreRequestOptions) {
-    const { headers: baseHeaders = {}, url } = await this.getFinalRequest(storeName, key, method)
+  async makeRequest({ body, headers: extraHeaders, key, metadata, method, storeName }: MakeStoreRequestOptions) {
+    const { headers: baseHeaders = {}, url } = await this.getFinalRequest(storeName, key, method, metadata)
     const headers: Record<string, string> = {
       ...baseHeaders,
       ...extraHeaders,

@@ -1,4 +1,5 @@
 import { Client } from './client.ts'
+import { decodeMetadata, Metadata } from './metadata.ts'
 import { BlobInput, HTTPMethod } from './types.ts'
 
 interface BaseStoreOptions {
@@ -17,13 +18,14 @@ type StoreOptions = DeployStoreOptions | NamedStoreOptions
 
 interface SetOptions {
   /**
-   * Accepts an absolute date as a `Date` object, or a relative date as the
-   * number of seconds from the current date.
+   * Arbitrary metadata object to associate with an entry. Must be seralizable
+   * to JSON.
    */
-  expiration?: Date | number
+  metadata?: Metadata
 }
 
-const EXPIRY_HEADER = 'x-nf-expires-at'
+type BlobWithMetadata = { etag?: string } & { metadata: Metadata }
+type BlobResponseType = 'arrayBuffer' | 'blob' | 'json' | 'stream' | 'text'
 
 export class Store {
   private client: Client
@@ -32,26 +34,6 @@ export class Store {
   constructor(options: StoreOptions) {
     this.client = options.client
     this.name = 'deployID' in options ? `deploy:${options.deployID}` : options.name
-  }
-
-  private static getExpirationHeaders(expiration: Date | number | undefined): Record<string, string> {
-    if (typeof expiration === 'number') {
-      return {
-        [EXPIRY_HEADER]: (Date.now() + expiration).toString(),
-      }
-    }
-
-    if (expiration instanceof Date) {
-      return {
-        [EXPIRY_HEADER]: expiration.getTime().toString(),
-      }
-    }
-
-    if (expiration === undefined) {
-      return {}
-    }
-
-    throw new TypeError(`'expiration' value must be a number or a Date, ${typeof expiration} found.`)
   }
 
   async delete(key: string) {
@@ -67,19 +49,10 @@ export class Store {
   async get(key: string, { type }: { type: 'text' }): Promise<string>
   async get(
     key: string,
-    options?: { type: 'arrayBuffer' | 'blob' | 'json' | 'stream' | 'text' },
+    options?: { type: BlobResponseType },
   ): Promise<ArrayBuffer | Blob | ReadableStream | string | null> {
     const { type } = options ?? {}
     const res = await this.client.makeRequest({ key, method: HTTPMethod.GET, storeName: this.name })
-    const expiration = res?.headers.get(EXPIRY_HEADER)
-
-    if (typeof expiration === 'string') {
-      const expirationTS = Number.parseInt(expiration)
-
-      if (!Number.isNaN(expirationTS) && expirationTS <= Date.now()) {
-        return null
-      }
-    }
 
     if (res === null) {
       return res
@@ -108,22 +81,85 @@ export class Store {
     throw new Error(`Invalid 'type' property: ${type}. Expected: arrayBuffer, blob, json, stream, or text.`)
   }
 
-  async set(key: string, data: BlobInput, { expiration }: SetOptions = {}) {
-    const headers = Store.getExpirationHeaders(expiration)
+  async getWithMetadata(key: string): Promise<{ data: string } & BlobWithMetadata>
 
+  async getWithMetadata(
+    key: string,
+    { type }: { type: 'arrayBuffer' },
+  ): Promise<{ data: ArrayBuffer } & BlobWithMetadata>
+
+  async getWithMetadata(key: string, { type }: { type: 'blob' }): Promise<{ data: Blob } & BlobWithMetadata>
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async getWithMetadata(key: string, { type }: { type: 'json' }): Promise<{ data: any } & BlobWithMetadata>
+
+  async getWithMetadata(key: string, { type }: { type: 'stream' }): Promise<{ data: ReadableStream } & BlobWithMetadata>
+
+  async getWithMetadata(key: string, { type }: { type: 'text' }): Promise<{ data: string } & BlobWithMetadata>
+
+  async getWithMetadata(
+    key: string,
+    options?: { type: BlobResponseType },
+  ): Promise<
+    | ({
+        data: ArrayBuffer | Blob | ReadableStream | string | null
+      } & BlobWithMetadata)
+    | null
+  > {
+    const { type } = options ?? {}
+    const res = await this.client.makeRequest({ key, method: HTTPMethod.GET, storeName: this.name })
+    const etag = res?.headers.get('etag') ?? undefined
+
+    let metadata: Metadata = {}
+
+    try {
+      metadata = decodeMetadata(res?.headers)
+    } catch {
+      throw new Error(
+        'An internal error occurred while trying to retrieve the metadata for an entry. Please try updating to the latest version of the Netlify Blobs client.',
+      )
+    }
+
+    if (res === null) {
+      return null
+    }
+
+    if (type === undefined || type === 'text') {
+      return { data: await res.text(), etag, metadata }
+    }
+
+    if (type === 'arrayBuffer') {
+      return { data: await res.arrayBuffer(), etag, metadata }
+    }
+
+    if (type === 'blob') {
+      return { data: await res.blob(), etag, metadata }
+    }
+
+    if (type === 'json') {
+      return { data: await res.json(), etag, metadata }
+    }
+
+    if (type === 'stream') {
+      return { data: res.body, etag, metadata }
+    }
+
+    throw new Error(`Invalid 'type' property: ${type}. Expected: arrayBuffer, blob, json, stream, or text.`)
+  }
+
+  async set(key: string, data: BlobInput, { metadata }: SetOptions = {}) {
     await this.client.makeRequest({
       body: data,
-      headers,
       key,
+      metadata,
       method: HTTPMethod.PUT,
       storeName: this.name,
     })
   }
 
-  async setJSON(key: string, data: unknown, { expiration }: SetOptions = {}) {
+  async setJSON(key: string, data: unknown, { metadata }: SetOptions = {}) {
     const payload = JSON.stringify(data)
     const headers = {
-      ...Store.getExpirationHeaders(expiration),
       'content-type': 'application/json',
     }
 
@@ -131,6 +167,7 @@ export class Store {
       body: payload,
       headers,
       key,
+      metadata,
       method: HTTPMethod.PUT,
       storeName: this.name,
     })
