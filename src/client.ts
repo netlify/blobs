@@ -1,4 +1,5 @@
 import { EnvironmentContext, getEnvironmentContext, MissingBlobsEnvironmentError } from './environment.ts'
+import { encodeMetadata, Metadata, METADATA_HEADER_EXTERNAL, METADATA_HEADER_INTERNAL } from './metadata.ts'
 import { fetchAndRetry } from './retry.ts'
 import { BlobInput, Fetcher, HTTPMethod } from './types.ts'
 
@@ -6,6 +7,7 @@ interface MakeStoreRequestOptions {
   body?: BlobInput | null
   headers?: Record<string, string>
   key: string
+  metadata?: Metadata
   method: HTTPMethod
   storeName: string
 }
@@ -33,14 +35,21 @@ export class Client {
     this.token = token
   }
 
-  private async getFinalRequest(storeName: string, key: string, method: string) {
+  private async getFinalRequest(storeName: string, key: string, method: string, metadata?: Metadata) {
     const encodedKey = encodeURIComponent(key)
+    const encodedMetadata = encodeMetadata(metadata)
 
     if (this.edgeURL) {
+      const headers: Record<string, string> = {
+        authorization: `Bearer ${this.token}`,
+      }
+
+      if (encodedMetadata) {
+        headers[METADATA_HEADER_EXTERNAL] = encodedMetadata
+      }
+
       return {
-        headers: {
-          authorization: `Bearer ${this.token}`,
-        },
+        headers,
         url: `${this.edgeURL}/${this.siteID}/${storeName}/${encodedKey}`,
       }
     }
@@ -48,23 +57,30 @@ export class Client {
     const apiURL = `${this.apiURL ?? 'https://api.netlify.com'}/api/v1/sites/${
       this.siteID
     }/blobs/${encodedKey}?context=${storeName}`
-    const headers = { authorization: `Bearer ${this.token}` }
+    const apiHeaders: Record<string, string> = { authorization: `Bearer ${this.token}` }
+
+    if (encodedMetadata) {
+      apiHeaders[METADATA_HEADER_EXTERNAL] = encodedMetadata
+    }
+
     const fetch = this.fetch ?? globalThis.fetch
-    const res = await fetch(apiURL, { headers, method })
+    const res = await fetch(apiURL, { headers: apiHeaders, method })
 
     if (res.status !== 200) {
       throw new Error(`${method} operation has failed: API returned a ${res.status} response`)
     }
 
     const { url } = await res.json()
+    const userHeaders = encodedMetadata ? { [METADATA_HEADER_INTERNAL]: encodedMetadata } : undefined
 
     return {
+      headers: userHeaders,
       url,
     }
   }
 
-  async makeRequest({ body, headers: extraHeaders, key, method, storeName }: MakeStoreRequestOptions) {
-    const { headers: baseHeaders = {}, url } = await this.getFinalRequest(storeName, key, method)
+  async makeRequest({ body, headers: extraHeaders, key, metadata, method, storeName }: MakeStoreRequestOptions) {
+    const { headers: baseHeaders = {}, url } = await this.getFinalRequest(storeName, key, method, metadata)
     const headers: Record<string, string> = {
       ...baseHeaders,
       ...extraHeaders,

@@ -5,7 +5,7 @@ import semver from 'semver'
 import { describe, test, expect, beforeAll, afterEach } from 'vitest'
 
 import { MockFetch } from '../test/mock_fetch.js'
-import { streamToString } from '../test/util.js'
+import { base64Encode, streamToString } from '../test/util.js'
 
 import { MissingBlobsEnvironmentError } from './environment.js'
 import { getDeployStore, getStore } from './main.js'
@@ -164,34 +164,6 @@ describe('get', () => {
 
       expect(mockStore.fulfilled).toBeTruthy()
     })
-
-    test('Returns `null` when the blob entry contains an expiry date in the past', async () => {
-      const mockStore = new MockFetch()
-        .get({
-          headers: { authorization: `Bearer ${apiToken}` },
-          response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
-        })
-        .get({
-          response: new Response(value, {
-            headers: {
-              'x-nf-expires-at': (Date.now() - 1000).toString(),
-            },
-          }),
-          url: signedURL,
-        })
-
-      globalThis.fetch = mockStore.fetch
-
-      const blobs = getStore({
-        name: 'production',
-        token: apiToken,
-        siteID,
-      })
-
-      expect(await blobs.get(key)).toBeNull()
-      expect(mockStore.fulfilled).toBeTruthy()
-    })
   })
 
   describe('With edge credentials', () => {
@@ -318,6 +290,162 @@ describe('get', () => {
   })
 })
 
+describe('getWithMetadata', () => {
+  describe('With API credentials', () => {
+    test('Reads from the blob store and returns the etag and the metadata object', async () => {
+      const mockMetadata = {
+        name: 'Netlify',
+        cool: true,
+        functions: ['edge', 'serverless'],
+      }
+      const responseHeaders = {
+        etag: '123456789',
+        'x-amz-meta-user': `b64;${base64Encode(mockMetadata)}`,
+      }
+      const mockStore = new MockFetch()
+        .get({
+          headers: { authorization: `Bearer ${apiToken}` },
+          response: new Response(JSON.stringify({ url: signedURL })),
+          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
+        })
+        .get({
+          response: new Response(value, { headers: responseHeaders }),
+          url: signedURL,
+        })
+        .get({
+          headers: { authorization: `Bearer ${apiToken}` },
+          response: new Response(JSON.stringify({ url: signedURL })),
+          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
+        })
+        .get({
+          response: new Response(value, { headers: responseHeaders }),
+          url: signedURL,
+        })
+
+      globalThis.fetch = mockStore.fetch
+
+      const blobs = getStore({
+        name: 'production',
+        token: apiToken,
+        siteID,
+      })
+
+      const entry1 = await blobs.getWithMetadata(key)
+      expect(entry1.data).toBe(value)
+      expect(entry1.etag).toBe(responseHeaders.etag)
+      expect(entry1.metadata).toEqual(mockMetadata)
+
+      const entry2 = await blobs.getWithMetadata(key, { type: 'stream' })
+      expect(await streamToString(entry2.data as unknown as NodeJS.ReadableStream)).toBe(value)
+      expect(entry2.etag).toBe(responseHeaders.etag)
+      expect(entry2.metadata).toEqual(mockMetadata)
+
+      expect(mockStore.fulfilled).toBeTruthy()
+    })
+
+    test('Returns `null` when the pre-signed URL returns a 404', async () => {
+      const mockStore = new MockFetch()
+        .get({
+          headers: { authorization: `Bearer ${apiToken}` },
+          response: new Response(JSON.stringify({ url: signedURL })),
+          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
+        })
+        .get({
+          response: new Response('Something went wrong', { status: 404 }),
+          url: signedURL,
+        })
+
+      globalThis.fetch = mockStore.fetch
+
+      const blobs = getStore({
+        name: 'production',
+        token: apiToken,
+        siteID,
+      })
+
+      expect(await blobs.getWithMetadata(key)).toBeNull()
+      expect(mockStore.fulfilled).toBeTruthy()
+    })
+
+    test('Throws when the metadata object cannot be parsed', async () => {
+      const responseHeaders = {
+        etag: '123456789',
+        'x-amz-meta-user': `b64;${base64Encode(`{"name": "Netlify", "cool`)}`,
+      }
+      const mockStore = new MockFetch()
+        .get({
+          headers: { authorization: `Bearer ${apiToken}` },
+          response: new Response(JSON.stringify({ url: signedURL })),
+          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
+        })
+        .get({
+          response: new Response(value, { headers: responseHeaders }),
+          url: signedURL,
+        })
+
+      globalThis.fetch = mockStore.fetch
+
+      const blobs = getStore({
+        name: 'production',
+        token: apiToken,
+        siteID,
+      })
+
+      await expect(async () => await blobs.getWithMetadata(key)).rejects.toThrowError(
+        'An internal error occurred while trying to retrieve the metadata for an entry. Please try updating to the latest version of the Netlify Blobs client.',
+      )
+
+      expect(mockStore.fulfilled).toBeTruthy()
+    })
+  })
+
+  describe('With edge credentials', () => {
+    test('Reads from the blob store and returns the etag and the metadata object', async () => {
+      const mockMetadata = {
+        name: 'Netlify',
+        cool: true,
+        functions: ['edge', 'serverless'],
+      }
+      const responseHeaders = {
+        etag: '123456789',
+        'x-amz-meta-user': `b64;${base64Encode(mockMetadata)}`,
+      }
+      const mockStore = new MockFetch()
+        .get({
+          headers: { authorization: `Bearer ${edgeToken}` },
+          response: new Response(value, { headers: responseHeaders }),
+          url: `${edgeURL}/${siteID}/production/${key}`,
+        })
+        .get({
+          headers: { authorization: `Bearer ${edgeToken}` },
+          response: new Response(value, { headers: responseHeaders }),
+          url: `${edgeURL}/${siteID}/production/${key}`,
+        })
+
+      globalThis.fetch = mockStore.fetch
+
+      const blobs = getStore({
+        edgeURL,
+        name: 'production',
+        token: edgeToken,
+        siteID,
+      })
+
+      const entry1 = await blobs.getWithMetadata(key)
+      expect(entry1.data).toBe(value)
+      expect(entry1.etag).toBe(responseHeaders.etag)
+      expect(entry1.metadata).toEqual(mockMetadata)
+
+      const entry2 = await blobs.getWithMetadata(key, { type: 'stream' })
+      expect(await streamToString(entry2.data as unknown as NodeJS.ReadableStream)).toBe(value)
+      expect(entry2.etag).toBe(responseHeaders.etag)
+      expect(entry2.metadata).toEqual(mockMetadata)
+
+      expect(mockStore.fulfilled).toBeTruthy()
+    })
+  })
+})
+
 describe('set', () => {
   describe('With API credentials', () => {
     test('Writes to the blob store', async () => {
@@ -361,11 +489,16 @@ describe('set', () => {
       expect(mockStore.fulfilled).toBeTruthy()
     })
 
-    test('Accepts an `expiration` parameter', async () => {
-      const expiration = new Date(Date.now() + 15_000)
+    test('Accepts a `metadata` parameter', async () => {
+      const metadata = {
+        name: 'Netlify',
+        cool: true,
+        functions: ['edge', 'serverless'],
+      }
+      const encodedMetadata = `b64;${Buffer.from(JSON.stringify(metadata)).toString('base64')}`
       const mockStore = new MockFetch()
         .put({
-          headers: { authorization: `Bearer ${apiToken}` },
+          headers: { authorization: `Bearer ${apiToken}`, 'netlify-blobs-metadata': encodedMetadata },
           response: new Response(JSON.stringify({ url: signedURL })),
           url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
         })
@@ -373,7 +506,7 @@ describe('set', () => {
           body: value,
           headers: {
             'cache-control': 'max-age=0, stale-while-revalidate=60',
-            'x-nf-expires-at': expiration.getTime().toString(),
+            'x-amz-meta-user': encodedMetadata,
           },
           response: new Response(null),
           url: signedURL,
@@ -387,7 +520,7 @@ describe('set', () => {
         siteID,
       })
 
-      await blobs.set(key, value, { expiration })
+      await blobs.set(key, value, { metadata })
 
       expect(mockStore.fulfilled).toBeTruthy()
     })
@@ -620,35 +753,56 @@ describe('setJSON', () => {
       expect(mockStore.fulfilled).toBeTruthy()
     })
 
-    test('Accepts an `expiration` parameter', async () => {
-      const expiration = new Date(Date.now() + 15_000)
-      const mockStore = new MockFetch()
-        .put({
-          headers: { authorization: `Bearer ${apiToken}` },
-          response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
-        })
-        .put({
-          body: JSON.stringify({ value }),
-          headers: {
-            'cache-control': 'max-age=0, stale-while-revalidate=60',
-            'x-nf-expires-at': expiration.getTime().toString(),
-          },
-          response: new Response(null),
-          url: signedURL,
-        })
+    test('Accepts a `metadata` parameter', async () => {
+      const metadata = {
+        name: 'Netlify',
+        cool: true,
+        functions: ['edge', 'serverless'],
+      }
+      const encodedMetadata = `b64;${Buffer.from(JSON.stringify(metadata)).toString('base64')}`
+      const mockStore = new MockFetch().put({
+        body: JSON.stringify({ value }),
+        headers: {
+          authorization: `Bearer ${edgeToken}`,
+          'cache-control': 'max-age=0, stale-while-revalidate=60',
+          'netlify-blobs-metadata': encodedMetadata,
+        },
+        response: new Response(null),
+        url: `${edgeURL}/${siteID}/production/${key}`,
+      })
 
       globalThis.fetch = mockStore.fetch
 
       const blobs = getStore({
+        edgeURL,
         name: 'production',
-        token: apiToken,
+        token: edgeToken,
         siteID,
       })
 
-      await blobs.setJSON(key, { value }, { expiration })
+      await blobs.setJSON(key, { value }, { metadata })
 
       expect(mockStore.fulfilled).toBeTruthy()
+    })
+
+    test('Throws when the `metadata` parameter is above the size limit', async () => {
+      const metadata = {
+        name: 'Netlify'.repeat(1000),
+      }
+      const mockStore = new MockFetch()
+
+      globalThis.fetch = mockStore.fetch
+
+      const blobs = getStore({
+        edgeURL,
+        name: 'production',
+        token: edgeToken,
+        siteID,
+      })
+
+      expect(async () => await blobs.setJSON(key, { value }, { metadata })).rejects.toThrowError(
+        'Metadata object exceeds the maximum size',
+      )
     })
   })
 })
