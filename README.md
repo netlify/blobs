@@ -214,7 +214,7 @@ const blob = await blobs.getWithMetadata('some-key', { type: 'json' })
 console.log(blob.data, blob.etag, blob.metadata)
 ```
 
-### `set(key: string, value: ArrayBuffer | Blob | ReadableStream | string): Promise<void>`
+### `set(key: string, value: ArrayBuffer | Blob | ReadableStream | string, { metadata?: object }): Promise<void>`
 
 Creates an object with the given key and value.
 
@@ -224,7 +224,7 @@ If an entry with the given key already exists, its value is overwritten.
 await blobs.set('some-key', 'This is a string value')
 ```
 
-### `setJSON(key: string, value: any): Promise<void>`
+### `setJSON(key: string, value: any, { metadata?: object }): Promise<void>`
 
 Convenience method for creating a JSON-serialized object with the given key.
 
