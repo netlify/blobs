@@ -783,6 +783,26 @@ describe('setJSON', () => {
 
       expect(mockStore.fulfilled).toBeTruthy()
     })
+
+    test('Throws when the `metadata` parameter is above the size limit', async () => {
+      const metadata = {
+        name: 'Netlify'.repeat(1000),
+      }
+      const mockStore = new MockFetch()
+
+      globalThis.fetch = mockStore.fetch
+
+      const blobs = getStore({
+        edgeURL,
+        name: 'production',
+        token: edgeToken,
+        siteID,
+      })
+
+      expect(async () => await blobs.setJSON(key, { value }, { metadata })).rejects.toThrowError(
+        'Metadata object exceeds the maximum size',
+      )
+    })
   })
 })
 
