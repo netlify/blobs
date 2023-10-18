@@ -498,14 +498,15 @@ describe('set', () => {
       const encodedMetadata = `b64;${Buffer.from(JSON.stringify(metadata)).toString('base64')}`
       const mockStore = new MockFetch()
         .put({
-          headers: { authorization: `Bearer ${apiToken}` },
+          headers: { authorization: `Bearer ${apiToken}`, 'netlify-blobs-metadata': encodedMetadata },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production&metadata=${encodedMetadata}`,
+          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
         })
         .put({
           body: value,
           headers: {
             'cache-control': 'max-age=0, stale-while-revalidate=60',
+            'x-amz-meta-user': encodedMetadata,
           },
           response: new Response(null),
           url: signedURL,

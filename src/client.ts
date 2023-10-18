@@ -1,5 +1,5 @@
 import { EnvironmentContext, getEnvironmentContext, MissingBlobsEnvironmentError } from './environment.ts'
-import { encodeMetadata, Metadata, METADATA_HEADER_EXTERNAL } from './metadata.ts'
+import { encodeMetadata, Metadata, METADATA_HEADER_EXTERNAL, METADATA_HEADER_INTERNAL } from './metadata.ts'
 import { fetchAndRetry } from './retry.ts'
 import { BlobInput, Fetcher, HTTPMethod } from './types.ts'
 
@@ -37,14 +37,15 @@ export class Client {
 
   private async getFinalRequest(storeName: string, key: string, method: string, metadata?: Metadata) {
     const encodedKey = encodeURIComponent(key)
+    const encodedMetadata = encodeMetadata(metadata)
 
     if (this.edgeURL) {
       const headers: Record<string, string> = {
         authorization: `Bearer ${this.token}`,
       }
 
-      if (metadata) {
-        headers[METADATA_HEADER_EXTERNAL] = encodeMetadata(metadata)
+      if (encodedMetadata) {
+        headers[METADATA_HEADER_EXTERNAL] = encodedMetadata
       }
 
       return {
@@ -53,25 +54,27 @@ export class Client {
       }
     }
 
-    let apiURL = `${this.apiURL ?? 'https://api.netlify.com'}/api/v1/sites/${
+    const apiURL = `${this.apiURL ?? 'https://api.netlify.com'}/api/v1/sites/${
       this.siteID
     }/blobs/${encodedKey}?context=${storeName}`
+    const apiHeaders: Record<string, string> = { authorization: `Bearer ${this.token}` }
 
-    if (metadata) {
-      apiURL += `&metadata=${encodeMetadata(metadata)}`
+    if (encodedMetadata) {
+      apiHeaders[METADATA_HEADER_EXTERNAL] = encodedMetadata
     }
 
-    const headers = { authorization: `Bearer ${this.token}` }
     const fetch = this.fetch ?? globalThis.fetch
-    const res = await fetch(apiURL, { headers, method })
+    const res = await fetch(apiURL, { headers: apiHeaders, method })
 
     if (res.status !== 200) {
       throw new Error(`${method} operation has failed: API returned a ${res.status} response`)
     }
 
     const { url } = await res.json()
+    const userHeaders = encodedMetadata ? { [METADATA_HEADER_INTERNAL]: encodedMetadata } : undefined
 
     return {
+      headers: userHeaders,
       url,
     }
   }

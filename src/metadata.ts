@@ -7,7 +7,11 @@ export const METADATA_HEADER_INTERNAL = 'x-amz-meta-user'
 export const METADATA_HEADER_EXTERNAL = 'netlify-blobs-metadata'
 const METADATA_MAX_SIZE = 2 * 1024
 
-export const encodeMetadata = (metadata: Metadata) => {
+export const encodeMetadata = (metadata?: Metadata) => {
+  if (!metadata) {
+    return null
+  }
+
   const encodedObject = Buffer.from(JSON.stringify(metadata)).toString('base64')
   const payload = `b64;${encodedObject}`
 
