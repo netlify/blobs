@@ -1121,6 +1121,22 @@ describe(`getStore`, () => {
     )
   })
 
+  test('Throws when there is no `fetch` implementation available', async () => {
+    // @ts-expect-error Assigning a value that doesn't match the type.
+    globalThis.fetch = undefined
+
+    const context = {
+      siteID,
+      token: apiToken,
+    }
+
+    env.NETLIFY_BLOBS_CONTEXT = Buffer.from(JSON.stringify(context)).toString('base64')
+
+    expect(() => getStore('production')).toThrowError(
+      'Netlify Blobs could not find a `fetch` client in the global scope. You can either update your runtime to a version that includes `fetch` (like Node.js 18.0.0 or above), or you can supply your own implementation using the `fetch` property.',
+    )
+  })
+
   test('URL-encodes the store name', async () => {
     const mockStore = new MockFetch()
       .get({
