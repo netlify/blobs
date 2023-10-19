@@ -2,12 +2,16 @@ import { Client, ClientOptions, getClientOptions } from './client.ts'
 import { getEnvironmentContext, MissingBlobsEnvironmentError } from './environment.ts'
 import { Store } from './store.ts'
 
+interface GetDeployStoreOptions extends Partial<ClientOptions> {
+  deployID?: string
+}
+
 /**
  * Gets a reference to a deploy-scoped store.
  */
-export const getDeployStore = (options: Partial<ClientOptions> = {}): Store => {
+export const getDeployStore = (options: GetDeployStoreOptions = {}): Store => {
   const context = getEnvironmentContext()
-  const { deployID } = context
+  const deployID = options.deployID ?? context.deployID
 
   if (!deployID) {
     throw new MissingBlobsEnvironmentError(['deployID'])
@@ -40,7 +44,7 @@ export const getStore: {
     return new Store({ client, name: input })
   }
 
-  if (typeof input.name === 'string') {
+  if (typeof input?.name === 'string') {
     const { name } = input
     const clientOptions = getClientOptions(input)
 
@@ -53,7 +57,7 @@ export const getStore: {
     return new Store({ client, name })
   }
 
-  if (typeof input.deployID === 'string') {
+  if (typeof input?.deployID === 'string') {
     const clientOptions = getClientOptions(input)
     const { deployID } = input
 
@@ -66,5 +70,7 @@ export const getStore: {
     return new Store({ client, deployID })
   }
 
-  throw new Error('`getStore()` requires a `name` or `siteID` properties.')
+  throw new Error(
+    'The `getStore` method requires the name of the store as a string or as the `name` property of an options object',
+  )
 }

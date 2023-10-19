@@ -916,19 +916,9 @@ describe('delete', () => {
 })
 
 describe('Deploy scope', () => {
-  test('Returns a deploy-scoped store if the `deployID` parameter is supplied', async () => {
+  test('Returns a deploy-scoped store if the `deployID` parameter is supplied and the environment context is present', async () => {
     const mockToken = 'some-token'
     const mockStore = new MockFetch()
-      .get({
-        headers: { authorization: `Bearer ${mockToken}` },
-        response: new Response(value),
-        url: `${edgeURL}/${siteID}/images/${key}`,
-      })
-      .get({
-        headers: { authorization: `Bearer ${mockToken}` },
-        response: new Response(value),
-        url: `${edgeURL}/${siteID}/images/${key}`,
-      })
       .get({
         headers: { authorization: `Bearer ${mockToken}` },
         response: new Response(value),
@@ -950,26 +940,52 @@ describe('Deploy scope', () => {
 
     env.NETLIFY_BLOBS_CONTEXT = Buffer.from(JSON.stringify(context)).toString('base64')
 
-    const siteStore = getStore('images')
-
-    const string1 = await siteStore.get(key)
-    expect(string1).toBe(value)
-
-    const stream1 = await siteStore.get(key, { type: 'stream' })
-    expect(await streamToString(stream1 as unknown as NodeJS.ReadableStream)).toBe(value)
-
     const deployStore = getStore({ deployID })
 
-    const string2 = await deployStore.get(key)
-    expect(string2).toBe(value)
+    const string = await deployStore.get(key)
+    expect(string).toBe(value)
 
-    const stream2 = await deployStore.get(key, { type: 'stream' })
-    expect(await streamToString(stream2 as unknown as NodeJS.ReadableStream)).toBe(value)
+    const stream = await deployStore.get(key, { type: 'stream' })
+    expect(await streamToString(stream as unknown as NodeJS.ReadableStream)).toBe(value)
 
     expect(mockStore.fulfilled).toBeTruthy()
   })
 
-  test('Returns a deploy-scoped store if the `getDeployStore` method is called', async () => {
+  test('Returns a deploy-scoped store if the `deployID` parameter is supplied and the environment context is not present', async () => {
+    const mockStore = new MockFetch()
+      .get({
+        headers: { authorization: `Bearer ${apiToken}` },
+        response: new Response(JSON.stringify({ url: signedURL })),
+        url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=deploy:${deployID}`,
+      })
+      .get({
+        response: new Response(value),
+        url: signedURL,
+      })
+      .get({
+        headers: { authorization: `Bearer ${apiToken}` },
+        response: new Response(JSON.stringify({ url: signedURL })),
+        url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=deploy:${deployID}`,
+      })
+      .get({
+        response: new Response(value),
+        url: signedURL,
+      })
+
+    globalThis.fetch = mockStore.fetch
+
+    const deployStore = getStore({ deployID, siteID, token: apiToken })
+
+    const string = await deployStore.get(key)
+    expect(string).toBe(value)
+
+    const stream = await deployStore.get(key, { type: 'stream' })
+    expect(await streamToString(stream as unknown as NodeJS.ReadableStream)).toBe(value)
+
+    expect(mockStore.fulfilled).toBeTruthy()
+  })
+
+  test('Returns a deploy-scoped store if the `getDeployStore` method is called and the environment context is present', async () => {
     const mockToken = 'some-token'
     const mockStore = new MockFetch()
       .get({
@@ -995,6 +1011,40 @@ describe('Deploy scope', () => {
     env.NETLIFY_BLOBS_CONTEXT = Buffer.from(JSON.stringify(context)).toString('base64')
 
     const deployStore = getDeployStore()
+
+    const string = await deployStore.get(key)
+    expect(string).toBe(value)
+
+    const stream = await deployStore.get(key, { type: 'stream' })
+    expect(await streamToString(stream as unknown as NodeJS.ReadableStream)).toBe(value)
+
+    expect(mockStore.fulfilled).toBeTruthy()
+  })
+
+  test('Returns a deploy-scoped store if the `getDeployStore` method is called and the environment context is not present', async () => {
+    const mockStore = new MockFetch()
+      .get({
+        headers: { authorization: `Bearer ${apiToken}` },
+        response: new Response(JSON.stringify({ url: signedURL })),
+        url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=deploy:${deployID}`,
+      })
+      .get({
+        response: new Response(value),
+        url: signedURL,
+      })
+      .get({
+        headers: { authorization: `Bearer ${apiToken}` },
+        response: new Response(JSON.stringify({ url: signedURL })),
+        url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=deploy:${deployID}`,
+      })
+      .get({
+        response: new Response(value),
+        url: signedURL,
+      })
+
+    globalThis.fetch = mockStore.fetch
+
+    const deployStore = getDeployStore({ deployID, siteID, token: apiToken })
 
     const string = await deployStore.get(key)
     expect(string).toBe(value)
@@ -1049,5 +1099,25 @@ describe(`getStore`, () => {
         siteID: '',
       }),
     ).toThrowError(MissingBlobsEnvironmentError)
+  })
+
+  test('Throws when the name of the store is not provided', async () => {
+    const { fetch } = new MockFetch()
+
+    globalThis.fetch = fetch
+
+    // @ts-expect-error Ignoring types, which expect an argument
+    expect(() => getStore()).toThrowError(
+      'The `getStore` method requires the name of the store as a string or as the `name` property of an options object',
+    )
+
+    expect(() =>
+      getStore({
+        token: apiToken,
+        siteID,
+      }),
+    ).toThrowError(
+      'The `getStore` method requires the name of the store as a string or as the `name` property of an options object',
+    )
   })
 })
