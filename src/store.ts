@@ -33,7 +33,14 @@ export class Store {
 
   constructor(options: StoreOptions) {
     this.client = options.client
-    this.name = 'deployID' in options ? `deploy:${options.deployID}` : options.name
+
+    if ('deployID' in options) {
+      this.name = `deploy:${encodeURIComponent(options.deployID)}`
+    } else if (options?.name.startsWith('deploy:')) {
+      throw new Error('Store name cannot start with the string `deploy:`, which is a reserved namespace')
+    } else {
+      this.name = encodeURIComponent(options.name)
+    }
   }
 
   async delete(key: string) {

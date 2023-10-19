@@ -1120,4 +1120,71 @@ describe(`getStore`, () => {
       'The `getStore` method requires the name of the store as a string or as the `name` property of an options object',
     )
   })
+
+  test('Throws when the name of the store starts with the `deploy:` prefix', async () => {
+    const { fetch } = new MockFetch()
+
+    globalThis.fetch = fetch
+
+    expect(() =>
+      getStore({
+        name: 'deploy:foo',
+        token: apiToken,
+        siteID,
+      }),
+    ).toThrowError('Store name cannot start with the string `deploy:`, which is a reserved namespace')
+
+    const context = {
+      siteID,
+      token: apiToken,
+    }
+
+    env.NETLIFY_BLOBS_CONTEXT = Buffer.from(JSON.stringify(context)).toString('base64')
+
+    expect(() => getStore('deploy:foo')).toThrowError(
+      'Store name cannot start with the string `deploy:`, which is a reserved namespace',
+    )
+  })
+
+  test('Throws when there is no `fetch` implementation available', async () => {
+    // @ts-expect-error Assigning a value that doesn't match the type.
+    globalThis.fetch = undefined
+
+    const context = {
+      siteID,
+      token: apiToken,
+    }
+
+    env.NETLIFY_BLOBS_CONTEXT = Buffer.from(JSON.stringify(context)).toString('base64')
+
+    expect(() => getStore('production')).toThrowError(
+      'Netlify Blobs could not find a `fetch` client in the global scope. You can either update your runtime to a version that includes `fetch` (like Node.js 18.0.0 or above), or you can supply your own implementation using the `fetch` property.',
+    )
+  })
+
+  test('URL-encodes the store name', async () => {
+    const mockStore = new MockFetch()
+      .get({
+        headers: { authorization: `Bearer ${apiToken}` },
+        response: new Response(JSON.stringify({ url: signedURL })),
+        url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=%2Fwhat%3F`,
+      })
+      .get({
+        response: new Response(value),
+        url: signedURL,
+      })
+
+    globalThis.fetch = mockStore.fetch
+
+    const blobs = getStore({
+      name: '/what?',
+      token: apiToken,
+      siteID,
+    })
+
+    const string = await blobs.get(key)
+    expect(string).toBe(value)
+
+    expect(mockStore.fulfilled).toBeTruthy()
+  })
 })

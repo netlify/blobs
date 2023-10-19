@@ -23,16 +23,22 @@ export interface ClientOptions {
 export class Client {
   private apiURL?: string
   private edgeURL?: string
-  private fetch?: Fetcher
+  private fetch: Fetcher
   private siteID: string
   private token: string
 
   constructor({ apiURL, edgeURL, fetch, siteID, token }: ClientOptions) {
     this.apiURL = apiURL
     this.edgeURL = edgeURL
-    this.fetch = fetch
+    this.fetch = fetch ?? globalThis.fetch
     this.siteID = siteID
     this.token = token
+
+    if (!this.fetch) {
+      throw new Error(
+        'Netlify Blobs could not find a `fetch` client in the global scope. You can either update your runtime to a version that includes `fetch` (like Node.js 18.0.0 or above), or you can supply your own implementation using the `fetch` property.',
+      )
+    }
   }
 
   private async getFinalRequest(storeName: string, key: string, method: string, metadata?: Metadata) {
@@ -63,8 +69,7 @@ export class Client {
       apiHeaders[METADATA_HEADER_EXTERNAL] = encodedMetadata
     }
 
-    const fetch = this.fetch ?? globalThis.fetch
-    const res = await fetch(apiURL, { headers: apiHeaders, method })
+    const res = await this.fetch(apiURL, { headers: apiHeaders, method })
 
     if (res.status !== 200) {
       throw new Error(`${method} operation has failed: API returned a ${res.status} response`)
@@ -102,8 +107,7 @@ export class Client {
       options.duplex = 'half'
     }
 
-    const fetch = this.fetch ?? globalThis.fetch
-    const res = await fetchAndRetry(fetch, url, options)
+    const res = await fetchAndRetry(this.fetch, url, options)
 
     if (res.status === 404 && method === HTTPMethod.GET) {
       return null
