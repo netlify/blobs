@@ -1100,4 +1100,24 @@ describe(`getStore`, () => {
       }),
     ).toThrowError(MissingBlobsEnvironmentError)
   })
+
+  test('Throws when the name of the store is not provided', async () => {
+    const { fetch } = new MockFetch()
+
+    globalThis.fetch = fetch
+
+    // @ts-expect-error Ignoring types, which expect an argument
+    expect(() => getStore()).toThrowError(
+      'The `getStore` method requires the name of the store as a string or as the `name` property of an options object',
+    )
+
+    expect(() =>
+      getStore({
+        token: apiToken,
+        siteID,
+      }),
+    ).toThrowError(
+      'The `getStore` method requires the name of the store as a string or as the `name` property of an options object',
+    )
+  })
 })

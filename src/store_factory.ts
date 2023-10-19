@@ -44,7 +44,7 @@ export const getStore: {
     return new Store({ client, name: input })
   }
 
-  if (typeof input.name === 'string') {
+  if (typeof input?.name === 'string') {
     const { name } = input
     const clientOptions = getClientOptions(input)
 
@@ -57,7 +57,7 @@ export const getStore: {
     return new Store({ client, name })
   }
 
-  if (typeof input.deployID === 'string') {
+  if (typeof input?.deployID === 'string') {
     const clientOptions = getClientOptions(input)
     const { deployID } = input
 
@@ -70,5 +70,7 @@ export const getStore: {
     return new Store({ client, deployID })
   }
 
-  throw new Error('`getStore()` requires a `name` or `siteID` properties.')
+  throw new Error(
+    'The `getStore` method requires the name of the store as a string or as the `name` property of an options object',
+  )
 }
