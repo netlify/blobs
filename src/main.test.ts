@@ -1121,6 +1121,31 @@ describe(`getStore`, () => {
     )
   })
 
+  test('Throws when the name of the store starts with the `deploy:` prefix', async () => {
+    const { fetch } = new MockFetch()
+
+    globalThis.fetch = fetch
+
+    expect(() =>
+      getStore({
+        name: 'deploy:foo',
+        token: apiToken,
+        siteID,
+      }),
+    ).toThrowError('Store name cannot start with the string `deploy:`, which is a reserved namespace')
+
+    const context = {
+      siteID,
+      token: apiToken,
+    }
+
+    env.NETLIFY_BLOBS_CONTEXT = Buffer.from(JSON.stringify(context)).toString('base64')
+
+    expect(() => getStore('deploy:foo')).toThrowError(
+      'Store name cannot start with the string `deploy:`, which is a reserved namespace',
+    )
+  })
+
   test('Throws when there is no `fetch` implementation available', async () => {
     // @ts-expect-error Assigning a value that doesn't match the type.
     globalThis.fetch = undefined
