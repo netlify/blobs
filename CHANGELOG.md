@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.2.0](https://github.com/netlify/blobs/compare/v3.1.0...v3.2.0) (2023-10-19)
+
+
+### Features
+
+* add support for arbitrary metadata ([#70](https://github.com/netlify/blobs/issues/70)) ([9b2a4df](https://github.com/netlify/blobs/commit/9b2a4dfe2adbb028c5cbfbe814e53e010a58be19))
+
+
+### Bug Fixes
+
+* couple of small fixes ([#72](https://github.com/netlify/blobs/issues/72)) ([edadf1c](https://github.com/netlify/blobs/commit/edadf1c6288ae0c55e48cc196e2476e3ef95cc0c))
+
 ## [3.1.0](https://github.com/netlify/blobs/compare/v3.0.0...v3.1.0) (2023-10-18)
 
 
