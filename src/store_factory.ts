@@ -2,12 +2,16 @@ import { Client, ClientOptions, getClientOptions } from './client.ts'
 import { getEnvironmentContext, MissingBlobsEnvironmentError } from './environment.ts'
 import { Store } from './store.ts'
 
+interface GetDeployStoreOptions extends Partial<ClientOptions> {
+  deployID?: string
+}
+
 /**
  * Gets a reference to a deploy-scoped store.
  */
-export const getDeployStore = (options: Partial<ClientOptions> = {}): Store => {
+export const getDeployStore = (options: GetDeployStoreOptions = {}): Store => {
   const context = getEnvironmentContext()
-  const { deployID } = context
+  const deployID = options.deployID ?? context.deployID
 
   if (!deployID) {
     throw new MissingBlobsEnvironmentError(['deployID'])
