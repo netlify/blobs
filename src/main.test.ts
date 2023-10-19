@@ -1120,4 +1120,30 @@ describe(`getStore`, () => {
       'The `getStore` method requires the name of the store as a string or as the `name` property of an options object',
     )
   })
+
+  test('URL-encodes the store name', async () => {
+    const mockStore = new MockFetch()
+      .get({
+        headers: { authorization: `Bearer ${apiToken}` },
+        response: new Response(JSON.stringify({ url: signedURL })),
+        url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=%2Fwhat%3F`,
+      })
+      .get({
+        response: new Response(value),
+        url: signedURL,
+      })
+
+    globalThis.fetch = mockStore.fetch
+
+    const blobs = getStore({
+      name: '/what?',
+      token: apiToken,
+      siteID,
+    })
+
+    const string = await blobs.get(key)
+    expect(string).toBe(value)
+
+    expect(mockStore.fulfilled).toBeTruthy()
+  })
 })

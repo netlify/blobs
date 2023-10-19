@@ -33,7 +33,7 @@ export class Store {
 
   constructor(options: StoreOptions) {
     this.client = options.client
-    this.name = 'deployID' in options ? `deploy:${options.deployID}` : options.name
+    this.name = 'deployID' in options ? `deploy:${options.deployID}` : encodeURIComponent(options.name)
   }
 
   async delete(key: string) {
