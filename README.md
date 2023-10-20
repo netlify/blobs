@@ -191,7 +191,7 @@ const entry = await blobs.get('some-key', { type: 'json' })
 console.log(entry)
 ```
 
-### `getWithMetadata(key: string, { type?: string }): Promise<{ data: any, etag: string, metadata: object }>`
+### `getWithMetadata(key: string, { etag?: string, type?: string }): Promise<{ data: any, etag: string, metadata: object }>`
 
 Retrieves an object with the given key, the [ETag value](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag)
 for the entry, and any metadata that has been stored with the entry.
@@ -212,6 +212,25 @@ If an object with the given key is not found, `null` is returned.
 const blob = await blobs.getWithMetadata('some-key', { type: 'json' })
 
 console.log(blob.data, blob.etag, blob.metadata)
+```
+
+The `etag` input parameter lets you implement conditional requests, where the blob is only returned if it differs from a
+version you have previously obtained.
+
+```javascript
+// Mock implementation of a system for locally persisting blobs and their etags
+const cachedETag = getFromMockCache('my-key')
+
+// Get entry from the blob store only if its ETag is different from the one you
+// have locally, which means the entry has changed since you last obtained it
+const { data, etag, fresh } = await blobs.getWithMetadata('some-key', { etag: cachedETag })
+
+if (fresh) {
+  // `data` is `null` because the local blob is fresh
+} else {
+  // `data` contains the new blob, store it locally alongside the new ETag
+  writeInMockCache('my-key', data, etag)
+}
 ```
 
 ### `set(key: string, value: ArrayBuffer | Blob | ReadableStream | string, { metadata?: object }): Promise<void>`

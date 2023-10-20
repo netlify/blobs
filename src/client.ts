@@ -113,7 +113,7 @@ export class Client {
       return null
     }
 
-    if (res.status !== 200) {
+    if (res.status !== 200 && res.status !== 304) {
       throw new Error(`${method} operation has failed: store returned a ${res.status} response`)
     }
 

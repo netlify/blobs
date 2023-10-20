@@ -397,6 +397,61 @@ describe('getWithMetadata', () => {
 
       expect(mockStore.fulfilled).toBeTruthy()
     })
+
+    test('Supports conditional requests', async () => {
+      const mockMetadata = {
+        name: 'Netlify',
+        cool: true,
+        functions: ['edge', 'serverless'],
+      }
+      const etags = ['"thewrongetag"', '"therightetag"']
+      const metadataHeaders = {
+        'x-amz-meta-user': `b64;${base64Encode(mockMetadata)}`,
+      }
+      const mockStore = new MockFetch()
+        .get({
+          headers: { authorization: `Bearer ${apiToken}` },
+          response: new Response(JSON.stringify({ url: `${signedURL}b` })),
+          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
+        })
+        .get({
+          headers: { 'if-none-match': etags[0] },
+          response: new Response(value, { headers: { ...metadataHeaders, etag: etags[0] }, status: 200 }),
+          url: `${signedURL}b`,
+        })
+        .get({
+          headers: { authorization: `Bearer ${apiToken}` },
+          response: new Response(JSON.stringify({ url: `${signedURL}a` })),
+          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
+        })
+        .get({
+          headers: { 'if-none-match': etags[1] },
+          response: new Response(null, { headers: { ...metadataHeaders, etag: etags[0] }, status: 304 }),
+          url: `${signedURL}a`,
+        })
+
+      globalThis.fetch = mockStore.fetch
+
+      const blobs = getStore({
+        name: 'production',
+        token: apiToken,
+        siteID,
+      })
+
+      const staleEntry = await blobs.getWithMetadata(key, { etag: etags[0] })
+      expect(staleEntry.data).toBe(value)
+      expect(staleEntry.etag).toBe(etags[0])
+      expect(staleEntry.fresh).toBe(false)
+      expect(staleEntry.metadata).toEqual(mockMetadata)
+
+      const freshEntry = await blobs.getWithMetadata(key, { etag: etags[1], type: 'text' })
+      expect(freshEntry.data).toBe(null)
+      expect(freshEntry.etag).toBe(etags[0])
+      expect(freshEntry.fresh).toBe(true)
+      expect(freshEntry.metadata).toEqual(mockMetadata)
+
+      expect(mockStore.fulfilled).toBeTruthy()
+    })
   })
 
   describe('With edge credentials', () => {
