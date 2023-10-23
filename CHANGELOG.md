@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.3.0](https://github.com/netlify/blobs/compare/v3.2.0...v3.3.0) (2023-10-23)
+
+
+### Features
+
+* add local server ([#75](https://github.com/netlify/blobs/issues/75)) ([dc209d7](https://github.com/netlify/blobs/commit/dc209d715ca87d3b774784fde3cf02ce0e3b0faf))
+* add support for conditional requests ([#76](https://github.com/netlify/blobs/issues/76)) ([82df6ad](https://github.com/netlify/blobs/commit/82df6ad0889ea29fd6191133c8a319e7e458ab7d))
+* encode store name + check for `fetch` ([#73](https://github.com/netlify/blobs/issues/73)) ([0cb0b36](https://github.com/netlify/blobs/commit/0cb0b3654b164e327e9602ad229bfdd69f0cab45))
+
 ## [3.2.0](https://github.com/netlify/blobs/compare/v3.1.0...v3.2.0) (2023-10-19)
 
 
