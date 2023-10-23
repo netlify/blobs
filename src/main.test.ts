@@ -608,15 +608,11 @@ describe('set', () => {
         siteID,
       })
 
-      expect(async () => await blobs.set('kéy', 'value')).rejects.toThrowError(
-        `Keys can only contain letters, numbers, percentage signs (%), exclamation marks (!), dots (.), asterisks (*), single quotes ('), parentheses (()), dashes (-) and underscores (_) up to a maximum of 600 characters. Keys can also contain forward slashes (/), but must not start with one.`,
-      )
-      expect(async () => await blobs.set('/key', 'value')).rejects.toThrowError(
-        `Keys can only contain letters, numbers, percentage signs (%), exclamation marks (!), dots (.), asterisks (*), single quotes ('), parentheses (()), dashes (-) and underscores (_) up to a maximum of 600 characters. Keys can also contain forward slashes (/), but must not start with one.`,
-      )
-      expect(async () => await blobs.set('a'.repeat(801), 'value')).rejects.toThrowError(
-        `Keys can only contain letters, numbers, percentage signs (%), exclamation marks (!), dots (.), asterisks (*), single quotes ('), parentheses (()), dashes (-) and underscores (_) up to a maximum of 600 characters. Keys can also contain forward slashes (/), but must not start with one.`,
-      )
+      const expectedError = `Keys can only contain letters, numbers, percentage signs (%), exclamation marks (!), dots (.), asterisks (*), single quotes ('), parentheses (()), dashes (-) and underscores (_) up to a maximum of 600 characters. Keys can also contain forward slashes (/), but must not start with one.`
+
+      expect(async () => await blobs.set('kéy', 'value')).rejects.toThrowError(expectedError)
+      expect(async () => await blobs.set('/key', 'value')).rejects.toThrowError(expectedError)
+      expect(async () => await blobs.set('a'.repeat(801), 'value')).rejects.toThrowError(expectedError)
     })
 
     test('Retries failed operations', async () => {
