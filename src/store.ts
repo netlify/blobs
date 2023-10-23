@@ -16,6 +16,16 @@ interface NamedStoreOptions extends BaseStoreOptions {
 
 type StoreOptions = DeployStoreOptions | NamedStoreOptions
 
+interface GetWithMetadataOptions {
+  etag?: string
+}
+
+interface GetWithMetadataResult {
+  etag?: string
+  fresh: boolean
+  metadata: Metadata
+}
+
 interface SetOptions {
   /**
    * Arbitrary metadata object to associate with an entry. Must be seralizable
@@ -24,7 +34,6 @@ interface SetOptions {
   metadata?: Metadata
 }
 
-type BlobWithMetadata = { etag?: string } & { metadata: Metadata }
 type BlobResponseType = 'arrayBuffer' | 'blob' | 'json' | 'stream' | 'text'
 
 export class Store {
@@ -88,34 +97,53 @@ export class Store {
     throw new Error(`Invalid 'type' property: ${type}. Expected: arrayBuffer, blob, json, stream, or text.`)
   }
 
-  async getWithMetadata(key: string): Promise<{ data: string } & BlobWithMetadata>
+  async getWithMetadata(
+    key: string,
+    options?: GetWithMetadataOptions,
+  ): Promise<{ data: string } & GetWithMetadataResult>
 
   async getWithMetadata(
     key: string,
-    { type }: { type: 'arrayBuffer' },
-  ): Promise<{ data: ArrayBuffer } & BlobWithMetadata>
-
-  async getWithMetadata(key: string, { type }: { type: 'blob' }): Promise<{ data: Blob } & BlobWithMetadata>
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async getWithMetadata(key: string, { type }: { type: 'json' }): Promise<{ data: any } & BlobWithMetadata>
-
-  async getWithMetadata(key: string, { type }: { type: 'stream' }): Promise<{ data: ReadableStream } & BlobWithMetadata>
-
-  async getWithMetadata(key: string, { type }: { type: 'text' }): Promise<{ data: string } & BlobWithMetadata>
+    options: { type: 'arrayBuffer' } & GetWithMetadataOptions,
+  ): Promise<{ data: ArrayBuffer } & GetWithMetadataResult>
 
   async getWithMetadata(
     key: string,
-    options?: { type: BlobResponseType },
+    options: { type: 'blob' } & GetWithMetadataOptions,
+  ): Promise<{ data: Blob } & GetWithMetadataResult>
+
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+
+  async getWithMetadata(
+    key: string,
+    options: { type: 'json' } & GetWithMetadataOptions,
+  ): Promise<{ data: any } & GetWithMetadataResult>
+
+  /* eslint-enable @typescript-eslint/no-explicit-any */
+
+  async getWithMetadata(
+    key: string,
+    options: { type: 'stream' } & GetWithMetadataOptions,
+  ): Promise<{ data: ReadableStream } & GetWithMetadataResult>
+
+  async getWithMetadata(
+    key: string,
+    options: { type: 'text' } & GetWithMetadataOptions,
+  ): Promise<{ data: string } & GetWithMetadataResult>
+
+  async getWithMetadata(
+    key: string,
+    options?: { type: BlobResponseType } & GetWithMetadataOptions,
   ): Promise<
     | ({
         data: ArrayBuffer | Blob | ReadableStream | string | null
-      } & BlobWithMetadata)
+      } & GetWithMetadataResult)
     | null
   > {
-    const { type } = options ?? {}
-    const res = await this.client.makeRequest({ key, method: HTTPMethod.GET, storeName: this.name })
-    const etag = res?.headers.get('etag') ?? undefined
+    const { etag: requestETag, type } = options ?? {}
+    const headers = requestETag ? { 'if-none-match': requestETag } : undefined
+    const res = await this.client.makeRequest({ headers, key, method: HTTPMethod.GET, storeName: this.name })
+    const responseETag = res?.headers.get('etag') ?? undefined
 
     let metadata: Metadata = {}
 
@@ -131,24 +159,34 @@ export class Store {
       return null
     }
 
+    const result: GetWithMetadataResult = {
+      etag: responseETag,
+      fresh: false,
+      metadata,
+    }
+
+    if (res.status === 304 && requestETag) {
+      return { data: null, ...result, fresh: true }
+    }
+
     if (type === undefined || type === 'text') {
-      return { data: await res.text(), etag, metadata }
+      return { data: await res.text(), ...result }
     }
 
     if (type === 'arrayBuffer') {
-      return { data: await res.arrayBuffer(), etag, metadata }
+      return { data: await res.arrayBuffer(), ...result }
     }
 
     if (type === 'blob') {
-      return { data: await res.blob(), etag, metadata }
+      return { data: await res.blob(), ...result }
     }
 
     if (type === 'json') {
-      return { data: await res.json(), etag, metadata }
+      return { data: await res.json(), ...result }
     }
 
     if (type === 'stream') {
-      return { data: res.body, etag, metadata }
+      return { data: res.body, ...result }
     }
 
     throw new Error(`Invalid 'type' property: ${type}. Expected: arrayBuffer, blob, json, stream, or text.`)
