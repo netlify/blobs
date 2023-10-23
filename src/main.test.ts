@@ -32,7 +32,7 @@ afterEach(() => {
 const deployID = '6527dfab35be400008332a1d'
 const siteID = '9a003659-aaaa-0000-aaaa-63d3720d8621'
 const key = '54321'
-const complexKey = '/artista/canção'
+const complexKey = 'artist/song'
 const value = 'some value'
 const apiToken = 'some token'
 const signedURL = 'https://signed.url/123456789'
@@ -64,9 +64,7 @@ describe('get', () => {
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${encodeURIComponent(
-            complexKey,
-          )}?context=production`,
+          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${complexKey}?context=production`,
         })
         .get({
           response: new Response(value),
@@ -519,9 +517,7 @@ describe('set', () => {
         .put({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${encodeURIComponent(
-            complexKey,
-          )}?context=production`,
+          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${complexKey}?context=production`,
         })
         .put({
           body: value,
@@ -601,6 +597,28 @@ describe('set', () => {
       expect(mockStore.fulfilled).toBeTruthy()
     })
 
+    test('Throws when the key fails validation', async () => {
+      const mockStore = new MockFetch()
+
+      globalThis.fetch = mockStore.fetch
+
+      const blobs = getStore({
+        name: 'production',
+        token: apiToken,
+        siteID,
+      })
+
+      expect(async () => await blobs.set('kéy', 'value')).rejects.toThrowError(
+        `Keys can only contain letters, numbers, percentage signs (%), exclamation marks (!), dots (.), asterisks (*), single quotes ('), parentheses (()), dashes (-) and underscores (_) up to a maximum of 800 characters. Keys can also contain forward slashes (/), but must not start with one.`,
+      )
+      expect(async () => await blobs.set('/key', 'value')).rejects.toThrowError(
+        `Keys can only contain letters, numbers, percentage signs (%), exclamation marks (!), dots (.), asterisks (*), single quotes ('), parentheses (()), dashes (-) and underscores (_) up to a maximum of 800 characters. Keys can also contain forward slashes (/), but must not start with one.`,
+      )
+      expect(async () => await blobs.set('a'.repeat(801), 'value')).rejects.toThrowError(
+        `Keys can only contain letters, numbers, percentage signs (%), exclamation marks (!), dots (.), asterisks (*), single quotes ('), parentheses (()), dashes (-) and underscores (_) up to a maximum of 800 characters. Keys can also contain forward slashes (/), but must not start with one.`,
+      )
+    })
+
     test('Retries failed operations', async () => {
       const mockStore = new MockFetch()
         .put({
@@ -668,7 +686,7 @@ describe('set', () => {
           body: value,
           headers: { authorization: `Bearer ${edgeToken}`, 'cache-control': 'max-age=0, stale-while-revalidate=60' },
           response: new Response(null),
-          url: `${edgeURL}/${siteID}/production/${encodeURIComponent(complexKey)}`,
+          url: `${edgeURL}/${siteID}/production/${complexKey}`,
         })
 
       globalThis.fetch = mockStore.fetch
@@ -878,9 +896,7 @@ describe('delete', () => {
         .delete({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${encodeURIComponent(
-            complexKey,
-          )}?context=production`,
+          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${complexKey}?context=production`,
         })
         .delete({
           response: new Response(null),
@@ -1109,6 +1125,35 @@ describe('Deploy scope', () => {
 
     expect(mockStore.fulfilled).toBeTruthy()
   })
+
+  test('Throws if the deploy ID fails validation', async () => {
+    const mockToken = 'some-token'
+    const mockStore = new MockFetch()
+    const longDeployID = 'd'.repeat(80)
+
+    globalThis.fetch = mockStore.fetch
+
+    expect(() => getDeployStore({ deployID: 'deploy/ID', siteID, token: apiToken })).toThrowError(
+      `'deploy/ID' is not a valid Netlify deploy ID`,
+    )
+    expect(() => getStore({ deployID: 'deploy/ID', siteID, token: apiToken })).toThrowError(
+      `'deploy/ID' is not a valid Netlify deploy ID`,
+    )
+    expect(() => getStore({ deployID: longDeployID, siteID, token: apiToken })).toThrowError(
+      `'${longDeployID}' is not a valid Netlify deploy ID`,
+    )
+
+    const context = {
+      deployID: 'uhoh!',
+      edgeURL,
+      siteID,
+      token: mockToken,
+    }
+
+    env.NETLIFY_BLOBS_CONTEXT = Buffer.from(JSON.stringify(context)).toString('base64')
+
+    expect(() => getDeployStore()).toThrowError(`'uhoh!' is not a valid Netlify deploy ID`)
+  })
 })
 
 describe('Custom `fetch`', () => {
@@ -1176,10 +1221,30 @@ describe(`getStore`, () => {
     )
   })
 
-  test('Throws when the name of the store starts with the `deploy:` prefix', async () => {
+  test('Throws when the name of the store fails validation', async () => {
     const { fetch } = new MockFetch()
 
     globalThis.fetch = fetch
+
+    expect(() =>
+      getStore({
+        name: 'some/store',
+        token: apiToken,
+        siteID,
+      }),
+    ).toThrowError(
+      `Store name can only contain letters, numbers, percentage signs (%), exclamation marks (!), dots (.), asterisks (*), single quotes ('), parentheses (()), dashes (-) and underscores (_) up to a maximum of 64 characters.`,
+    )
+
+    expect(() =>
+      getStore({
+        name: 'a'.repeat(70),
+        token: apiToken,
+        siteID,
+      }),
+    ).toThrowError(
+      `Store name can only contain letters, numbers, percentage signs (%), exclamation marks (!), dots (.), asterisks (*), single quotes ('), parentheses (()), dashes (-) and underscores (_) up to a maximum of 64 characters.`,
+    )
 
     expect(() =>
       getStore({
@@ -1187,7 +1252,7 @@ describe(`getStore`, () => {
         token: apiToken,
         siteID,
       }),
-    ).toThrowError('Store name cannot start with the string `deploy:`, which is a reserved namespace')
+    ).toThrowError('Store name cannot start with the string `deploy:`, which is a reserved namespace.')
 
     const context = {
       siteID,
@@ -1197,7 +1262,7 @@ describe(`getStore`, () => {
     env.NETLIFY_BLOBS_CONTEXT = Buffer.from(JSON.stringify(context)).toString('base64')
 
     expect(() => getStore('deploy:foo')).toThrowError(
-      'Store name cannot start with the string `deploy:`, which is a reserved namespace',
+      'Store name cannot start with the string `deploy:`, which is a reserved namespace.',
     )
   })
 
@@ -1215,31 +1280,5 @@ describe(`getStore`, () => {
     expect(() => getStore('production')).toThrowError(
       'Netlify Blobs could not find a `fetch` client in the global scope. You can either update your runtime to a version that includes `fetch` (like Node.js 18.0.0 or above), or you can supply your own implementation using the `fetch` property.',
     )
-  })
-
-  test('URL-encodes the store name', async () => {
-    const mockStore = new MockFetch()
-      .get({
-        headers: { authorization: `Bearer ${apiToken}` },
-        response: new Response(JSON.stringify({ url: signedURL })),
-        url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=%2Fwhat%3F`,
-      })
-      .get({
-        response: new Response(value),
-        url: signedURL,
-      })
-
-    globalThis.fetch = mockStore.fetch
-
-    const blobs = getStore({
-      name: '/what?',
-      token: apiToken,
-      siteID,
-    })
-
-    const string = await blobs.get(key)
-    expect(string).toBe(value)
-
-    expect(mockStore.fulfilled).toBeTruthy()
   })
 })
