@@ -186,7 +186,7 @@ second parameter, with one of the following values:
 If an object with the given key is not found, `null` is returned.
 
 ```javascript
-const entry = await blobs.get('some-key', { type: 'json' })
+const entry = await store.get('some-key', { type: 'json' })
 
 console.log(entry)
 ```
@@ -209,7 +209,7 @@ second parameter, with one of the following values:
 If an object with the given key is not found, `null` is returned.
 
 ```javascript
-const blob = await blobs.getWithMetadata('some-key', { type: 'json' })
+const blob = await store.getWithMetadata('some-key', { type: 'json' })
 
 console.log(blob.data, blob.etag, blob.metadata)
 ```
@@ -223,7 +223,7 @@ const cachedETag = getFromMockCache('my-key')
 
 // Get entry from the blob store only if its ETag is different from the one you
 // have locally, which means the entry has changed since you last obtained it
-const { data, etag, fresh } = await blobs.getWithMetadata('some-key', { etag: cachedETag })
+const { data, etag, fresh } = await store.getWithMetadata('some-key', { etag: cachedETag })
 
 if (fresh) {
   // `data` is `null` because the local blob is fresh
@@ -240,7 +240,7 @@ Creates an object with the given key and value.
 If an entry with the given key already exists, its value is overwritten.
 
 ```javascript
-await blobs.set('some-key', 'This is a string value')
+await store.set('some-key', 'This is a string value')
 ```
 
 ### `setJSON(key: string, value: any, { metadata?: object }): Promise<void>`
@@ -250,7 +250,7 @@ Convenience method for creating a JSON-serialized object with the given key.
 If an entry with the given key already exists, its value is overwritten.
 
 ```javascript
-await blobs.setJSON('some-key', {
+await store.setJSON('some-key', {
   foo: 'bar',
 })
 ```
@@ -260,7 +260,28 @@ await blobs.setJSON('some-key', {
 Deletes an object with the given key, if one exists.
 
 ```javascript
-await blobs.delete('my-key')
+await store.delete('my-key')
+```
+
+### `list(options?: { cursor?: string, paginate?: boolean. prefix?: string }): Promise<{ blobs: BlobResult[] }>`
+
+Returns a list of blobs in a given store.
+
+```javascript
+const { blobs } = await store.list()
+
+// [ { etag: 'etag1', key: 'some-key' }, { etag: 'etag2', key: 'another-key' } ]
+console.log(blobs)
+```
+
+To filter down the entries that should be returned, an optional `prefix` parameter can be supplied. When used, only the
+entries whose key starts with that prefix are returned.
+
+```javascript
+const { blobs } = await store.list({ prefix: 'some' })
+
+// [ { etag: 'etag1', key: 'some-key' } ]
+console.log(blobs)
 ```
 
 ## Contributing

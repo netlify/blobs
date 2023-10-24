@@ -1,6 +1,8 @@
+import { ListResponse, ListResponseBlob } from './backend/list.ts'
 import { Client } from './client.ts'
 import { decodeMetadata, Metadata } from './metadata.ts'
 import { BlobInput, HTTPMethod } from './types.ts'
+import { BlobsInternalError } from './util.ts'
 
 interface BaseStoreOptions {
   client: Client
@@ -24,6 +26,21 @@ interface GetWithMetadataResult {
   etag?: string
   fresh: boolean
   metadata: Metadata
+}
+
+interface ListResult {
+  blobs: ListResultBlob[]
+}
+
+interface ListResultBlob {
+  etag: string
+  key: string
+}
+
+interface ListOptions {
+  cursor?: string
+  paginate?: boolean
+  prefix?: string
 }
 
 interface SetOptions {
@@ -55,7 +72,11 @@ export class Store {
   }
 
   async delete(key: string) {
-    await this.client.makeRequest({ key, method: HTTPMethod.DELETE, storeName: this.name })
+    const res = await this.client.makeRequest({ key, method: HTTPMethod.DELETE, storeName: this.name })
+
+    if (res.status !== 200 && res.status !== 404) {
+      throw new BlobsInternalError(res.status)
+    }
   }
 
   async get(key: string): Promise<string>
@@ -72,8 +93,12 @@ export class Store {
     const { type } = options ?? {}
     const res = await this.client.makeRequest({ key, method: HTTPMethod.GET, storeName: this.name })
 
-    if (res === null) {
-      return res
+    if (res.status === 404) {
+      return null
+    }
+
+    if (res.status !== 200) {
+      throw new BlobsInternalError(res.status)
     }
 
     if (type === undefined || type === 'text') {
@@ -96,7 +121,7 @@ export class Store {
       return res.body
     }
 
-    throw new Error(`Invalid 'type' property: ${type}. Expected: arrayBuffer, blob, json, stream, or text.`)
+    throw new BlobsInternalError(res.status)
   }
 
   async getWithMetadata(
@@ -145,6 +170,15 @@ export class Store {
     const { etag: requestETag, type } = options ?? {}
     const headers = requestETag ? { 'if-none-match': requestETag } : undefined
     const res = await this.client.makeRequest({ headers, key, method: HTTPMethod.GET, storeName: this.name })
+
+    if (res.status === 404) {
+      return null
+    }
+
+    if (res.status !== 200 && res.status !== 304) {
+      throw new BlobsInternalError(res.status)
+    }
+
     const responseETag = res?.headers.get('etag') ?? undefined
 
     let metadata: Metadata = {}
@@ -155,10 +189,6 @@ export class Store {
       throw new Error(
         'An internal error occurred while trying to retrieve the metadata for an entry. Please try updating to the latest version of the Netlify Blobs client.',
       )
-    }
-
-    if (res === null) {
-      return null
     }
 
     const result: GetWithMetadataResult = {
@@ -194,16 +224,36 @@ export class Store {
     throw new Error(`Invalid 'type' property: ${type}. Expected: arrayBuffer, blob, json, stream, or text.`)
   }
 
+  async list(options: ListOptions = {}): Promise<ListResult> {
+    const cursor = options.paginate === false ? options.cursor : undefined
+    const maxPages = options.paginate === false ? 1 : Number.POSITIVE_INFINITY
+    const res = await this.listAndPaginate({
+      currentPage: 1,
+      maxPages,
+      nextCursor: cursor,
+      prefix: options.prefix,
+    })
+    const blobs = res.blobs?.map(Store.formatListResult).filter(Boolean) as ListResultBlob[]
+
+    return {
+      blobs,
+    }
+  }
+
   async set(key: string, data: BlobInput, { metadata }: SetOptions = {}) {
     Store.validateKey(key)
 
-    await this.client.makeRequest({
+    const res = await this.client.makeRequest({
       body: data,
       key,
       metadata,
       method: HTTPMethod.PUT,
       storeName: this.name,
     })
+
+    if (res.status !== 200) {
+      throw new BlobsInternalError(res.status)
+    }
   }
 
   async setJSON(key: string, data: unknown, { metadata }: SetOptions = {}) {
@@ -214,7 +264,7 @@ export class Store {
       'content-type': 'application/json',
     }
 
-    await this.client.makeRequest({
+    const res = await this.client.makeRequest({
       body: payload,
       headers,
       key,
@@ -222,9 +272,24 @@ export class Store {
       method: HTTPMethod.PUT,
       storeName: this.name,
     })
+
+    if (res.status !== 200) {
+      throw new BlobsInternalError(res.status)
+    }
   }
 
-  static validateKey(key: string) {
+  private static formatListResult(result: ListResponseBlob): ListResultBlob | null {
+    if (!result.key) {
+      return null
+    }
+
+    return {
+      etag: result.etag,
+      key: result.key,
+    }
+  }
+
+  private static validateKey(key: string) {
     if (key.startsWith('/') || !/^[\w%!.*'()/-]{1,600}$/.test(key)) {
       throw new Error(
         "Keys can only contain letters, numbers, percentage signs (%), exclamation marks (!), dots (.), asterisks (*), single quotes ('), parentheses (()), dashes (-) and underscores (_) up to a maximum of 600 characters. Keys can also contain forward slashes (/), but must not start with one.",
@@ -232,7 +297,7 @@ export class Store {
     }
   }
 
-  static validateDeployID(deployID: string) {
+  private static validateDeployID(deployID: string) {
     // We could be stricter here and require a length of 24 characters, but the
     // CLI currently uses a deploy of `0` when running Netlify Dev, since there
     // is no actual deploy at that point. Let's go with a more loose validation
@@ -242,7 +307,7 @@ export class Store {
     }
   }
 
-  static validateStoreName(name: string) {
+  private static validateStoreName(name: string) {
     if (name.startsWith('deploy:')) {
       throw new Error('Store name cannot start with the string `deploy:`, which is a reserved namespace.')
     }
@@ -251,6 +316,54 @@ export class Store {
       throw new Error(
         "Store name can only contain letters, numbers, percentage signs (%), exclamation marks (!), dots (.), asterisks (*), single quotes ('), parentheses (()), dashes (-) and underscores (_) up to a maximum of 64 characters.",
       )
+    }
+  }
+
+  private async listAndPaginate(options: {
+    accumulator?: ListResponse
+    currentPage: number
+    maxPages: number
+    nextCursor?: string
+    prefix?: string
+  }): Promise<ListResponse> {
+    const { accumulator = { blobs: [] }, currentPage, maxPages, nextCursor, prefix } = options
+
+    if (currentPage > maxPages || (currentPage > 1 && !nextCursor)) {
+      return accumulator
+    }
+
+    const parameters: Record<string, string> = {}
+
+    if (nextCursor) {
+      parameters.cursor = nextCursor
+    }
+
+    if (prefix) {
+      parameters.prefix = prefix
+    }
+
+    const res = await this.client.makeRequest({
+      method: HTTPMethod.GET,
+      parameters,
+      storeName: this.name,
+    })
+
+    if (res.status !== 200) {
+      throw new BlobsInternalError(res.status)
+    }
+
+    try {
+      const listResponse = (await res.json()) as ListResponse
+      const { blobs = [], next_cursor: nextCursor } = listResponse
+
+      return this.listAndPaginate({
+        accumulator: { ...listResponse, blobs: [...(accumulator.blobs || []), ...blobs] },
+        currentPage: currentPage + 1,
+        maxPages,
+        nextCursor,
+      })
+    } catch (error: unknown) {
+      throw new Error(`'list()' has returned an internal error: ${error}`)
     }
   }
 }
