@@ -44,11 +44,13 @@ export class Store {
     this.client = options.client
 
     if ('deployID' in options) {
-      this.name = `deploy:${encodeURIComponent(options.deployID)}`
-    } else if (options?.name.startsWith('deploy:')) {
-      throw new Error('Store name cannot start with the string `deploy:`, which is a reserved namespace')
+      Store.validateDeployID(options.deployID)
+
+      this.name = `deploy:${options.deployID}`
     } else {
-      this.name = encodeURIComponent(options.name)
+      Store.validateStoreName(options.name)
+
+      this.name = options.name
     }
   }
 
@@ -193,6 +195,8 @@ export class Store {
   }
 
   async set(key: string, data: BlobInput, { metadata }: SetOptions = {}) {
+    Store.validateKey(key)
+
     await this.client.makeRequest({
       body: data,
       key,
@@ -203,6 +207,8 @@ export class Store {
   }
 
   async setJSON(key: string, data: unknown, { metadata }: SetOptions = {}) {
+    Store.validateKey(key)
+
     const payload = JSON.stringify(data)
     const headers = {
       'content-type': 'application/json',
@@ -216,5 +222,35 @@ export class Store {
       method: HTTPMethod.PUT,
       storeName: this.name,
     })
+  }
+
+  static validateKey(key: string) {
+    if (key.startsWith('/') || !/^[\w%!.*'()/-]{1,600}$/.test(key)) {
+      throw new Error(
+        "Keys can only contain letters, numbers, percentage signs (%), exclamation marks (!), dots (.), asterisks (*), single quotes ('), parentheses (()), dashes (-) and underscores (_) up to a maximum of 600 characters. Keys can also contain forward slashes (/), but must not start with one.",
+      )
+    }
+  }
+
+  static validateDeployID(deployID: string) {
+    // We could be stricter here and require a length of 24 characters, but the
+    // CLI currently uses a deploy of `0` when running Netlify Dev, since there
+    // is no actual deploy at that point. Let's go with a more loose validation
+    // logic here until we update the CLI.
+    if (!/^\w{1,24}$/.test(deployID)) {
+      throw new Error(`'${deployID}' is not a valid Netlify deploy ID.`)
+    }
+  }
+
+  static validateStoreName(name: string) {
+    if (name.startsWith('deploy:')) {
+      throw new Error('Store name cannot start with the string `deploy:`, which is a reserved namespace.')
+    }
+
+    if (!/^[\w%!.*'()-]{1,64}$/.test(name)) {
+      throw new Error(
+        "Store name can only contain letters, numbers, percentage signs (%), exclamation marks (!), dots (.), asterisks (*), single quotes ('), parentheses (()), dashes (-) and underscores (_) up to a maximum of 64 characters.",
+      )
+    }
   }
 }

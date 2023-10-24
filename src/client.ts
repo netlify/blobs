@@ -42,7 +42,6 @@ export class Client {
   }
 
   private async getFinalRequest(storeName: string, key: string, method: string, metadata?: Metadata) {
-    const encodedKey = encodeURIComponent(key)
     const encodedMetadata = encodeMetadata(metadata)
 
     if (this.edgeURL) {
@@ -56,13 +55,13 @@ export class Client {
 
       return {
         headers,
-        url: `${this.edgeURL}/${this.siteID}/${storeName}/${encodedKey}`,
+        url: `${this.edgeURL}/${this.siteID}/${storeName}/${key}`,
       }
     }
 
     const apiURL = `${this.apiURL ?? 'https://api.netlify.com'}/api/v1/sites/${
       this.siteID
-    }/blobs/${encodedKey}?context=${storeName}`
+    }/blobs/${key}?context=${storeName}`
     const apiHeaders: Record<string, string> = { authorization: `Bearer ${this.token}` }
 
     if (encodedMetadata) {
