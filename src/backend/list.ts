@@ -1,5 +1,6 @@
 export interface ListResponse {
   blobs?: ListResponseBlob[]
+  directories?: string[]
   next_cursor?: string
 }
 

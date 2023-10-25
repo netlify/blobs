@@ -34,7 +34,7 @@ const edgeURL = 'https://cloudfront.url'
 
 describe('list', () => {
   describe('With API credentials', () => {
-    test('Lists entries and handles pagination', async () => {
+    test('Lists blobs and handles pagination by default', async () => {
       const mockStore = new MockFetch()
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
@@ -54,6 +54,7 @@ describe('list', () => {
                   last_modified: '2023-07-18T12:59:06Z',
                 },
               ],
+              directories: [],
               next_cursor: 'cursor_1',
             }),
           ),
@@ -77,6 +78,7 @@ describe('list', () => {
                   last_modified: '2023-07-18T12:59:06Z',
                 },
               ],
+              directories: [],
               next_cursor: 'cursor_2',
             }),
           ),
@@ -94,6 +96,7 @@ describe('list', () => {
                   last_modified: '2023-07-18T12:59:06Z',
                 },
               ],
+              directories: [],
             }),
           ),
           url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs?cursor=cursor_2&context=${storeName}`,
@@ -116,6 +119,120 @@ describe('list', () => {
         { etag: 'etag4', key: 'key4' },
         { etag: 'etag5', key: 'key5' },
       ])
+
+      expect(mockStore.fulfilled).toBeTruthy()
+    })
+
+    test('Accepts a `directories` parameter', async () => {
+      const mockStore = new MockFetch()
+        .get({
+          headers: { authorization: `Bearer ${apiToken}` },
+          response: new Response(
+            JSON.stringify({
+              blobs: [
+                {
+                  etag: 'etag1',
+                  key: 'key1',
+                  size: 1,
+                  last_modified: '2023-07-18T12:59:06Z',
+                },
+                {
+                  etag: 'etag2',
+                  key: 'key2',
+                  size: 2,
+                  last_modified: '2023-07-18T12:59:06Z',
+                },
+              ],
+              directories: ['dir1'],
+              next_cursor: 'cursor_1',
+            }),
+          ),
+          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs?directories=true&context=${storeName}`,
+        })
+        .get({
+          headers: { authorization: `Bearer ${apiToken}` },
+          response: new Response(
+            JSON.stringify({
+              blobs: [
+                {
+                  etag: 'etag3',
+                  key: 'key3',
+                  size: 3,
+                  last_modified: '2023-07-18T12:59:06Z',
+                },
+                {
+                  etag: 'etag4',
+                  key: 'key4',
+                  size: 4,
+                  last_modified: '2023-07-18T12:59:06Z',
+                },
+              ],
+              directories: ['dir2'],
+              next_cursor: 'cursor_2',
+            }),
+          ),
+          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs?cursor=cursor_1&directories=true&context=${storeName}`,
+        })
+        .get({
+          headers: { authorization: `Bearer ${apiToken}` },
+          response: new Response(
+            JSON.stringify({
+              blobs: [
+                {
+                  etag: 'etag5',
+                  key: 'key5',
+                  size: 5,
+                  last_modified: '2023-07-18T12:59:06Z',
+                },
+              ],
+              directories: ['dir3'],
+            }),
+          ),
+          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs?cursor=cursor_2&directories=true&context=${storeName}`,
+        })
+        .get({
+          headers: { authorization: `Bearer ${apiToken}` },
+          response: new Response(
+            JSON.stringify({
+              blobs: [
+                {
+                  etag: 'etag6',
+                  key: 'key6',
+                  size: 6,
+                  last_modified: '2023-07-18T12:59:06Z',
+                },
+              ],
+              directories: [],
+            }),
+          ),
+          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs?prefix=dir2%2F&directories=true&context=${storeName}`,
+        })
+
+      globalThis.fetch = mockStore.fetch
+
+      const store = getStore({
+        name: 'mystore',
+        token: apiToken,
+        siteID,
+      })
+
+      const root = await store.list({ directories: true })
+
+      expect(root.blobs).toEqual([
+        { etag: 'etag1', key: 'key1' },
+        { etag: 'etag2', key: 'key2' },
+        { etag: 'etag3', key: 'key3' },
+        { etag: 'etag4', key: 'key4' },
+        { etag: 'etag5', key: 'key5' },
+      ])
+
+      expect(root.directories).toEqual(['dir1', 'dir2', 'dir3'])
+
+      const directory = await store.list({ directories: true, prefix: `dir2/` })
+
+      expect(directory.blobs).toEqual([{ etag: 'etag6', key: 'key6' }])
+      expect(directory.directories).toEqual([])
+
       expect(mockStore.fulfilled).toBeTruthy()
     })
 
@@ -209,7 +326,7 @@ describe('list', () => {
   })
 
   describe('With edge credentials', () => {
-    test('Lists entries and handles pagination', async () => {
+    test('Lists blobs and handles pagination by default', async () => {
       const mockStore = new MockFetch()
         .get({
           headers: { authorization: `Bearer ${edgeToken}` },
@@ -229,6 +346,7 @@ describe('list', () => {
                   last_modified: '2023-07-18T12:59:06Z',
                 },
               ],
+              directories: ['dir1'],
               next_cursor: 'cursor_1',
             }),
           ),
@@ -252,6 +370,7 @@ describe('list', () => {
                   last_modified: '2023-07-18T12:59:06Z',
                 },
               ],
+              directories: ['dir2'],
               next_cursor: 'cursor_2',
             }),
           ),
@@ -269,9 +388,27 @@ describe('list', () => {
                   last_modified: '2023-07-18T12:59:06Z',
                 },
               ],
+              directories: ['dir3'],
             }),
           ),
           url: `${edgeURL}/${siteID}/${storeName}?cursor=cursor_2`,
+        })
+        .get({
+          headers: { authorization: `Bearer ${edgeToken}` },
+          response: new Response(
+            JSON.stringify({
+              blobs: [
+                {
+                  etag: 'etag6',
+                  key: 'key6',
+                  size: 6,
+                  last_modified: '2023-07-18T12:59:06Z',
+                },
+              ],
+              directories: [],
+            }),
+          ),
+          url: `${edgeURL}/${siteID}/${storeName}?prefix=dir2%2F`,
         })
 
       globalThis.fetch = mockStore.fetch
@@ -283,15 +420,140 @@ describe('list', () => {
         siteID,
       })
 
-      const { blobs } = await store.list()
+      const root = await store.list()
 
-      expect(blobs).toEqual([
+      expect(root.blobs).toEqual([
         { etag: 'etag1', key: 'key1' },
         { etag: 'etag2', key: 'key2' },
         { etag: 'etag3', key: 'key3' },
         { etag: 'etag4', key: 'key4' },
         { etag: 'etag5', key: 'key5' },
       ])
+
+      // @ts-expect-error `directories` is not part of the return type
+      expect(root.directories).toBe(undefined)
+
+      const directory = await store.list({ prefix: 'dir2/' })
+
+      expect(directory.blobs).toEqual([{ etag: 'etag6', key: 'key6' }])
+
+      // @ts-expect-error `directories` is not part of the return type
+      expect(directory.directories).toBe(undefined)
+
+      expect(mockStore.fulfilled).toBeTruthy()
+    })
+
+    test('Accepts a `directories` parameter', async () => {
+      const mockStore = new MockFetch()
+        .get({
+          headers: { authorization: `Bearer ${edgeToken}` },
+          response: new Response(
+            JSON.stringify({
+              blobs: [
+                {
+                  etag: 'etag1',
+                  key: 'key1',
+                  size: 1,
+                  last_modified: '2023-07-18T12:59:06Z',
+                },
+                {
+                  etag: 'etag2',
+                  key: 'key2',
+                  size: 2,
+                  last_modified: '2023-07-18T12:59:06Z',
+                },
+              ],
+              directories: ['dir1'],
+              next_cursor: 'cursor_1',
+            }),
+          ),
+          url: `${edgeURL}/${siteID}/${storeName}?directories=true`,
+        })
+        .get({
+          headers: { authorization: `Bearer ${edgeToken}` },
+          response: new Response(
+            JSON.stringify({
+              blobs: [
+                {
+                  etag: 'etag3',
+                  key: 'key3',
+                  size: 3,
+                  last_modified: '2023-07-18T12:59:06Z',
+                },
+                {
+                  etag: 'etag4',
+                  key: 'key4',
+                  size: 4,
+                  last_modified: '2023-07-18T12:59:06Z',
+                },
+              ],
+              directories: ['dir2'],
+              next_cursor: 'cursor_2',
+            }),
+          ),
+          url: `${edgeURL}/${siteID}/${storeName}?cursor=cursor_1&directories=true`,
+        })
+        .get({
+          headers: { authorization: `Bearer ${edgeToken}` },
+          response: new Response(
+            JSON.stringify({
+              blobs: [
+                {
+                  etag: 'etag5',
+                  key: 'key5',
+                  size: 5,
+                  last_modified: '2023-07-18T12:59:06Z',
+                },
+              ],
+              directories: ['dir3'],
+            }),
+          ),
+          url: `${edgeURL}/${siteID}/${storeName}?cursor=cursor_2&directories=true`,
+        })
+        .get({
+          headers: { authorization: `Bearer ${edgeToken}` },
+          response: new Response(
+            JSON.stringify({
+              blobs: [
+                {
+                  etag: 'etag6',
+                  key: 'key6',
+                  size: 6,
+                  last_modified: '2023-07-18T12:59:06Z',
+                },
+              ],
+              directories: [],
+            }),
+          ),
+          url: `${edgeURL}/${siteID}/${storeName}?prefix=dir2%2F&directories=true`,
+        })
+
+      globalThis.fetch = mockStore.fetch
+
+      const store = getStore({
+        edgeURL,
+        name: storeName,
+        token: edgeToken,
+        siteID,
+      })
+
+      const root = await store.list({ directories: true })
+
+      expect(root.blobs).toEqual([
+        { etag: 'etag1', key: 'key1' },
+        { etag: 'etag2', key: 'key2' },
+        { etag: 'etag3', key: 'key3' },
+        { etag: 'etag4', key: 'key4' },
+        { etag: 'etag5', key: 'key5' },
+      ])
+
+      expect(root.directories).toEqual(['dir1', 'dir2', 'dir3'])
+
+      const directory = await store.list({ directories: true, prefix: 'dir2/' })
+
+      expect(directory.blobs).toEqual([{ etag: 'etag6', key: 'key6' }])
+      expect(directory.directories).toEqual([])
+
       expect(mockStore.fulfilled).toBeTruthy()
     })
 

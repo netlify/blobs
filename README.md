@@ -284,6 +284,60 @@ const { blobs } = await store.list({ prefix: 'some' })
 console.log(blobs)
 ```
 
+Optionally, you can choose to group blobs together under a common prefix and then browse them hierarchically when
+listing a store.
+
+To do this, you must use the `/` character in your keys to separate keys into multiple levels.
+
+Take the following list of keys as an example:
+
+```
+cats/garfield.jpg
+cats/tom.jpg
+mice/jerry.jpg
+mice/mickey.jpg
+pink-panther.jpg
+```
+
+By default, calling `store.list()` will return all five keys.
+
+```javascript
+const { blobs } = await store.list()
+
+// [
+//   { etag: "etag1", key: "cats/garfield.jpg" },
+//   { etag: "etag2", key: "cats/tom.jpg" },
+//   { etag: "etag3", key: "mice/jerry.jpg" },
+//   { etag: "etag4", key: "mice/mickey.jpg" },
+//   { etag: "etag5", key: "pink-panther.jg" },
+// ]
+console.log(blobs)
+```
+
+But if you want to list entries hierarchically, use the `directories` parameter.
+
+```javascript
+const { blobs, directories } = await store.list({ directories: true })
+
+// [ { etag: "etag1", key: "pink-panther.jpg" } ]
+console.log(blobs)
+
+// [ "cats", "mice" ]
+console.log(directories)
+```
+
+To drill down into a directory and get a list of its items, you can use the directory name as the `prefix` value.
+
+```javascript
+const { blobs, directories } = await store.list({ prefix: 'mice/' })
+
+// [ { etag: "etag3", key: "mice/jerry.jpg" }, { etag: "etag4", key: "mice/mickey.jpg" } ]
+console.log(blobs)
+
+// [ ]
+console.log(directories)
+```
+
 ## Contributing
 
 Contributions are welcome! If you encounter any issues or have suggestions for improvements, please open an issue or

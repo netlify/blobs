@@ -32,6 +32,10 @@ interface ListResult {
   blobs: ListResultBlob[]
 }
 
+interface ListResultWithDirectories extends ListResult {
+  directories: string[]
+}
+
 interface ListResultBlob {
   etag: string
   key: string
@@ -39,6 +43,7 @@ interface ListResultBlob {
 
 interface ListOptions {
   cursor?: string
+  directories?: boolean
   paginate?: boolean
   prefix?: string
 }
@@ -224,16 +229,26 @@ export class Store {
     throw new Error(`Invalid 'type' property: ${type}. Expected: arrayBuffer, blob, json, stream, or text.`)
   }
 
-  async list(options: ListOptions = {}): Promise<ListResult> {
+  async list(options: ListOptions & { directories: true }): Promise<ListResultWithDirectories>
+  async list(options?: ListOptions & { directories?: false }): Promise<ListResult>
+  async list(options: ListOptions = {}): Promise<ListResult | ListResultWithDirectories> {
     const cursor = options.paginate === false ? options.cursor : undefined
     const maxPages = options.paginate === false ? 1 : Number.POSITIVE_INFINITY
     const res = await this.listAndPaginate({
       currentPage: 1,
+      directories: options.directories,
       maxPages,
       nextCursor: cursor,
       prefix: options.prefix,
     })
-    const blobs = res.blobs?.map(Store.formatListResult).filter(Boolean) as ListResultBlob[]
+    const blobs = res.blobs?.map(Store.formatListResultBlob).filter(Boolean) as ListResultBlob[]
+
+    if (options?.directories) {
+      return {
+        blobs,
+        directories: res.directories?.filter(Boolean) as string[],
+      }
+    }
 
     return {
       blobs,
@@ -278,7 +293,7 @@ export class Store {
     }
   }
 
-  private static formatListResult(result: ListResponseBlob): ListResultBlob | null {
+  private static formatListResultBlob(result: ListResponseBlob): ListResultBlob | null {
     if (!result.key) {
       return null
     }
@@ -321,12 +336,20 @@ export class Store {
 
   private async listAndPaginate(options: {
     accumulator?: ListResponse
+    directories?: boolean
     currentPage: number
     maxPages: number
     nextCursor?: string
     prefix?: string
   }): Promise<ListResponse> {
-    const { accumulator = { blobs: [] }, currentPage, maxPages, nextCursor, prefix } = options
+    const {
+      accumulator = { blobs: [], directories: [] },
+      currentPage,
+      directories,
+      maxPages,
+      nextCursor,
+      prefix,
+    } = options
 
     if (currentPage > maxPages || (currentPage > 1 && !nextCursor)) {
       return accumulator
@@ -342,6 +365,10 @@ export class Store {
       parameters.prefix = prefix
     }
 
+    if (directories) {
+      parameters.directories = 'true'
+    }
+
     const res = await this.client.makeRequest({
       method: HTTPMethod.GET,
       parameters,
@@ -353,14 +380,19 @@ export class Store {
     }
 
     try {
-      const listResponse = (await res.json()) as ListResponse
-      const { blobs = [], next_cursor: nextCursor } = listResponse
+      const current = (await res.json()) as ListResponse
+      const newAccumulator = {
+        ...current,
+        blobs: [...(accumulator.blobs || []), ...(current.blobs || [])],
+        directories: [...(accumulator.directories || []), ...(current.directories || [])],
+      }
 
       return this.listAndPaginate({
-        accumulator: { ...listResponse, blobs: [...(accumulator.blobs || []), ...blobs] },
+        accumulator: newAccumulator,
         currentPage: currentPage + 1,
+        directories,
         maxPages,
-        nextCursor,
+        nextCursor: current.next_cursor,
       })
     } catch (error: unknown) {
       throw new Error(`'list()' has returned an internal error: ${error}`)
