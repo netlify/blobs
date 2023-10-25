@@ -285,9 +285,7 @@ console.log(blobs)
 ```
 
 Optionally, you can choose to group blobs together under a common prefix and then browse them hierarchically when
-listing a store.
-
-To do this, you must use the `/` character in your keys to separate keys into multiple levels.
+listing a store. To do this, use the `/` character in your keys to group them into multiple levels.
 
 Take the following list of keys as an example:
 
@@ -309,7 +307,7 @@ const { blobs } = await store.list()
 //   { etag: "etag2", key: "cats/tom.jpg" },
 //   { etag: "etag3", key: "mice/jerry.jpg" },
 //   { etag: "etag4", key: "mice/mickey.jpg" },
-//   { etag: "etag5", key: "pink-panther.jg" },
+//   { etag: "etag5", key: "pink-panther.jpg" },
 // ]
 console.log(blobs)
 ```
@@ -329,7 +327,7 @@ console.log(directories)
 To drill down into a directory and get a list of its items, you can use the directory name as the `prefix` value.
 
 ```javascript
-const { blobs, directories } = await store.list({ prefix: 'mice/' })
+const { blobs, directories } = await store.list({ directories: true, prefix: 'mice/' })
 
 // [ { etag: "etag3", key: "mice/jerry.jpg" }, { etag: "etag4", key: "mice/mickey.jpg" } ]
 console.log(blobs)
