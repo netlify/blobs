@@ -1,5 +1,19 @@
 # Changelog
 
+## [4.0.0](https://github.com/netlify/blobs/compare/v3.3.0...v4.0.0) (2023-10-26)
+
+
+### ⚠ BREAKING CHANGES
+
+* validate keys and store names ([#80](https://github.com/netlify/blobs/issues/80))
+
+### Features
+
+* add `list()` method ([#82](https://github.com/netlify/blobs/issues/82)) ([00db5ff](https://github.com/netlify/blobs/commit/00db5ff2cfb1e1780eadd4f1605f76f6519f65d2))
+* support `list()` in local server ([#83](https://github.com/netlify/blobs/issues/83)) ([9fc8456](https://github.com/netlify/blobs/commit/9fc845604fc20189a18fff5add075d542fbddc8e))
+* update validation rules ([#84](https://github.com/netlify/blobs/issues/84)) ([7218bb5](https://github.com/netlify/blobs/commit/7218bb5865770f7a83967613c378d4b7bed9df3c))
+* validate keys and store names ([#80](https://github.com/netlify/blobs/issues/80)) ([af867f8](https://github.com/netlify/blobs/commit/af867f87225f2c1e10192d3a4403b76d49c6cb56))
+
 ## [3.3.0](https://github.com/netlify/blobs/compare/v3.2.0...v3.3.0) (2023-10-23)
 
 
