@@ -263,7 +263,7 @@ Deletes an object with the given key, if one exists.
 await store.delete('my-key')
 ```
 
-### `list(options?: { cursor?: string, paginate?: boolean. prefix?: string }): Promise<{ blobs: BlobResult[], directories: string[] }>`
+### `list(options?: { cursor?: string, directories?: boolean, paginate?: boolean. prefix?: string }): Promise<{ blobs: BlobResult[], directories: string[] }>`
 
 Returns a list of blobs in a given store.
 
@@ -285,7 +285,8 @@ console.log(blobs)
 ```
 
 Optionally, you can choose to group blobs together under a common prefix and then browse them hierarchically when
-listing a store. To do this, use the `/` character in your keys to group them into multiple levels.
+listing a store, just like grouping files in a directory. To do this, use the `/` character in your keys to group them
+into directories.
 
 Take the following list of keys as an example:
 
@@ -327,14 +328,17 @@ console.log(directories)
 To drill down into a directory and get a list of its items, you can use the directory name as the `prefix` value.
 
 ```javascript
-const { blobs, directories } = await store.list({ directories: true, prefix: 'mice/' })
+const { blobs, directories } = await store.list({ directories: true, prefix: 'cats/' })
 
-// [ { etag: "etag3", key: "mice/jerry.jpg" }, { etag: "etag4", key: "mice/mickey.jpg" } ]
+// [ { etag: "etag1", key: "cats/garfield.jpg" }, { etag: "etag2", key: "cats/tom.jpg" } ]
 console.log(blobs)
 
 // [ ]
 console.log(directories)
 ```
+
+Note that we're only interested in entries under the `cats` directory, which is why we're using a trailing slash.
+Without it, other keys like `catsuit` would also match.
 
 ## Contributing
 
