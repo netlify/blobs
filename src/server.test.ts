@@ -28,7 +28,6 @@ afterEach(() => {
 })
 
 const siteID = '9a003659-aaaa-0000-aaaa-63d3720d8621'
-const key = '54321'
 const token = 'my-very-secret-token'
 
 test('Reads and writes from the file system', async () => {
@@ -52,17 +51,21 @@ test('Reads and writes from the file system', async () => {
     name: 'Netlify',
   }
 
-  await blobs.set(key, 'value 1')
-  expect(await blobs.get(key)).toBe('value 1')
+  await blobs.set('simple-key', 'value 1')
+  expect(await blobs.get('simple-key')).toBe('value 1')
 
-  await blobs.set(key, 'value 2', { metadata })
-  expect(await blobs.get(key)).toBe('value 2')
+  await blobs.set('simple-key', 'value 2', { metadata })
+  expect(await blobs.get('simple-key')).toBe('value 2')
 
-  const entry = await blobs.getWithMetadata(key)
+  await blobs.set('parent/child', 'value 3')
+  expect(await blobs.get('parent/child')).toBe('value 3')
+  expect(await blobs.get('parent')).toBe(null)
+
+  const entry = await blobs.getWithMetadata('simple-key')
   expect(entry.metadata).toEqual(metadata)
 
-  await blobs.delete(key)
-  expect(await blobs.get(key)).toBe(null)
+  await blobs.delete('simple-key')
+  expect(await blobs.get('simple-key')).toBe(null)
 
   await server.stop()
   await fs.rm(directory.path, { force: true, recursive: true })
@@ -88,6 +91,7 @@ test('Separates keys from different stores', async () => {
     token,
     siteID,
   })
+  const key = 'my-key'
 
   await store1.set(key, 'value 1 for store 1')
   await store2.set(key, 'value 1 for store 2')
@@ -113,7 +117,7 @@ test('If a token is set, rejects any requests with an invalid `authorization` he
     siteID,
   })
 
-  await expect(async () => await blobs.get(key)).rejects.toThrowError(
+  await expect(async () => await blobs.get('some-key')).rejects.toThrowError(
     'Netlify Blobs has generated an internal error: 403 response',
   )
 

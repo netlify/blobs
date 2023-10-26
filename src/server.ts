@@ -1,7 +1,7 @@
 import { createReadStream, createWriteStream, promises as fs } from 'node:fs'
 import http from 'node:http'
 import { tmpdir } from 'node:os'
-import { dirname, join, relative, resolve } from 'node:path'
+import { dirname, join, relative, resolve, sep } from 'node:path'
 
 import { ListResponse } from './backend/list.ts'
 import { decodeMetadata, encodeMetadata, METADATA_HEADER_EXTERNAL, METADATA_HEADER_INTERNAL } from './metadata.ts'
@@ -117,7 +117,7 @@ export class BlobsServer {
     const stream = createReadStream(dataPath)
 
     stream.on('error', (error: NodeJS.ErrnoException) => {
-      if (error.code === 'ENOENT') {
+      if (error.code === 'EISDIR' || error.code === 'ENOENT') {
         return this.sendResponse(req, res, 404)
       }
 
@@ -191,7 +191,6 @@ export class BlobsServer {
       await fs.mkdir(dirname(metadataPath), { recursive: true })
       await fs.writeFile(metadataPath, JSON.stringify(metadata))
     } catch (error) {
-      console.error(error)
       this.logDebug('Error when writing data:', error)
 
       return this.sendResponse(req, res, 500)
@@ -319,7 +318,13 @@ export class BlobsServer {
     for (const entry of entries) {
       const entryPath = join(path, entry)
       const stat = await fs.stat(entryPath)
-      const key = relative(rootPath, entryPath)
+
+      let key = relative(rootPath, entryPath)
+
+      // Normalize keys to use `/` as delimiter regardless of OS.
+      if (sep !== '/') {
+        key = key.split(sep).join('/')
+      }
 
       // To match the key against the prefix, we start by creating a "mask",
       // which consists of the subset of the key up to the length of the
