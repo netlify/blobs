@@ -608,11 +608,12 @@ describe('set', () => {
         siteID,
       })
 
-      const expectedError = `Keys can only contain letters, numbers, percentage signs (%), exclamation marks (!), dots (.), asterisks (*), single quotes ('), parentheses (()), dashes (-) and underscores (_) up to a maximum of 600 characters. Keys can also contain forward slashes (/), but must not start with one.`
-
-      expect(async () => await blobs.set('kéy', 'value')).rejects.toThrowError(expectedError)
-      expect(async () => await blobs.set('/key', 'value')).rejects.toThrowError(expectedError)
-      expect(async () => await blobs.set('a'.repeat(801), 'value')).rejects.toThrowError(expectedError)
+      expect(async () => await blobs.set('/key', 'value')).rejects.toThrowError(
+        'Blob key must not start with forward slash (/).',
+      )
+      expect(async () => await blobs.set('a'.repeat(801), 'value')).rejects.toThrowError(
+        'Blob key must be a sequence of Unicode characters whose UTF-8 encoding is at most 600 bytes long.',
+      )
     })
 
     test('Retries failed operations', async () => {
@@ -1228,9 +1229,7 @@ describe(`getStore`, () => {
         token: apiToken,
         siteID,
       }),
-    ).toThrowError(
-      `Store name can only contain letters, numbers, percentage signs (%), exclamation marks (!), dots (.), asterisks (*), single quotes ('), parentheses (()), dashes (-) and underscores (_) up to a maximum of 64 characters.`,
-    )
+    ).toThrowError(`Store name must not contain forward slashes (/).`)
 
     expect(() =>
       getStore({
@@ -1238,9 +1237,7 @@ describe(`getStore`, () => {
         token: apiToken,
         siteID,
       }),
-    ).toThrowError(
-      `Store name can only contain letters, numbers, percentage signs (%), exclamation marks (!), dots (.), asterisks (*), single quotes ('), parentheses (()), dashes (-) and underscores (_) up to a maximum of 64 characters.`,
-    )
+    ).toThrowError(`Store name must be a sequence of Unicode characters whose UTF-8 encoding is at most 64 bytes long.`)
 
     expect(() =>
       getStore({
@@ -1248,7 +1245,7 @@ describe(`getStore`, () => {
         token: apiToken,
         siteID,
       }),
-    ).toThrowError('Store name cannot start with the string `deploy:`, which is a reserved namespace.')
+    ).toThrowError('Store name must not start with the `deploy:` reserved keyword.')
 
     const context = {
       siteID,
@@ -1257,9 +1254,7 @@ describe(`getStore`, () => {
 
     env.NETLIFY_BLOBS_CONTEXT = Buffer.from(JSON.stringify(context)).toString('base64')
 
-    expect(() => getStore('deploy:foo')).toThrowError(
-      'Store name cannot start with the string `deploy:`, which is a reserved namespace.',
-    )
+    expect(() => getStore('deploy:foo')).toThrowError('Store name must not start with the `deploy:` reserved keyword.')
   })
 
   test('Throws when there is no `fetch` implementation available', async () => {
