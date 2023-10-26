@@ -6,9 +6,10 @@ import { BlobInput, Fetcher, HTTPMethod } from './types.ts'
 interface MakeStoreRequestOptions {
   body?: BlobInput | null
   headers?: Record<string, string>
-  key: string
+  key?: string
   metadata?: Metadata
   method: HTTPMethod
+  parameters?: Record<string, string>
   storeName: string
 }
 
@@ -18,6 +19,14 @@ export interface ClientOptions {
   fetch?: Fetcher
   siteID: string
   token: string
+}
+
+interface GetFinalRequestOptions {
+  key: string | undefined
+  metadata?: Metadata
+  method: string
+  parameters?: Record<string, string>
+  storeName: string
 }
 
 export class Client {
@@ -41,7 +50,7 @@ export class Client {
     }
   }
 
-  private async getFinalRequest(storeName: string, key: string, method: string, metadata?: Metadata) {
+  private async getFinalRequest({ key, metadata, method, parameters = {}, storeName }: GetFinalRequestOptions) {
     const encodedMetadata = encodeMetadata(metadata)
 
     if (this.edgeURL) {
@@ -53,38 +62,72 @@ export class Client {
         headers[METADATA_HEADER_EXTERNAL] = encodedMetadata
       }
 
+      const path = key ? `/${this.siteID}/${storeName}/${key}` : `/${this.siteID}/${storeName}`
+      const url = new URL(path, this.edgeURL)
+
+      for (const key in parameters) {
+        url.searchParams.set(key, parameters[key])
+      }
+
       return {
         headers,
-        url: `${this.edgeURL}/${this.siteID}/${storeName}/${key}`,
+        url: url.toString(),
       }
     }
 
-    const apiURL = `${this.apiURL ?? 'https://api.netlify.com'}/api/v1/sites/${
-      this.siteID
-    }/blobs/${key}?context=${storeName}`
     const apiHeaders: Record<string, string> = { authorization: `Bearer ${this.token}` }
+    const url = new URL(`/api/v1/sites/${this.siteID}/blobs`, this.apiURL ?? 'https://api.netlify.com')
+
+    for (const key in parameters) {
+      url.searchParams.set(key, parameters[key])
+    }
+
+    url.searchParams.set('context', storeName)
+
+    if (key === undefined) {
+      return {
+        headers: apiHeaders,
+        url: url.toString(),
+      }
+    }
+
+    url.pathname += `/${key}`
 
     if (encodedMetadata) {
       apiHeaders[METADATA_HEADER_EXTERNAL] = encodedMetadata
     }
 
-    const res = await this.fetch(apiURL, { headers: apiHeaders, method })
+    const res = await this.fetch(url.toString(), { headers: apiHeaders, method })
 
     if (res.status !== 200) {
-      throw new Error(`${method} operation has failed: API returned a ${res.status} response`)
+      throw new Error(`Netlify Blobs has generated an internal error: ${res.status} response`)
     }
 
-    const { url } = await res.json()
+    const { url: signedURL } = await res.json()
     const userHeaders = encodedMetadata ? { [METADATA_HEADER_INTERNAL]: encodedMetadata } : undefined
 
     return {
       headers: userHeaders,
-      url,
+      url: signedURL,
     }
   }
 
-  async makeRequest({ body, headers: extraHeaders, key, metadata, method, storeName }: MakeStoreRequestOptions) {
-    const { headers: baseHeaders = {}, url } = await this.getFinalRequest(storeName, key, method, metadata)
+  async makeRequest({
+    body,
+    headers: extraHeaders,
+    key,
+    metadata,
+    method,
+    parameters,
+    storeName,
+  }: MakeStoreRequestOptions) {
+    const { headers: baseHeaders = {}, url } = await this.getFinalRequest({
+      key,
+      metadata,
+      method,
+      parameters,
+      storeName,
+    })
     const headers: Record<string, string> = {
       ...baseHeaders,
       ...extraHeaders,
@@ -106,17 +149,7 @@ export class Client {
       options.duplex = 'half'
     }
 
-    const res = await fetchAndRetry(this.fetch, url, options)
-
-    if (res.status === 404 && method === HTTPMethod.GET) {
-      return null
-    }
-
-    if (res.status !== 200 && res.status !== 304) {
-      throw new Error(`${method} operation has failed: store returned a ${res.status} response`)
-    }
-
-    return res
+    return fetchAndRetry(this.fetch, url, options)
   }
 }
 

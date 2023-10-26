@@ -186,7 +186,7 @@ second parameter, with one of the following values:
 If an object with the given key is not found, `null` is returned.
 
 ```javascript
-const entry = await blobs.get('some-key', { type: 'json' })
+const entry = await store.get('some-key', { type: 'json' })
 
 console.log(entry)
 ```
@@ -209,7 +209,7 @@ second parameter, with one of the following values:
 If an object with the given key is not found, `null` is returned.
 
 ```javascript
-const blob = await blobs.getWithMetadata('some-key', { type: 'json' })
+const blob = await store.getWithMetadata('some-key', { type: 'json' })
 
 console.log(blob.data, blob.etag, blob.metadata)
 ```
@@ -223,7 +223,7 @@ const cachedETag = getFromMockCache('my-key')
 
 // Get entry from the blob store only if its ETag is different from the one you
 // have locally, which means the entry has changed since you last obtained it
-const { data, etag, fresh } = await blobs.getWithMetadata('some-key', { etag: cachedETag })
+const { data, etag, fresh } = await store.getWithMetadata('some-key', { etag: cachedETag })
 
 if (fresh) {
   // `data` is `null` because the local blob is fresh
@@ -240,7 +240,7 @@ Creates an object with the given key and value.
 If an entry with the given key already exists, its value is overwritten.
 
 ```javascript
-await blobs.set('some-key', 'This is a string value')
+await store.set('some-key', 'This is a string value')
 ```
 
 ### `setJSON(key: string, value: any, { metadata?: object }): Promise<void>`
@@ -250,7 +250,7 @@ Convenience method for creating a JSON-serialized object with the given key.
 If an entry with the given key already exists, its value is overwritten.
 
 ```javascript
-await blobs.setJSON('some-key', {
+await store.setJSON('some-key', {
   foo: 'bar',
 })
 ```
@@ -260,8 +260,85 @@ await blobs.setJSON('some-key', {
 Deletes an object with the given key, if one exists.
 
 ```javascript
-await blobs.delete('my-key')
+await store.delete('my-key')
 ```
+
+### `list(options?: { cursor?: string, directories?: boolean, paginate?: boolean. prefix?: string }): Promise<{ blobs: BlobResult[], directories: string[] }>`
+
+Returns a list of blobs in a given store.
+
+```javascript
+const { blobs } = await store.list()
+
+// [ { etag: 'etag1', key: 'some-key' }, { etag: 'etag2', key: 'another-key' } ]
+console.log(blobs)
+```
+
+To filter down the entries that should be returned, an optional `prefix` parameter can be supplied. When used, only the
+entries whose key starts with that prefix are returned.
+
+```javascript
+const { blobs } = await store.list({ prefix: 'some' })
+
+// [ { etag: 'etag1', key: 'some-key' } ]
+console.log(blobs)
+```
+
+Optionally, you can choose to group blobs together under a common prefix and then browse them hierarchically when
+listing a store, just like grouping files in a directory. To do this, use the `/` character in your keys to group them
+into directories.
+
+Take the following list of keys as an example:
+
+```
+cats/garfield.jpg
+cats/tom.jpg
+mice/jerry.jpg
+mice/mickey.jpg
+pink-panther.jpg
+```
+
+By default, calling `store.list()` will return all five keys.
+
+```javascript
+const { blobs } = await store.list()
+
+// [
+//   { etag: "etag1", key: "cats/garfield.jpg" },
+//   { etag: "etag2", key: "cats/tom.jpg" },
+//   { etag: "etag3", key: "mice/jerry.jpg" },
+//   { etag: "etag4", key: "mice/mickey.jpg" },
+//   { etag: "etag5", key: "pink-panther.jpg" },
+// ]
+console.log(blobs)
+```
+
+But if you want to list entries hierarchically, use the `directories` parameter.
+
+```javascript
+const { blobs, directories } = await store.list({ directories: true })
+
+// [ { etag: "etag1", key: "pink-panther.jpg" } ]
+console.log(blobs)
+
+// [ "cats", "mice" ]
+console.log(directories)
+```
+
+To drill down into a directory and get a list of its items, you can use the directory name as the `prefix` value.
+
+```javascript
+const { blobs, directories } = await store.list({ directories: true, prefix: 'cats/' })
+
+// [ { etag: "etag1", key: "cats/garfield.jpg" }, { etag: "etag2", key: "cats/tom.jpg" } ]
+console.log(blobs)
+
+// [ ]
+console.log(directories)
+```
+
+Note that we're only interested in entries under the `cats` directory, which is why we're using a trailing slash.
+Without it, other keys like `catsuit` would also match.
 
 ## Contributing
 

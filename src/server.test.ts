@@ -105,7 +105,7 @@ describe('Local server', () => {
     })
 
     await expect(async () => await blobs.get(key)).rejects.toThrowError(
-      'get operation has failed: store returned a 403 response',
+      'Netlify Blobs has generated an internal error: 403 response',
     )
 
     await server.stop()

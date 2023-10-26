@@ -131,7 +131,7 @@ describe('get', () => {
       })
 
       expect(async () => await blobs.get(key)).rejects.toThrowError(
-        'get operation has failed: API returned a 401 response',
+        `Netlify Blobs has generated an internal error: 401 response`,
       )
       expect(mockStore.fulfilled).toBeTruthy()
     })
@@ -157,7 +157,7 @@ describe('get', () => {
       })
 
       await expect(async () => await blobs.get(key)).rejects.toThrowError(
-        'get operation has failed: store returned a 401 response',
+        `Netlify Blobs has generated an internal error: 401 response`,
       )
 
       expect(mockStore.fulfilled).toBeTruthy()
@@ -233,7 +233,7 @@ describe('get', () => {
       })
 
       await expect(async () => await blobs.get(key)).rejects.toThrowError(
-        'get operation has failed: store returned a 401 response',
+        `Netlify Blobs has generated an internal error: 401 response`,
       )
 
       expect(mockStore.fulfilled).toBeTruthy()
@@ -592,7 +592,7 @@ describe('set', () => {
       })
 
       expect(async () => await blobs.set(key, 'value')).rejects.toThrowError(
-        'put operation has failed: API returned a 401 response',
+        `Netlify Blobs has generated an internal error: 401 response`,
       )
       expect(mockStore.fulfilled).toBeTruthy()
     })
@@ -718,7 +718,7 @@ describe('set', () => {
       })
 
       await expect(async () => await blobs.set(key, value)).rejects.toThrowError(
-        'put operation has failed: store returned a 401 response',
+        `Netlify Blobs has generated an internal error: 401 response`,
       )
 
       expect(mockStore.fulfilled).toBeTruthy()
@@ -929,7 +929,7 @@ describe('delete', () => {
       })
 
       expect(async () => await blobs.delete(key)).rejects.toThrowError(
-        'delete operation has failed: API returned a 401 response',
+        `Netlify Blobs has generated an internal error: 401 response`,
       )
       expect(mockStore.fulfilled).toBeTruthy()
     })
@@ -974,7 +974,7 @@ describe('delete', () => {
       })
 
       await expect(async () => await blobs.delete(key)).rejects.toThrowError(
-        'delete operation has failed: store returned a 401 response',
+        `Netlify Blobs has generated an internal error: 401 response`,
       )
 
       expect(mockStore.fulfilled).toBeTruthy()
@@ -1023,7 +1023,7 @@ describe('Deploy scope', () => {
       .get({
         headers: { authorization: `Bearer ${apiToken}` },
         response: new Response(JSON.stringify({ url: signedURL })),
-        url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=deploy:${deployID}`,
+        url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=deploy%3A${deployID}`,
       })
       .get({
         response: new Response(value),
@@ -1032,7 +1032,7 @@ describe('Deploy scope', () => {
       .get({
         headers: { authorization: `Bearer ${apiToken}` },
         response: new Response(JSON.stringify({ url: signedURL })),
-        url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=deploy:${deployID}`,
+        url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=deploy%3A${deployID}`,
       })
       .get({
         response: new Response(value),
@@ -1093,7 +1093,7 @@ describe('Deploy scope', () => {
       .get({
         headers: { authorization: `Bearer ${apiToken}` },
         response: new Response(JSON.stringify({ url: signedURL })),
-        url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=deploy:${deployID}`,
+        url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=deploy%3A${deployID}`,
       })
       .get({
         response: new Response(value),
@@ -1102,7 +1102,7 @@ describe('Deploy scope', () => {
       .get({
         headers: { authorization: `Bearer ${apiToken}` },
         response: new Response(JSON.stringify({ url: signedURL })),
-        url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=deploy:${deployID}`,
+        url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=deploy%3A${deployID}`,
       })
       .get({
         response: new Response(value),
