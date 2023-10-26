@@ -263,7 +263,7 @@ Deletes an object with the given key, if one exists.
 await store.delete('my-key')
 ```
 
-### `list(options?: { cursor?: string, paginate?: boolean. prefix?: string }): Promise<{ blobs: BlobResult[] }>`
+### `list(options?: { cursor?: string, paginate?: boolean. prefix?: string }): Promise<{ blobs: BlobResult[], directories: string[] }>`
 
 Returns a list of blobs in a given store.
 
