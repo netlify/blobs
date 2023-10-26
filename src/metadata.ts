@@ -22,18 +22,12 @@ export const encodeMetadata = (metadata?: Metadata) => {
   return payload
 }
 
-export const decodeMetadata = (headers?: Headers): Metadata => {
-  if (!headers) {
+export const decodeMetadata = (header: string | null): Metadata => {
+  if (!header || !header.startsWith(BASE64_PREFIX)) {
     return {}
   }
 
-  const metadataHeader = headers.get(METADATA_HEADER_INTERNAL)
-
-  if (!metadataHeader || !metadataHeader.startsWith(BASE64_PREFIX)) {
-    return {}
-  }
-
-  const encodedData = metadataHeader.slice(BASE64_PREFIX.length)
+  const encodedData = header.slice(BASE64_PREFIX.length)
   const decodedData = Buffer.from(encodedData, 'base64').toString()
   const metadata = JSON.parse(decodedData)
 

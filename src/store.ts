@@ -1,6 +1,6 @@
 import { ListResponse, ListResponseBlob } from './backend/list.ts'
 import { Client } from './client.ts'
-import { decodeMetadata, Metadata } from './metadata.ts'
+import { decodeMetadata, Metadata, METADATA_HEADER_INTERNAL } from './metadata.ts'
 import { BlobInput, HTTPMethod } from './types.ts'
 import { BlobsInternalError } from './util.ts'
 
@@ -189,7 +189,7 @@ export class Store {
     let metadata: Metadata = {}
 
     try {
-      metadata = decodeMetadata(res?.headers)
+      metadata = decodeMetadata(res?.headers.get(METADATA_HEADER_INTERNAL))
     } catch {
       throw new Error(
         'An internal error occurred while trying to retrieve the metadata for an entry. Please try updating to the latest version of the Netlify Blobs client.',
