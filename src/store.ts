@@ -1,3 +1,5 @@
+import { Buffer } from 'node:buffer'
+
 import { ListResponse, ListResponseBlob } from './backend/list.ts'
 import { Client } from './client.ts'
 import { decodeMetadata, Metadata, METADATA_HEADER_INTERNAL } from './metadata.ts'
@@ -305,9 +307,13 @@ export class Store {
   }
 
   private static validateKey(key: string) {
-    if (key.startsWith('/') || !/^[\w%!.*'()/-]{1,600}$/.test(key)) {
+    if (key.startsWith('/') || key.startsWith('%2F')) {
+      throw new Error('Blob key must not start with forward slash (/).')
+    }
+
+    if (Buffer.byteLength(key, 'utf8') > 600) {
       throw new Error(
-        "Keys can only contain letters, numbers, percentage signs (%), exclamation marks (!), dots (.), asterisks (*), single quotes ('), parentheses (()), dashes (-) and underscores (_) up to a maximum of 600 characters. Keys can also contain forward slashes (/), but must not start with one.",
+        'Blob key must be a sequence of Unicode characters whose UTF-8 encoding is at most 600 bytes long.',
       )
     }
   }
@@ -323,13 +329,17 @@ export class Store {
   }
 
   private static validateStoreName(name: string) {
-    if (name.startsWith('deploy:')) {
-      throw new Error('Store name cannot start with the string `deploy:`, which is a reserved namespace.')
+    if (name.startsWith('deploy:') || name.startsWith('deploy%3A1')) {
+      throw new Error('Store name must not start with the `deploy:` reserved keyword.')
     }
 
-    if (!/^[\w%!.*'()-]{1,64}$/.test(name)) {
+    if (name.includes('/') || name.includes('%2F')) {
+      throw new Error('Store name must not contain forward slashes (/).')
+    }
+
+    if (Buffer.byteLength(name, 'utf8') > 64) {
       throw new Error(
-        "Store name can only contain letters, numbers, percentage signs (%), exclamation marks (!), dots (.), asterisks (*), single quotes ('), parentheses (()), dashes (-) and underscores (_) up to a maximum of 64 characters.",
+        'Store name must be a sequence of Unicode characters whose UTF-8 encoding is at most 64 bytes long.',
       )
     }
   }
