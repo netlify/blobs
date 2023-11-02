@@ -2,7 +2,7 @@ import { Buffer } from 'node:buffer'
 
 import { ListResponse, ListResponseBlob } from './backend/list.ts'
 import { Client } from './client.ts'
-import { decodeMetadata, Metadata, METADATA_HEADER_INTERNAL } from './metadata.ts'
+import { getMetadataFromResponse, Metadata } from './metadata.ts'
 import { BlobInput, HTTPMethod } from './types.ts'
 import { BlobsInternalError } from './util.ts'
 
@@ -131,10 +131,31 @@ export class Store {
     throw new BlobsInternalError(res.status)
   }
 
+  async getMetadata(key: string) {
+    const res = await this.client.makeRequest({ key, method: HTTPMethod.HEAD, storeName: this.name })
+
+    if (res.status === 404) {
+      return null
+    }
+
+    if (res.status !== 200 && res.status !== 304) {
+      throw new BlobsInternalError(res.status)
+    }
+
+    const etag = res?.headers.get('etag') ?? undefined
+    const metadata = getMetadataFromResponse(res)
+    const result = {
+      etag,
+      metadata,
+    }
+
+    return result
+  }
+
   async getWithMetadata(
     key: string,
     options?: GetWithMetadataOptions,
-  ): Promise<{ data: string } & GetWithMetadataResult>
+  ): Promise<({ data: string } & GetWithMetadataResult) | null>
 
   async getWithMetadata(
     key: string,
@@ -144,26 +165,26 @@ export class Store {
   async getWithMetadata(
     key: string,
     options: { type: 'blob' } & GetWithMetadataOptions,
-  ): Promise<{ data: Blob } & GetWithMetadataResult>
+  ): Promise<({ data: Blob } & GetWithMetadataResult) | null>
 
   /* eslint-disable @typescript-eslint/no-explicit-any */
 
   async getWithMetadata(
     key: string,
     options: { type: 'json' } & GetWithMetadataOptions,
-  ): Promise<{ data: any } & GetWithMetadataResult>
+  ): Promise<({ data: any } & GetWithMetadataResult) | null>
 
   /* eslint-enable @typescript-eslint/no-explicit-any */
 
   async getWithMetadata(
     key: string,
     options: { type: 'stream' } & GetWithMetadataOptions,
-  ): Promise<{ data: ReadableStream } & GetWithMetadataResult>
+  ): Promise<({ data: ReadableStream } & GetWithMetadataResult) | null>
 
   async getWithMetadata(
     key: string,
     options: { type: 'text' } & GetWithMetadataOptions,
-  ): Promise<{ data: string } & GetWithMetadataResult>
+  ): Promise<({ data: string } & GetWithMetadataResult) | null>
 
   async getWithMetadata(
     key: string,
@@ -187,17 +208,7 @@ export class Store {
     }
 
     const responseETag = res?.headers.get('etag') ?? undefined
-
-    let metadata: Metadata = {}
-
-    try {
-      metadata = decodeMetadata(res?.headers.get(METADATA_HEADER_INTERNAL))
-    } catch {
-      throw new Error(
-        'An internal error occurred while trying to retrieve the metadata for an entry. Please try updating to the latest version of the Netlify Blobs client.',
-      )
-    }
-
+    const metadata = getMetadataFromResponse(res)
     const result: GetWithMetadataResult = {
       etag: responseETag,
       fresh: false,

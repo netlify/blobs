@@ -45,6 +45,10 @@ export class MockFetch {
     return this.addExpectedRequest({ ...options, method: 'get' })
   }
 
+  head(options: ExpectedRequestOptions) {
+    return this.addExpectedRequest({ ...options, method: 'head' })
+  }
+
   post(options: ExpectedRequestOptions) {
     return this.addExpectedRequest({ ...options, method: 'post' })
   }
