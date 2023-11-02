@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.1.0](https://github.com/netlify/blobs/compare/v4.0.0...v4.1.0) (2023-11-02)
+
+
+### Features
+
+* load context from global variable ([#87](https://github.com/netlify/blobs/issues/87)) ([cbb5c3d](https://github.com/netlify/blobs/commit/cbb5c3d3fb92d2680865831926d11af8a9ac2103))
+
 ## [4.0.0](https://github.com/netlify/blobs/compare/v3.3.0...v4.0.0) (2023-10-26)
 
 
