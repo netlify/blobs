@@ -244,7 +244,7 @@ This method can be used to check whether a key exists without having to actually
 potentially-large blob.
 
 ```javascript
-const blob = await store.getMetadata('some-key', { type: 'json' })
+const blob = await store.getMetadata('some-key')
 
 console.log(blob.etag, blob.metadata)
 ```
