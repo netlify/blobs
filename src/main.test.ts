@@ -27,6 +27,7 @@ beforeAll(async () => {
 
 afterEach(() => {
   delete env.NETLIFY_BLOBS_CONTEXT
+  delete globalThis.netlifyBlobsContext
 })
 
 const deployID = '6527dfab35be400008332a1d'
@@ -239,51 +240,108 @@ describe('get', () => {
       expect(mockStore.fulfilled).toBeTruthy()
     })
 
-    test('Loads credentials from the environment', async () => {
-      const tokens = ['some-token-1', 'another-token-2']
-      const mockStore = new MockFetch()
-        .get({
-          headers: { authorization: `Bearer ${tokens[0]}` },
-          response: new Response(value),
-          url: `${edgeURL}/${siteID}/images/${key}`,
-        })
-        .get({
-          headers: { authorization: `Bearer ${tokens[0]}` },
-          response: new Response(value),
-          url: `${edgeURL}/${siteID}/images/${key}`,
-        })
-        .get({
-          headers: { authorization: `Bearer ${tokens[1]}` },
-          response: new Response(value),
-          url: `${edgeURL}/${siteID}/images/${key}`,
-        })
-        .get({
-          headers: { authorization: `Bearer ${tokens[1]}` },
-          response: new Response(value),
-          url: `${edgeURL}/${siteID}/images/${key}`,
-        })
+    describe('Loads credentials from the environment', () => {
+      test('From the `NETLIFY_BLOBS_CONTEXT` environment variable', async () => {
+        const tokens = ['some-token-1', 'another-token-2']
+        const mockStore = new MockFetch()
+          .get({
+            headers: { authorization: `Bearer ${tokens[0]}` },
+            response: new Response(value),
+            url: `${edgeURL}/${siteID}/images/${key}`,
+          })
+          .get({
+            headers: { authorization: `Bearer ${tokens[0]}` },
+            response: new Response(value),
+            url: `${edgeURL}/${siteID}/images/${key}`,
+          })
+          .get({
+            headers: { authorization: `Bearer ${tokens[1]}` },
+            response: new Response(value),
+            url: `${edgeURL}/${siteID}/images/${key}`,
+          })
+          .get({
+            headers: { authorization: `Bearer ${tokens[1]}` },
+            response: new Response(value),
+            url: `${edgeURL}/${siteID}/images/${key}`,
+          })
 
-      globalThis.fetch = mockStore.fetch
+        globalThis.fetch = mockStore.fetch
 
-      for (let index = 0; index <= 1; index++) {
-        const context = {
-          edgeURL,
-          siteID,
-          token: tokens[index],
+        for (let index = 0; index <= 1; index++) {
+          const context = {
+            edgeURL,
+            siteID,
+            token: tokens[index],
+          }
+
+          env.NETLIFY_BLOBS_CONTEXT = Buffer.from(JSON.stringify(context)).toString('base64')
+
+          const store = getStore('images')
+
+          const string = await store.get(key)
+          expect(string).toBe(value)
+
+          const stream = await store.get(key, { type: 'stream' })
+          expect(await streamToString(stream as unknown as NodeJS.ReadableStream)).toBe(value)
         }
 
-        env.NETLIFY_BLOBS_CONTEXT = Buffer.from(JSON.stringify(context)).toString('base64')
+        expect(mockStore.fulfilled).toBeTruthy()
+      })
 
-        const store = getStore('images')
+      test('From the `netlifyBlobsContext` global variable', async () => {
+        const tokens = ['some-token-1', 'another-token-2']
+        const mockStore = new MockFetch()
+          .get({
+            headers: { authorization: `Bearer ${tokens[0]}` },
+            response: new Response(value),
+            url: `${edgeURL}/${siteID}/images/${key}`,
+          })
+          .get({
+            headers: { authorization: `Bearer ${tokens[0]}` },
+            response: new Response(value),
+            url: `${edgeURL}/${siteID}/images/${key}`,
+          })
+          .get({
+            headers: { authorization: `Bearer ${tokens[1]}` },
+            response: new Response(value),
+            url: `${edgeURL}/${siteID}/images/${key}`,
+          })
+          .get({
+            headers: { authorization: `Bearer ${tokens[1]}` },
+            response: new Response(value),
+            url: `${edgeURL}/${siteID}/images/${key}`,
+          })
 
-        const string = await store.get(key)
-        expect(string).toBe(value)
+        globalThis.fetch = mockStore.fetch
 
-        const stream = await store.get(key, { type: 'stream' })
-        expect(await streamToString(stream as unknown as NodeJS.ReadableStream)).toBe(value)
-      }
+        for (let index = 0; index <= 1; index++) {
+          const context1 = {
+            edgeURL,
+            siteID,
+            token: 'not-the-right-token',
+          }
 
-      expect(mockStore.fulfilled).toBeTruthy()
+          env.NETLIFY_BLOBS_CONTEXT = Buffer.from(JSON.stringify(context1)).toString('base64')
+
+          const context2 = {
+            edgeURL,
+            siteID,
+            token: tokens[index],
+          }
+
+          globalThis.netlifyBlobsContext = Buffer.from(JSON.stringify(context2)).toString('base64')
+
+          const store = getStore('images')
+
+          const string = await store.get(key)
+          expect(string).toBe(value)
+
+          const stream = await store.get(key, { type: 'stream' })
+          expect(await streamToString(stream as unknown as NodeJS.ReadableStream)).toBe(value)
+        }
+
+        expect(mockStore.fulfilled).toBeTruthy()
+      })
     })
   })
 })
