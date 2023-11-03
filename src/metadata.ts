@@ -33,3 +33,17 @@ export const decodeMetadata = (header: string | null): Metadata => {
 
   return metadata
 }
+
+export const getMetadataFromResponse = (response: Response) => {
+  if (!response.headers) {
+    return {}
+  }
+
+  try {
+    return decodeMetadata(response.headers.get(METADATA_HEADER_INTERNAL))
+  } catch {
+    throw new Error(
+      'An internal error occurred while trying to retrieve the metadata for an entry. Please try updating to the latest version of the Netlify Blobs client.',
+    )
+  }
+}

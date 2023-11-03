@@ -233,6 +233,22 @@ if (fresh) {
 }
 ```
 
+### `getMetadata(key: string, { etag?: string, type?: string }): Promise<{ data: any, etag: string, metadata: object }>`
+
+Retrieves any metadata associated with a given key and its
+[ETag value](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag).
+
+If an object with the given key is not found, `null` is returned.
+
+This method can be used to check whether a key exists without having to actually retrieve it and transfer a
+potentially-large blob.
+
+```javascript
+const blob = await store.getMetadata('some-key')
+
+console.log(blob.etag, blob.metadata)
+```
+
 ### `set(key: string, value: ArrayBuffer | Blob | ReadableStream | string, { metadata?: object }): Promise<void>`
 
 Creates an object with the given key and value.

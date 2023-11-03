@@ -84,6 +84,8 @@ export class Client {
 
     url.searchParams.set('context', storeName)
 
+    // If there is no key, we're dealing with the list endpoint, which is
+    // implemented directly in the Netlify API.
     if (key === undefined) {
       return {
         headers: apiHeaders,
@@ -95,6 +97,14 @@ export class Client {
 
     if (encodedMetadata) {
       apiHeaders[METADATA_HEADER_EXTERNAL] = encodedMetadata
+    }
+
+    // HEAD requests are implemented directly in the Netlify API.
+    if (method === HTTPMethod.HEAD) {
+      return {
+        headers: apiHeaders,
+        url: url.toString(),
+      }
     }
 
     const res = await this.fetch(url.toString(), { headers: apiHeaders, method })

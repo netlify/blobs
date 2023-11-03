@@ -346,6 +346,120 @@ describe('get', () => {
   })
 })
 
+describe('getMetadata', () => {
+  describe('With API credentials', () => {
+    test('Reads from the blob store and returns the etag and the metadata object', async () => {
+      const mockMetadata = {
+        name: 'Netlify',
+        cool: true,
+        functions: ['edge', 'serverless'],
+      }
+      const headers = {
+        etag: '123456789',
+        'x-amz-meta-user': `b64;${base64Encode(mockMetadata)}`,
+      }
+      const mockStore = new MockFetch().head({
+        headers: { authorization: `Bearer ${apiToken}` },
+        response: new Response(null, { headers }),
+        url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
+      })
+
+      globalThis.fetch = mockStore.fetch
+
+      const blobs = getStore({
+        name: 'production',
+        token: apiToken,
+        siteID,
+      })
+
+      const entry = await blobs.getMetadata(key)
+      expect(entry?.etag).toBe(headers.etag)
+      expect(entry?.metadata).toEqual(mockMetadata)
+
+      expect(mockStore.fulfilled).toBeTruthy()
+    })
+
+    test('Returns `null` when the API returns a 404', async () => {
+      const mockStore = new MockFetch().head({
+        headers: { authorization: `Bearer ${apiToken}` },
+        response: new Response(null, { status: 404 }),
+        url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
+      })
+
+      globalThis.fetch = mockStore.fetch
+
+      const blobs = getStore({
+        name: 'production',
+        token: apiToken,
+        siteID,
+      })
+
+      expect(await blobs.getMetadata(key)).toBeNull()
+      expect(mockStore.fulfilled).toBeTruthy()
+    })
+
+    test('Throws when the metadata object cannot be parsed', async () => {
+      const headers = {
+        etag: '123456789',
+        'x-amz-meta-user': `b64;${base64Encode(`{"name": "Netlify", "cool`)}`,
+      }
+      const mockStore = new MockFetch().head({
+        headers: { authorization: `Bearer ${apiToken}` },
+        response: new Response(null, { headers }),
+        url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
+      })
+
+      globalThis.fetch = mockStore.fetch
+
+      const blobs = getStore({
+        name: 'production',
+        token: apiToken,
+        siteID,
+      })
+
+      await expect(async () => await blobs.getMetadata(key)).rejects.toThrowError(
+        'An internal error occurred while trying to retrieve the metadata for an entry. Please try updating to the latest version of the Netlify Blobs client.',
+      )
+
+      expect(mockStore.fulfilled).toBeTruthy()
+    })
+  })
+
+  describe('With edge credentials', () => {
+    test('Reads from the blob store and returns the etag and the metadata object', async () => {
+      const mockMetadata = {
+        name: 'Netlify',
+        cool: true,
+        functions: ['edge', 'serverless'],
+      }
+      const headers = {
+        etag: '123456789',
+        'x-amz-meta-user': `b64;${base64Encode(mockMetadata)}`,
+      }
+      const mockStore = new MockFetch().head({
+        headers: { authorization: `Bearer ${edgeToken}` },
+        response: new Response(null, { headers }),
+        url: `${edgeURL}/${siteID}/production/${key}`,
+      })
+
+      globalThis.fetch = mockStore.fetch
+
+      const blobs = getStore({
+        edgeURL,
+        name: 'production',
+        token: edgeToken,
+        siteID,
+      })
+
+      const entry = await blobs.getMetadata(key)
+      expect(entry?.etag).toBe(headers.etag)
+      expect(entry?.metadata).toEqual(mockMetadata)
+
+      expect(mockStore.fulfilled).toBeTruthy()
+    })
+  })
+})
+
 describe('getWithMetadata', () => {
   describe('With API credentials', () => {
     test('Reads from the blob store and returns the etag and the metadata object', async () => {
@@ -387,14 +501,14 @@ describe('getWithMetadata', () => {
       })
 
       const entry1 = await blobs.getWithMetadata(key)
-      expect(entry1.data).toBe(value)
-      expect(entry1.etag).toBe(responseHeaders.etag)
-      expect(entry1.metadata).toEqual(mockMetadata)
+      expect(entry1?.data).toBe(value)
+      expect(entry1?.etag).toBe(responseHeaders.etag)
+      expect(entry1?.metadata).toEqual(mockMetadata)
 
       const entry2 = await blobs.getWithMetadata(key, { type: 'stream' })
-      expect(await streamToString(entry2.data as unknown as NodeJS.ReadableStream)).toBe(value)
-      expect(entry2.etag).toBe(responseHeaders.etag)
-      expect(entry2.metadata).toEqual(mockMetadata)
+      expect(await streamToString(entry2?.data as unknown as NodeJS.ReadableStream)).toBe(value)
+      expect(entry2?.etag).toBe(responseHeaders.etag)
+      expect(entry2?.metadata).toEqual(mockMetadata)
 
       expect(mockStore.fulfilled).toBeTruthy()
     })
@@ -495,16 +609,16 @@ describe('getWithMetadata', () => {
       })
 
       const staleEntry = await blobs.getWithMetadata(key, { etag: etags[0] })
-      expect(staleEntry.data).toBe(value)
-      expect(staleEntry.etag).toBe(etags[0])
-      expect(staleEntry.fresh).toBe(false)
-      expect(staleEntry.metadata).toEqual(mockMetadata)
+      expect(staleEntry?.data).toBe(value)
+      expect(staleEntry?.etag).toBe(etags[0])
+      expect(staleEntry?.fresh).toBe(false)
+      expect(staleEntry?.metadata).toEqual(mockMetadata)
 
       const freshEntry = await blobs.getWithMetadata(key, { etag: etags[1], type: 'text' })
-      expect(freshEntry.data).toBe(null)
-      expect(freshEntry.etag).toBe(etags[0])
-      expect(freshEntry.fresh).toBe(true)
-      expect(freshEntry.metadata).toEqual(mockMetadata)
+      expect(freshEntry?.data).toBe(null)
+      expect(freshEntry?.etag).toBe(etags[0])
+      expect(freshEntry?.fresh).toBe(true)
+      expect(freshEntry?.metadata).toEqual(mockMetadata)
 
       expect(mockStore.fulfilled).toBeTruthy()
     })
@@ -543,14 +657,14 @@ describe('getWithMetadata', () => {
       })
 
       const entry1 = await blobs.getWithMetadata(key)
-      expect(entry1.data).toBe(value)
-      expect(entry1.etag).toBe(responseHeaders.etag)
-      expect(entry1.metadata).toEqual(mockMetadata)
+      expect(entry1?.data).toBe(value)
+      expect(entry1?.etag).toBe(responseHeaders.etag)
+      expect(entry1?.metadata).toEqual(mockMetadata)
 
       const entry2 = await blobs.getWithMetadata(key, { type: 'stream' })
-      expect(await streamToString(entry2.data as unknown as NodeJS.ReadableStream)).toBe(value)
-      expect(entry2.etag).toBe(responseHeaders.etag)
-      expect(entry2.metadata).toEqual(mockMetadata)
+      expect(await streamToString(entry2?.data as unknown as NodeJS.ReadableStream)).toBe(value)
+      expect(entry2?.etag).toBe(responseHeaders.etag)
+      expect(entry2?.metadata).toEqual(mockMetadata)
 
       expect(mockStore.fulfilled).toBeTruthy()
     })
