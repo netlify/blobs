@@ -1007,7 +1007,7 @@ describe('setJSON', () => {
         headers: {
           authorization: `Bearer ${edgeToken}`,
           'cache-control': 'max-age=0, stale-while-revalidate=60',
-          'netlify-blobs-metadata': encodedMetadata,
+          'x-amz-meta-user': encodedMetadata,
         },
         response: new Response(null),
         url: `${edgeURL}/${siteID}/production/${key}`,
