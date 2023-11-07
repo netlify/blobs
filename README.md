@@ -231,7 +231,7 @@ if (fresh) {
 }
 ```
 
-### `getMetadata(key: string, { etag?: string, type?: string }): Promise<{ data: any, etag: string, metadata: object }>`
+### `getMetadata(key: string, { etag?: string, type?: string }): Promise<{ etag: string, metadata: object }>`
 
 Retrieves any metadata associated with a given key and its
 [ETag value](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag).
