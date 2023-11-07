@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join, relative, resolve, sep } from 'node:path'
 
 import { ListResponse } from './backend/list.ts'
-import { decodeMetadata, encodeMetadata, METADATA_HEADER_EXTERNAL, METADATA_HEADER_INTERNAL } from './metadata.ts'
+import { decodeMetadata, encodeMetadata, METADATA_HEADER_INTERNAL } from './metadata.ts'
 import { isNodeError, Logger } from './util.ts'
 
 interface BlobsServerOptions {
@@ -163,7 +163,7 @@ export class BlobsServer {
       return this.sendResponse(req, res, 400)
     }
 
-    const metadataHeader = req.headers[METADATA_HEADER_EXTERNAL]
+    const metadataHeader = req.headers[METADATA_HEADER_INTERNAL]
     const metadata = decodeMetadata(Array.isArray(metadataHeader) ? metadataHeader[0] : metadataHeader ?? null)
 
     try {
