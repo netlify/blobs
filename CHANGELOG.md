@@ -1,5 +1,18 @@
 # Changelog
 
+## [4.2.0](https://github.com/netlify/blobs/compare/v4.1.0...v4.2.0) (2023-11-07)
+
+
+### Features
+
+* add `getMetadata` method ([#90](https://github.com/netlify/blobs/issues/90)) ([0327476](https://github.com/netlify/blobs/commit/03274763dc0afc9fdbe3981685f8eba1882bae4a))
+
+
+### Bug Fixes
+
+* delete status code checking ([#93](https://github.com/netlify/blobs/issues/93)) ([ea3d754](https://github.com/netlify/blobs/commit/ea3d754fb918b25490c6b924806a3bf8ae378120))
+* internal vs external metadata headers ([#92](https://github.com/netlify/blobs/issues/92)) ([de41f9e](https://github.com/netlify/blobs/commit/de41f9e6e59a50426338f504270a6b37aa8e3904))
+
 ## [4.1.0](https://github.com/netlify/blobs/compare/v4.0.0...v4.1.0) (2023-11-02)
 
 
