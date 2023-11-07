@@ -41,7 +41,7 @@ export const getMetadataFromResponse = (response: Response) => {
 
   // If metadata is coming from the API, it will be under the external header.
   // If it's coming from the edge, it will be under the internal header.
-  const value = response.headers.get(METADATA_HEADER_INTERNAL) || response.headers.get(METADATA_HEADER_EXTERNAL)
+  const value = response.headers.get(METADATA_HEADER_EXTERNAL) || response.headers.get(METADATA_HEADER_INTERNAL)
 
   try {
     return decodeMetadata(value)
