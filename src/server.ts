@@ -163,7 +163,7 @@ export class BlobsServer {
       return this.sendResponse(req, res, 400)
     }
 
-    const metadataHeader = req.headers[METADATA_HEADER_EXTERNAL]
+    const metadataHeader = req.headers[METADATA_HEADER_INTERNAL]
     const metadata = decodeMetadata(Array.isArray(metadataHeader) ? metadataHeader[0] : metadataHeader ?? null)
 
     try {
