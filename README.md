@@ -3,7 +3,7 @@
 
 # @netlify/blobs
 
-A JavaScript client for the Netlify Blob Store.
+A TypeScript client for Netlify Blobs.
 
 ## Installation
 
@@ -16,8 +16,6 @@ npm install @netlify/blobs
 ### Requirements
 
 - Deno 1.30 and above or Node.js 16.0.0 and above
-- `fetch` in the global scope with a [fetch-compatible](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
-  interface
 
 ## Usage
 
