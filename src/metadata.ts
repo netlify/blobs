@@ -39,8 +39,12 @@ export const getMetadataFromResponse = (response: Response) => {
     return {}
   }
 
+  // If metadata is coming from the API, it will be under the external header.
+  // If it's coming from the edge, it will be under the internal header.
+  const value = response.headers.get(METADATA_HEADER_INTERNAL) || response.headers.get(METADATA_HEADER_EXTERNAL)
+
   try {
-    return decodeMetadata(response.headers.get(METADATA_HEADER_INTERNAL))
+    return decodeMetadata(value)
   } catch {
     throw new Error(
       'An internal error occurred while trying to retrieve the metadata for an entry. Please try updating to the latest version of the Netlify Blobs client.',

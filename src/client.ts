@@ -59,7 +59,7 @@ export class Client {
       }
 
       if (encodedMetadata) {
-        headers[METADATA_HEADER_EXTERNAL] = encodedMetadata
+        headers[METADATA_HEADER_INTERNAL] = encodedMetadata
       }
 
       const path = key ? `/${this.siteID}/${storeName}/${key}` : `/${this.siteID}/${storeName}`
