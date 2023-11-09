@@ -350,7 +350,7 @@ describe('list', () => {
               next_cursor: 'cursor_1',
             }),
           ),
-          url: `${edgeURL}/${siteID}/${storeName}`,
+          url: `${edgeURL}/api/v1/sites/${siteID}/blobs/?context=${storeName}`,
         })
         .get({
           headers: { authorization: `Bearer ${edgeToken}` },
@@ -374,7 +374,7 @@ describe('list', () => {
               next_cursor: 'cursor_2',
             }),
           ),
-          url: `${edgeURL}/${siteID}/${storeName}?cursor=cursor_1`,
+          url: `${edgeURL}/api/v1/sites/${siteID}/blobs/?context=${storeName}&cursor=cursor_1`,
         })
         .get({
           headers: { authorization: `Bearer ${edgeToken}` },
@@ -391,7 +391,7 @@ describe('list', () => {
               directories: ['dir3'],
             }),
           ),
-          url: `${edgeURL}/${siteID}/${storeName}?cursor=cursor_2`,
+          url: `${edgeURL}/api/v1/sites/${siteID}/blobs/?context=${storeName}&cursor=cursor_2`,
         })
         .get({
           headers: { authorization: `Bearer ${edgeToken}` },
@@ -408,7 +408,7 @@ describe('list', () => {
               directories: [],
             }),
           ),
-          url: `${edgeURL}/${siteID}/${storeName}?prefix=dir2%2F`,
+          url: `${edgeURL}/api/v1/sites/${siteID}/blobs/?context=${storeName}&prefix=dir2%2F`,
         })
 
       globalThis.fetch = mockStore.fetch
@@ -467,7 +467,7 @@ describe('list', () => {
               next_cursor: 'cursor_1',
             }),
           ),
-          url: `${edgeURL}/${siteID}/${storeName}?directories=true`,
+          url: `${edgeURL}/api/v1/sites/${siteID}/blobs/?context=${storeName}&directories=true`,
         })
         .get({
           headers: { authorization: `Bearer ${edgeToken}` },
@@ -491,7 +491,7 @@ describe('list', () => {
               next_cursor: 'cursor_2',
             }),
           ),
-          url: `${edgeURL}/${siteID}/${storeName}?cursor=cursor_1&directories=true`,
+          url: `${edgeURL}/api/v1/sites/${siteID}/blobs/?context=${storeName}&cursor=cursor_1&directories=true`,
         })
         .get({
           headers: { authorization: `Bearer ${edgeToken}` },
@@ -508,7 +508,7 @@ describe('list', () => {
               directories: ['dir3'],
             }),
           ),
-          url: `${edgeURL}/${siteID}/${storeName}?cursor=cursor_2&directories=true`,
+          url: `${edgeURL}/api/v1/sites/${siteID}/blobs/?context=${storeName}&cursor=cursor_2&directories=true`,
         })
         .get({
           headers: { authorization: `Bearer ${edgeToken}` },
@@ -525,7 +525,7 @@ describe('list', () => {
               directories: [],
             }),
           ),
-          url: `${edgeURL}/${siteID}/${storeName}?prefix=dir2%2F&directories=true`,
+          url: `${edgeURL}/api/v1/sites/${siteID}/blobs/?context=${storeName}&prefix=dir2%2F&directories=true`,
         })
 
       globalThis.fetch = mockStore.fetch
@@ -578,7 +578,7 @@ describe('list', () => {
             ],
           }),
         ),
-        url: `${edgeURL}/${siteID}/${storeName}?prefix=group%2F`,
+        url: `${edgeURL}/api/v1/sites/${siteID}/blobs/?context=${storeName}&prefix=group%2F`,
       })
 
       globalThis.fetch = mockStore.fetch
@@ -623,7 +623,7 @@ describe('list', () => {
             next_cursor: 'cursor_2',
           }),
         ),
-        url: `${edgeURL}/${siteID}/${storeName}?cursor=cursor_1`,
+        url: `${edgeURL}/api/v1/sites/${siteID}/blobs/?context=${storeName}&cursor=cursor_1`,
       })
 
       globalThis.fetch = mockStore.fetch
