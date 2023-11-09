@@ -1,5 +1,21 @@
 # Changelog
 
+## [5.0.0](https://github.com/netlify/blobs/compare/v4.2.0...v5.0.0) (2023-11-09)
+
+
+### ⚠ BREAKING CHANGES
+
+* remove `fresh` property from metadata result ([#99](https://github.com/netlify/blobs/issues/99))
+* return boolean from `delete()` ([#98](https://github.com/netlify/blobs/issues/98))
+* disallow setting an object as a stream ([#96](https://github.com/netlify/blobs/issues/96))
+
+### Features
+
+* disallow setting an object as a stream ([#96](https://github.com/netlify/blobs/issues/96)) ([1c8f668](https://github.com/netlify/blobs/commit/1c8f668e27210c92a564efb45a3ae6bc7a0c518b))
+* remove `fresh` property from metadata result ([#99](https://github.com/netlify/blobs/issues/99)) ([a0f337a](https://github.com/netlify/blobs/commit/a0f337a81a30c19804737da6ea62f67dd015ca6c))
+* remove return value of `delete()` ([#100](https://github.com/netlify/blobs/issues/100)) ([b0c607b](https://github.com/netlify/blobs/commit/b0c607b1c4742f2f4d32b709c1df5ee4cb14d383))
+* return boolean from `delete()` ([#98](https://github.com/netlify/blobs/issues/98)) ([a566287](https://github.com/netlify/blobs/commit/a566287619a97a3ce146768225284fecc0910be2))
+
 ## [4.2.0](https://github.com/netlify/blobs/compare/v4.1.0...v4.2.0) (2023-11-07)
 
 
