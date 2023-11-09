@@ -62,9 +62,9 @@ export class Client {
         headers[METADATA_HEADER_EXTERNAL] = encodedMetadata
       }
 
-      const path = key === undefined ?
-          `/api/v1/sites/${this.siteID}/blobs/` :
-          `/${this.siteID}/${storeName}/${key}`
+      const path = key === undefined
+          ? `/api/v1/sites/${this.siteID}/blobs/`
+          : `/${this.siteID}/${storeName}/${key}`
 
       const url = new URL(path, this.edgeURL)
 
