@@ -1081,12 +1081,13 @@ describe('delete', () => {
         siteID,
       })
 
-      expect(await blobs.delete(key)).toBe(true)
-      expect(await blobs.delete(complexKey)).toBe(true)
+      await blobs.delete(key)
+      await blobs.delete(complexKey)
+
       expect(mockStore.fulfilled).toBeTruthy()
     })
 
-    test('Returns `false` when the blob does not exist', async () => {
+    test('Does not throw when the blob does not exist', async () => {
       const mockStore = new MockFetch()
         .delete({
           headers: { authorization: `Bearer ${apiToken}` },
@@ -1106,7 +1107,8 @@ describe('delete', () => {
         siteID,
       })
 
-      expect(await blobs.delete(key)).toBe(false)
+      await blobs.delete(key)
+
       expect(mockStore.fulfilled).toBeTruthy()
     })
 
@@ -1149,11 +1151,12 @@ describe('delete', () => {
         siteID,
       })
 
-      expect(await blobs.delete(key)).toBe(true)
+      await blobs.delete(key)
+
       expect(mockStore.fulfilled).toBeTruthy()
     })
 
-    test('Returns `false` when the blob does not exist', async () => {
+    test('Does not throw when the blob does not exist', async () => {
       const mockStore = new MockFetch().delete({
         headers: { authorization: `Bearer ${edgeToken}` },
         response: new Response(null, { status: 404 }),
@@ -1169,7 +1172,8 @@ describe('delete', () => {
         siteID,
       })
 
-      expect(await blobs.delete(key)).toBe(false)
+      await blobs.delete(key)
+
       expect(mockStore.fulfilled).toBeTruthy()
     })
 
