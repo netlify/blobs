@@ -62,7 +62,13 @@ export class Client {
         headers[METADATA_HEADER_EXTERNAL] = encodedMetadata
       }
 
-      const path = key ? `/${this.siteID}/${storeName}/${key}` : `/${this.siteID}/${storeName}`
+      // If there is no key, we're dealing with the list endpoint, which is
+      // implemented directly in the Netlify API, which can be accessed from
+      // the edge with a special path pattern.
+      const path = key === undefined ?
+          `/api/v1/sites/${this.siteID}/blobs/` :
+          `/${this.siteID}/${storeName}/${key}`
+
       const url = new URL(path, this.edgeURL)
 
       for (const key in parameters) {
