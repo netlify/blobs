@@ -1,4 +1,4 @@
-export type BlobInput = ReadableStream | string | ArrayBuffer | Blob
+export type BlobInput = string | ArrayBuffer | Blob
 
 export type Fetcher = typeof globalThis.fetch
 
