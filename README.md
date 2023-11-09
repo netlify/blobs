@@ -247,7 +247,7 @@ const blob = await store.getMetadata('some-key')
 console.log(blob.etag, blob.metadata)
 ```
 
-### `set(key: string, value: ArrayBuffer | Blob | ReadableStream | string, { metadata?: object }): Promise<void>`
+### `set(key: string, value: ArrayBuffer | Blob | string, { metadata?: object }): Promise<void>`
 
 Creates an object with the given key and value.
 
