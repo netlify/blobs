@@ -221,9 +221,9 @@ const cachedETag = getFromMockCache('my-key')
 
 // Get entry from the blob store only if its ETag is different from the one you
 // have locally, which means the entry has changed since you last obtained it
-const { data, etag, fresh } = await store.getWithMetadata('some-key', { etag: cachedETag })
+const { data, etag } = await store.getWithMetadata('some-key', { etag: cachedETag })
 
-if (fresh) {
+if (etag === cachedETag) {
   // `data` is `null` because the local blob is fresh
 } else {
   // `data` contains the new blob, store it locally alongside the new ETag

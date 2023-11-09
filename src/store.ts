@@ -26,7 +26,6 @@ interface GetWithMetadataOptions {
 
 interface GetWithMetadataResult {
   etag?: string
-  fresh: boolean
   metadata: Metadata
 }
 
@@ -219,12 +218,11 @@ export class Store {
     const metadata = getMetadataFromResponse(res)
     const result: GetWithMetadataResult = {
       etag: responseETag,
-      fresh: false,
       metadata,
     }
 
     if (res.status === 304 && requestETag) {
-      return { data: null, ...result, fresh: true }
+      return { data: null, ...result }
     }
 
     if (type === undefined || type === 'text') {
