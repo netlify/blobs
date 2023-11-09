@@ -271,7 +271,7 @@ await store.setJSON('some-key', {
 
 ### `delete(key: string): Promise<void>`
 
-Deletes an object with the given key, if one exists.
+If an entry exists with the given key, deletes it and returns `true`. If not, `false` is returned.
 
 ```javascript
 await store.delete('my-key')

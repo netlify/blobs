@@ -1080,9 +1080,32 @@ describe('delete', () => {
         siteID,
       })
 
-      await blobs.delete(key)
-      await blobs.delete(complexKey)
+      expect(await blobs.delete(key)).toBe(true)
+      expect(await blobs.delete(complexKey)).toBe(true)
+      expect(mockStore.fulfilled).toBeTruthy()
+    })
 
+    test('Returns `false` when the blob does not exist', async () => {
+      const mockStore = new MockFetch()
+        .delete({
+          headers: { authorization: `Bearer ${apiToken}` },
+          response: new Response(JSON.stringify({ url: signedURL })),
+          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
+        })
+        .delete({
+          response: new Response(null, { status: 404 }),
+          url: signedURL,
+        })
+
+      globalThis.fetch = mockStore.fetch
+
+      const blobs = getStore({
+        name: 'production',
+        token: apiToken,
+        siteID,
+      })
+
+      expect(await blobs.delete(key)).toBe(false)
       expect(mockStore.fulfilled).toBeTruthy()
     })
 
@@ -1112,7 +1135,7 @@ describe('delete', () => {
     test('Deletes from the blob store', async () => {
       const mockStore = new MockFetch().delete({
         headers: { authorization: `Bearer ${edgeToken}` },
-        response: new Response(null),
+        response: new Response(null, { status: 202 }),
         url: `${edgeURL}/${siteID}/production/${key}`,
       })
 
@@ -1125,8 +1148,27 @@ describe('delete', () => {
         siteID,
       })
 
-      await blobs.delete(key)
+      expect(await blobs.delete(key)).toBe(true)
+      expect(mockStore.fulfilled).toBeTruthy()
+    })
 
+    test('Returns `false` when the blob does not exist', async () => {
+      const mockStore = new MockFetch().delete({
+        headers: { authorization: `Bearer ${edgeToken}` },
+        response: new Response(null, { status: 404 }),
+        url: `${edgeURL}/${siteID}/production/${key}`,
+      })
+
+      globalThis.fetch = mockStore.fetch
+
+      const blobs = getStore({
+        edgeURL,
+        name: 'production',
+        token: edgeToken,
+        siteID,
+      })
+
+      expect(await blobs.delete(key)).toBe(false)
       expect(mockStore.fulfilled).toBeTruthy()
     })
 
