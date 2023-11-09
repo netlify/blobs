@@ -77,19 +77,11 @@ export class Store {
     }
   }
 
-  async delete(key: string): Promise<boolean> {
+  async delete(key: string) {
     const res = await this.client.makeRequest({ key, method: HTTPMethod.DELETE, storeName: this.name })
 
-    switch (res.status) {
-      case 200:
-      case 202:
-        return true
-
-      case 404:
-        return false
-
-      default:
-        throw new BlobsInternalError(res.status)
+    if (![200, 202, 404].includes(res.status)) {
+      throw new BlobsInternalError(res.status)
     }
   }
 
