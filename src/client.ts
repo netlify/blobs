@@ -62,7 +62,7 @@ export class Client {
         headers[METADATA_HEADER_INTERNAL] = encodedMetadata
       }
 
-      const path = key ? `/${this.siteID}/${storeName}/${key}` : `/${this.siteID}/${storeName}`
+      const path = key ? `/${this.siteID}/${storeName}/${key}` : `/${this.siteID}/${storeName}/`
       const url = new URL(path, this.edgeURL)
 
       for (const key in parameters) {
