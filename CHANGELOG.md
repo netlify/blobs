@@ -1,5 +1,16 @@
 # Changelog
 
+## [6.0.0](https://github.com/netlify/blobs/compare/v5.0.0...v6.0.0) (2023-11-10)
+
+
+### ⚠ BREAKING CHANGES
+
+* return `AsyncIterator` for `list()` ([#102](https://github.com/netlify/blobs/issues/102))
+
+### Features
+
+* return `AsyncIterator` for `list()` ([#102](https://github.com/netlify/blobs/issues/102)) ([f951513](https://github.com/netlify/blobs/commit/f951513a33d0009e863752e95d801486c410c4d7))
+
 ## [5.0.0](https://github.com/netlify/blobs/compare/v4.2.0...v5.0.0) (2023-11-09)
 
 
