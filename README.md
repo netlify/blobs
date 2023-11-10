@@ -355,8 +355,8 @@ console.log(directories)
 Note that we're only interested in entries under the `cats` directory, which is why we're using a trailing slash.
 Without it, other keys like `catsuit` would also match.
 
-For performance reasons, the server groups entries into multiple pages with a given size. By default, the `list()`
-method automatically retrieves all pages, meaning you'll always get the full list of results.
+For performance reasons, the server groups results into pages of up to 1,000 entries. By default, the `list()` method
+automatically retrieves all pages, meaning you'll always get the full list of results.
 
 If you'd like to handle this pagination manually, you can supply the `paginate` parameter, which makes `list()` return
 an [`AsyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator).
