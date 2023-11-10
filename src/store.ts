@@ -4,7 +4,7 @@ import { ListResponse, ListResponseBlob } from './backend/list.ts'
 import { Client } from './client.ts'
 import { getMetadataFromResponse, Metadata } from './metadata.ts'
 import { BlobInput, HTTPMethod } from './types.ts'
-import { BlobsInternalError } from './util.ts'
+import { BlobsInternalError, collectIterator } from './util.ts'
 
 interface BaseStoreOptions {
   client: Client
@@ -29,11 +29,8 @@ interface GetWithMetadataResult {
   metadata: Metadata
 }
 
-interface ListResult {
+export interface ListResult {
   blobs: ListResultBlob[]
-}
-
-interface ListResultWithDirectories extends ListResult {
   directories: string[]
 }
 
@@ -43,7 +40,6 @@ interface ListResultBlob {
 }
 
 interface ListOptions {
-  cursor?: string
   directories?: boolean
   paginate?: boolean
   prefix?: string
@@ -240,30 +236,25 @@ export class Store {
     throw new Error(`Invalid 'type' property: ${type}. Expected: arrayBuffer, blob, json, stream, or text.`)
   }
 
-  async list(options: ListOptions & { directories: true }): Promise<ListResultWithDirectories>
-  async list(options?: ListOptions & { directories?: false }): Promise<ListResult>
-  async list(options: ListOptions = {}): Promise<ListResult | ListResultWithDirectories> {
-    const cursor = options.paginate === false ? options.cursor : undefined
-    const maxPages = options.paginate === false ? 1 : Number.POSITIVE_INFINITY
-    const res = await this.listAndPaginate({
-      currentPage: 1,
-      directories: options.directories,
-      maxPages,
-      nextCursor: cursor,
-      prefix: options.prefix,
-    })
-    const blobs = res.blobs?.map(Store.formatListResultBlob).filter(Boolean) as ListResultBlob[]
+  list(options: ListOptions & { paginate: true }): AsyncIterable<ListResult>
+  list(options?: ListOptions & { paginate?: false }): Promise<ListResult>
+  list(options: ListOptions = {}): Promise<ListResult> | AsyncIterable<ListResult> {
+    const iterator = this.getListIterator(options)
 
-    if (options?.directories) {
-      return {
-        blobs,
-        directories: res.directories?.filter(Boolean) as string[],
-      }
+    if (options.paginate) {
+      return iterator
     }
 
-    return {
-      blobs,
-    }
+    // eslint-disable-next-line promise/prefer-await-to-then
+    return collectIterator(iterator).then((items) =>
+      items.reduce(
+        (acc, item) => ({
+          blobs: [...acc.blobs, ...item.blobs],
+          directories: [...acc.directories, ...item.directories],
+        }),
+        { blobs: [], directories: [] },
+      ),
+    )
   }
 
   async set(key: string, data: BlobInput, { metadata }: SetOptions = {}) {
@@ -353,68 +344,60 @@ export class Store {
     }
   }
 
-  private async listAndPaginate(options: {
-    accumulator?: ListResponse
-    directories?: boolean
-    currentPage: number
-    maxPages: number
-    nextCursor?: string
-    prefix?: string
-  }): Promise<ListResponse> {
-    const {
-      accumulator = { blobs: [], directories: [] },
-      currentPage,
-      directories,
-      maxPages,
-      nextCursor,
-      prefix,
-    } = options
-
-    if (currentPage > maxPages || (currentPage > 1 && !nextCursor)) {
-      return accumulator
-    }
-
+  private getListIterator(options?: ListOptions): AsyncIterable<ListResult> {
+    const { client, name: storeName } = this
     const parameters: Record<string, string> = {}
 
-    if (nextCursor) {
-      parameters.cursor = nextCursor
+    if (options?.prefix) {
+      parameters.prefix = options.prefix
     }
 
-    if (prefix) {
-      parameters.prefix = prefix
-    }
-
-    if (directories) {
+    if (options?.directories) {
       parameters.directories = 'true'
     }
 
-    const res = await this.client.makeRequest({
-      method: HTTPMethod.GET,
-      parameters,
-      storeName: this.name,
-    })
+    return {
+      [Symbol.asyncIterator]() {
+        let currentCursor: string | null = null
+        let done = false
 
-    if (res.status !== 200) {
-      throw new BlobsInternalError(res.status)
-    }
+        return {
+          async next() {
+            if (done) {
+              return { done: true, value: undefined }
+            }
 
-    try {
-      const current = (await res.json()) as ListResponse
-      const newAccumulator = {
-        ...current,
-        blobs: [...(accumulator.blobs || []), ...(current.blobs || [])],
-        directories: [...(accumulator.directories || []), ...(current.directories || [])],
-      }
+            const nextParameters = { ...parameters }
 
-      return this.listAndPaginate({
-        accumulator: newAccumulator,
-        currentPage: currentPage + 1,
-        directories,
-        maxPages,
-        nextCursor: current.next_cursor,
-      })
-    } catch (error: unknown) {
-      throw new Error(`'list()' has returned an internal error: ${error}`)
+            if (currentCursor !== null) {
+              nextParameters.cursor = currentCursor
+            }
+
+            const res = await client.makeRequest({
+              method: HTTPMethod.GET,
+              parameters: nextParameters,
+              storeName,
+            })
+            const page = (await res.json()) as ListResponse
+
+            if (page.next_cursor) {
+              currentCursor = page.next_cursor
+            } else {
+              done = true
+            }
+
+            const blobs = (page.blobs ?? []).map(Store.formatListResultBlob).filter(Boolean) as ListResponseBlob[]
+
+            return {
+              done: false,
+              value: {
+                blobs,
+                directories: page.directories ?? [],
+              },
+            }
+          },
+        }
+      },
     }
   }
 }

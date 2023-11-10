@@ -278,7 +278,7 @@ not there was an object to delete.
 await store.delete('my-key')
 ```
 
-### `list(options?: { cursor?: string, directories?: boolean, paginate?: boolean. prefix?: string }): Promise<{ blobs: BlobResult[], directories: string[] }>`
+### `list(options?: { directories?: boolean, paginate?: boolean. prefix?: string }): Promise<{ blobs: BlobResult[], directories: string[] }> | AsyncIterable<{ blobs: BlobResult[], directories: string[] }>`
 
 Returns a list of blobs in a given store.
 
@@ -354,6 +354,28 @@ console.log(directories)
 
 Note that we're only interested in entries under the `cats` directory, which is why we're using a trailing slash.
 Without it, other keys like `catsuit` would also match.
+
+The server returns lists in pages of 1,000 entries. By default, the `list()` method automatically retrieves all pages,
+meaning you'll always get the full list of results. If you'd like to handle this pagination manually, you can supply the
+`paginate` parameter, which makes `list()` return an
+[`AsyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator).
+
+```javascript
+const blobs = []
+
+for await (const entry of store.list({ paginate: true })) {
+  blobs.push(...entry.blobs)
+}
+
+// [
+//   { etag: "etag1", key: "cats/garfield.jpg" },
+//   { etag: "etag2", key: "cats/tom.jpg" },
+//   { etag: "etag3", key: "mice/jerry.jpg" },
+//   { etag: "etag4", key: "mice/mickey.jpg" },
+//   { etag: "etag5", key: "pink-panther.jpg" },
+// ]
+console.log(blobs)
+```
 
 ## Contributing
 

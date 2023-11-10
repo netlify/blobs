@@ -6,6 +6,7 @@ import { describe, test, expect, beforeAll, afterEach } from 'vitest'
 import { MockFetch } from '../test/mock_fetch.js'
 
 import { getStore } from './main.js'
+import type { ListResult } from './store.js'
 
 beforeAll(async () => {
   if (semver.lt(nodeVersion, '18.0.0')) {
@@ -171,7 +172,7 @@ describe('list', () => {
               next_cursor: 'cursor_2',
             }),
           ),
-          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs?cursor=cursor_1&directories=true&context=${storeName}`,
+          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs?directories=true&cursor=cursor_1&context=${storeName}`,
         })
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
@@ -188,7 +189,7 @@ describe('list', () => {
               directories: ['dir3'],
             }),
           ),
-          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs?cursor=cursor_2&directories=true&context=${storeName}`,
+          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs?directories=true&cursor=cursor_2&context=${storeName}`,
         })
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
@@ -279,30 +280,47 @@ describe('list', () => {
       expect(mockStore.fulfilled).toBeTruthy()
     })
 
-    test('Paginates manually with `cursor` if `paginate: false`', async () => {
-      const mockStore = new MockFetch().get({
-        headers: { authorization: `Bearer ${apiToken}` },
-        response: new Response(
-          JSON.stringify({
-            blobs: [
-              {
-                etag: 'etag3',
-                key: 'key3',
-                size: 3,
-                last_modified: '2023-07-18T12:59:06Z',
-              },
-              {
-                etag: 'etag4',
-                key: 'key4',
-                size: 4,
-                last_modified: '2023-07-18T12:59:06Z',
-              },
-            ],
-            next_cursor: 'cursor_2',
-          }),
-        ),
-        url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs?cursor=cursor_1&context=${storeName}`,
-      })
+    test('Returns an `AsyncIterator` if `paginate: true`', async () => {
+      const mockStore = new MockFetch()
+        .get({
+          headers: { authorization: `Bearer ${apiToken}` },
+          response: new Response(
+            JSON.stringify({
+              blobs: [
+                {
+                  etag: 'etag1',
+                  key: 'key1',
+                  size: 1,
+                  last_modified: '2023-07-18T12:59:06Z',
+                },
+                {
+                  etag: 'etag2',
+                  key: 'key2',
+                  size: 2,
+                  last_modified: '2023-07-18T12:59:06Z',
+                },
+              ],
+              next_cursor: 'cursor_2',
+            }),
+          ),
+          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs?context=${storeName}`,
+        })
+        .get({
+          headers: { authorization: `Bearer ${apiToken}` },
+          response: new Response(
+            JSON.stringify({
+              blobs: [
+                {
+                  etag: 'etag3',
+                  key: 'key3',
+                  size: 3,
+                  last_modified: '2023-07-18T12:59:06Z',
+                },
+              ],
+            }),
+          ),
+          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs?cursor=cursor_2&context=${storeName}`,
+        })
 
       globalThis.fetch = mockStore.fetch
 
@@ -311,15 +329,20 @@ describe('list', () => {
         token: apiToken,
         siteID,
       })
+      const result: ListResult = {
+        blobs: [],
+        directories: [],
+      }
 
-      const { blobs } = await store.list({
-        cursor: 'cursor_1',
-        paginate: false,
-      })
+      for await (const entry of store.list({ paginate: true })) {
+        result.blobs.push(...entry.blobs)
+        result.directories.push(...entry.directories)
+      }
 
-      expect(blobs).toEqual([
+      expect(result.blobs).toEqual([
+        { etag: 'etag1', key: 'key1' },
+        { etag: 'etag2', key: 'key2' },
         { etag: 'etag3', key: 'key3' },
-        { etag: 'etag4', key: 'key4' },
       ])
       expect(mockStore.fulfilled).toBeTruthy()
     })
@@ -346,7 +369,7 @@ describe('list', () => {
                   last_modified: '2023-07-18T12:59:06Z',
                 },
               ],
-              directories: ['dir1'],
+              directories: [],
               next_cursor: 'cursor_1',
             }),
           ),
@@ -370,7 +393,7 @@ describe('list', () => {
                   last_modified: '2023-07-18T12:59:06Z',
                 },
               ],
-              directories: ['dir2'],
+              directories: [],
               next_cursor: 'cursor_2',
             }),
           ),
@@ -388,7 +411,7 @@ describe('list', () => {
                   last_modified: '2023-07-18T12:59:06Z',
                 },
               ],
-              directories: ['dir3'],
+              directories: [],
             }),
           ),
           url: `${edgeURL}/${siteID}/${storeName}?cursor=cursor_2`,
@@ -430,15 +453,12 @@ describe('list', () => {
         { etag: 'etag5', key: 'key5' },
       ])
 
-      // @ts-expect-error `directories` is not part of the return type
-      expect(root.directories).toBe(undefined)
+      expect(root.directories).toEqual([])
 
       const directory = await store.list({ prefix: 'dir2/' })
 
       expect(directory.blobs).toEqual([{ etag: 'etag6', key: 'key6' }])
-
-      // @ts-expect-error `directories` is not part of the return type
-      expect(directory.directories).toBe(undefined)
+      expect(directory.directories).toEqual([])
 
       expect(mockStore.fulfilled).toBeTruthy()
     })
@@ -491,7 +511,7 @@ describe('list', () => {
               next_cursor: 'cursor_2',
             }),
           ),
-          url: `${edgeURL}/${siteID}/${storeName}?cursor=cursor_1&directories=true`,
+          url: `${edgeURL}/${siteID}/${storeName}?directories=true&cursor=cursor_1`,
         })
         .get({
           headers: { authorization: `Bearer ${edgeToken}` },
@@ -508,7 +528,7 @@ describe('list', () => {
               directories: ['dir3'],
             }),
           ),
-          url: `${edgeURL}/${siteID}/${storeName}?cursor=cursor_2&directories=true`,
+          url: `${edgeURL}/${siteID}/${storeName}?directories=true&cursor=cursor_2`,
         })
         .get({
           headers: { authorization: `Bearer ${edgeToken}` },
@@ -601,30 +621,70 @@ describe('list', () => {
       expect(mockStore.fulfilled).toBeTruthy()
     })
 
-    test('Paginates manually with `cursor` if `paginate: false`', async () => {
-      const mockStore = new MockFetch().get({
-        headers: { authorization: `Bearer ${edgeToken}` },
-        response: new Response(
-          JSON.stringify({
-            blobs: [
-              {
-                etag: 'etag3',
-                key: 'key3',
-                size: 3,
-                last_modified: '2023-07-18T12:59:06Z',
-              },
-              {
-                etag: 'etag4',
-                key: 'key4',
-                size: 4,
-                last_modified: '2023-07-18T12:59:06Z',
-              },
-            ],
-            next_cursor: 'cursor_2',
-          }),
-        ),
-        url: `${edgeURL}/${siteID}/${storeName}?cursor=cursor_1`,
-      })
+    test('Returns an `AsyncIterator` if `paginate: true`', async () => {
+      const mockStore = new MockFetch()
+        .get({
+          headers: { authorization: `Bearer ${edgeToken}` },
+          response: new Response(
+            JSON.stringify({
+              blobs: [
+                {
+                  etag: 'etag1',
+                  key: 'key1',
+                  size: 1,
+                  last_modified: '2023-07-18T12:59:06Z',
+                },
+                {
+                  etag: 'etag2',
+                  key: 'key2',
+                  size: 2,
+                  last_modified: '2023-07-18T12:59:06Z',
+                },
+              ],
+              next_cursor: 'cursor_2',
+            }),
+          ),
+          url: `${edgeURL}/${siteID}/${storeName}`,
+        })
+        .get({
+          headers: { authorization: `Bearer ${edgeToken}` },
+          response: new Response(
+            JSON.stringify({
+              blobs: [
+                {
+                  etag: 'etag3',
+                  key: 'key3',
+                  size: 3,
+                  last_modified: '2023-07-18T12:59:06Z',
+                },
+                {
+                  etag: 'etag4',
+                  key: 'key4',
+                  size: 4,
+                  last_modified: '2023-07-18T12:59:06Z',
+                },
+              ],
+              next_cursor: 'cursor_3',
+            }),
+          ),
+          url: `${edgeURL}/${siteID}/${storeName}?cursor=cursor_2`,
+        })
+        .get({
+          headers: { authorization: `Bearer ${edgeToken}` },
+          response: new Response(
+            JSON.stringify({
+              blobs: [
+                {
+                  etag: 'etag5',
+                  key: 'key5',
+                  size: 5,
+                  last_modified: '2023-07-18T12:59:06Z',
+                },
+              ],
+            }),
+          ),
+          url: `${edgeURL}/${siteID}/${storeName}?cursor=cursor_3`,
+        })
 
       globalThis.fetch = mockStore.fetch
 
@@ -634,16 +694,24 @@ describe('list', () => {
         token: edgeToken,
         siteID,
       })
+      const result: ListResult = {
+        blobs: [],
+        directories: [],
+      }
 
-      const { blobs } = await store.list({
-        cursor: 'cursor_1',
-        paginate: false,
-      })
+      for await (const entry of store.list({ paginate: true })) {
+        result.blobs.push(...entry.blobs)
+        result.directories.push(...entry.directories)
+      }
 
-      expect(blobs).toEqual([
+      expect(result.blobs).toEqual([
+        { etag: 'etag1', key: 'key1' },
+        { etag: 'etag2', key: 'key2' },
         { etag: 'etag3', key: 'key3' },
         { etag: 'etag4', key: 'key4' },
+        { etag: 'etag5', key: 'key5' },
       ])
+      expect(result.directories).toEqual([])
       expect(mockStore.fulfilled).toBeTruthy()
     })
   })
