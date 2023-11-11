@@ -1138,7 +1138,7 @@ describe('delete', () => {
     test('Deletes from the blob store', async () => {
       const mockStore = new MockFetch().delete({
         headers: { authorization: `Bearer ${edgeToken}` },
-        response: new Response(null, { status: 202 }),
+        response: new Response(null, { status: 204 }),
         url: `${edgeURL}/${siteID}/production/${key}`,
       })
 
