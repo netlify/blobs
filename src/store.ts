@@ -76,7 +76,7 @@ export class Store {
   async delete(key: string) {
     const res = await this.client.makeRequest({ key, method: HTTPMethod.DELETE, storeName: this.name })
 
-    if (![200, 202, 404].includes(res.status)) {
+    if (![200, 204, 404].includes(res.status)) {
       throw new BlobsInternalError(res.status)
     }
   }
