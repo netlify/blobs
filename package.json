@@ -58,9 +58,9 @@
   },
   "keywords": [],
   "license": "MIT",
-  "repository": "netlify/blobs-client",
+  "repository": "netlify/blobs",
   "bugs": {
-    "url": "https://github.com/netlify/blobs-client/issues"
+    "url": "https://github.com/netlify/blobs/issues"
   },
   "author": "Netlify Inc.",
   "directories": {
