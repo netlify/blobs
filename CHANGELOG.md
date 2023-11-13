@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.0.1](https://github.com/netlify/blobs/compare/v6.0.0...v6.0.1) (2023-11-13)
+
+
+### Bug Fixes
+
+* successful delete returns 204 ([#104](https://github.com/netlify/blobs/issues/104)) ([da0ea31](https://github.com/netlify/blobs/commit/da0ea3145489d2cb93fdeb32be6db33af6049869))
+
 ## [6.0.0](https://github.com/netlify/blobs/compare/v5.0.0...v6.0.0) (2023-11-10)
 
 
