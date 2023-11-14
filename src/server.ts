@@ -71,28 +71,48 @@ export class BlobsServer {
   }
 
   async delete(req: http.IncomingMessage, res: http.ServerResponse) {
+    const apiMatch = this.parseAPIRequest(req)
+
+    if (apiMatch) {
+      return this.sendResponse(req, res, 200, JSON.stringify({ url: apiMatch.url.toString() }))
+    }
+
     const url = new URL(req.url ?? '', this.address)
-    const { dataPath, key } = this.getLocalPaths(url)
+    const { dataPath, key, metadataPath } = this.getLocalPaths(url)
 
     if (!dataPath || !key) {
       return this.sendResponse(req, res, 400)
     }
 
+    // Try to delete the metadata file, if one exists.
     try {
-      await fs.rm(dataPath, { recursive: true })
-    } catch (error: unknown) {
-      if (isNodeError(error) && error.code === 'ENOENT') {
-        return this.sendResponse(req, res, 404)
-      }
-
-      return this.sendResponse(req, res, 500)
+      await fs.rm(metadataPath, { force: true, recursive: true })
+    } catch {
+      // no-op
     }
 
-    return this.sendResponse(req, res, 200)
+    // Delete the data file.
+    try {
+      await fs.rm(dataPath, { force: true, recursive: true })
+    } catch (error: unknown) {
+      // An `ENOENT` error means we have tried to delete a key that doesn't
+      // exist, which shouldn't be treated as an error.
+      if (!isNodeError(error) || error.code !== 'ENOENT') {
+        return this.sendResponse(req, res, 500)
+      }
+    }
+
+    return this.sendResponse(req, res, 204)
   }
 
   async get(req: http.IncomingMessage, res: http.ServerResponse) {
-    const url = new URL(req.url ?? '', this.address)
+    const apiMatch = this.parseAPIRequest(req)
+    const url = apiMatch?.url ?? new URL(req.url ?? '', this.address)
+
+    if (apiMatch?.key) {
+      return this.sendResponse(req, res, 200, JSON.stringify({ url: apiMatch.url.toString() }))
+    }
+
     const { dataPath, key, metadataPath, rootPath } = this.getLocalPaths(url)
 
     if (!dataPath || !metadataPath) {
@@ -135,14 +155,12 @@ export class BlobsServer {
   }
 
   async head(req: http.IncomingMessage, res: http.ServerResponse) {
-    const url = new URL(req.url ?? '', this.address)
+    const url = this.parseAPIRequest(req)?.url ?? new URL(req.url ?? '', this.address)
     const { dataPath, key, metadataPath } = this.getLocalPaths(url)
 
     if (!dataPath || !metadataPath || !key) {
       return this.sendResponse(req, res, 400)
     }
-
-    const headers: Record<string, string> = {}
 
     try {
       const rawData = await fs.readFile(metadataPath, 'utf8')
@@ -150,14 +168,16 @@ export class BlobsServer {
       const encodedMetadata = encodeMetadata(metadata)
 
       if (encodedMetadata) {
-        headers[METADATA_HEADER_INTERNAL] = encodedMetadata
+        res.setHeader(METADATA_HEADER_INTERNAL, encodedMetadata)
       }
     } catch (error) {
-      this.logDebug('Could not read metadata file:', error)
-    }
+      if (isNodeError(error) && (error.code === 'ENOENT' || error.code === 'ISDIR')) {
+        return this.sendResponse(req, res, 404)
+      }
 
-    for (const name in headers) {
-      res.setHeader(name, headers[name])
+      this.logDebug('Could not read metadata file:', error)
+
+      return this.sendResponse(req, res, 500)
     }
 
     res.end()
@@ -182,9 +202,13 @@ export class BlobsServer {
     try {
       await BlobsServer.walk({ directories, path: dataPath, prefix, rootPath, result })
     } catch (error) {
-      this.logDebug('Could not perform list:', error)
+      // If the directory is not found, it just means there are no entries on
+      // the store, so that shouldn't be treated as an error.
+      if (!isNodeError(error) || error.code !== 'ENOENT') {
+        this.logDebug('Could not perform list:', error)
 
-      return this.sendResponse(req, res, 500)
+        return this.sendResponse(req, res, 500)
+      }
     }
 
     res.setHeader('content-type', 'application/json')
@@ -193,6 +217,12 @@ export class BlobsServer {
   }
 
   async put(req: http.IncomingMessage, res: http.ServerResponse) {
+    const apiMatch = this.parseAPIRequest(req)
+
+    if (apiMatch) {
+      return this.sendResponse(req, res, 200, JSON.stringify({ url: apiMatch.url.toString() }))
+    }
+
     const url = new URL(req.url ?? '', this.address)
     const { dataPath, key, metadataPath } = this.getLocalPaths(url)
 
@@ -263,19 +293,6 @@ export class BlobsServer {
       return this.sendResponse(req, res, 403)
     }
 
-    const apiURLMatch = req.url.match(API_URL_PATH)
-
-    // If this matches an API URL, return a signed URL.
-    if (apiURLMatch) {
-      const fullURL = new URL(req.url, this.address)
-      const storeName = fullURL.searchParams.get('context') ?? DEFAULT_STORE
-      const key = apiURLMatch.groups?.key as string
-      const siteID = apiURLMatch.groups?.site_id as string
-      const url = `${this.address}/${siteID}/${storeName}/${key}?signature=${this.tokenHash}`
-
-      return this.sendResponse(req, res, 200, JSON.stringify({ url }))
-    }
-
     switch (req.method) {
       case 'DELETE':
         return this.delete(req, res)
@@ -295,8 +312,38 @@ export class BlobsServer {
     }
   }
 
+  /**
+   * Tries to parse a URL as being an API request and returns the different
+   * components, such as the store name, site ID, key, and signed URL.
+   */
+  parseAPIRequest(req: http.IncomingMessage) {
+    if (!req.url) {
+      return null
+    }
+
+    const apiURLMatch = req.url.match(API_URL_PATH)
+
+    if (!apiURLMatch) {
+      return null
+    }
+
+    const fullURL = new URL(req.url, this.address)
+    const storeName = fullURL.searchParams.get('context') ?? DEFAULT_STORE
+    const key = apiURLMatch.groups?.key
+    const siteID = apiURLMatch.groups?.site_id as string
+    const urlPath = [siteID, storeName, key].filter(Boolean) as string[]
+    const url = new URL(`/${urlPath.join('/')}?signature=${this.tokenHash}`, this.address)
+
+    return {
+      key,
+      siteID,
+      storeName,
+      url,
+    }
+  }
+
   sendResponse(req: http.IncomingMessage, res: http.ServerResponse, status: number, body?: string) {
-    this.logDebug(`${req.method} ${req.url}: ${status}`)
+    this.logDebug(`${req.method} ${req.url} ${status}`)
 
     res.writeHead(status)
     res.end(body)

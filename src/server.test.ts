@@ -31,18 +31,6 @@ const siteID = '9a003659-aaaa-0000-aaaa-63d3720d8621'
 const token = 'my-very-secret-token'
 
 test('Reads and writes from the file system', async () => {
-  const directory = await tmp.dir()
-  const server = new BlobsServer({
-    directory: directory.path,
-    token,
-  })
-  const { port } = await server.start()
-  const blobs = getStore({
-    edgeURL: `http://localhost:${port}`,
-    name: 'mystore',
-    token,
-    siteID,
-  })
   const metadata = {
     features: {
       blobs: true,
@@ -51,27 +39,82 @@ test('Reads and writes from the file system', async () => {
     name: 'Netlify',
   }
 
-  await blobs.set('simple-key', 'value 1')
-  expect(await blobs.get('simple-key')).toBe('value 1')
+  // Store #1: Edge access
+  const directory1 = await tmp.dir()
+  const server1 = new BlobsServer({
+    directory: directory1.path,
+    token,
+  })
+  const { port: port1 } = await server1.start()
+  const store1 = getStore({
+    edgeURL: `http://localhost:${port1}`,
+    name: 'mystore1',
+    token,
+    siteID,
+  })
 
-  await blobs.set('simple-key', 'value 2', { metadata })
-  expect(await blobs.get('simple-key')).toBe('value 2')
+  // Store #2: API access
+  const directory2 = await tmp.dir()
+  const server2 = new BlobsServer({
+    directory: directory2.path,
+    token,
+  })
+  const { port: port2 } = await server2.start()
+  const store2 = getStore({
+    apiURL: `http://localhost:${port2}`,
+    name: 'mystore2',
+    token,
+    siteID,
+  })
 
-  await blobs.set('parent/child', 'value 3')
-  expect(await blobs.get('parent/child')).toBe('value 3')
-  expect(await blobs.get('parent')).toBe(null)
+  for (const store of [store1, store2]) {
+    const list1 = await store.list()
+    expect(list1.blobs).toEqual([])
+    expect(list1.directories).toEqual([])
 
-  const entry = await blobs.getWithMetadata('simple-key')
-  expect(entry?.metadata).toEqual(metadata)
+    await store.set('simple-key', 'value 1')
+    expect(await store.get('simple-key')).toBe('value 1')
 
-  const entryMetadata = await blobs.getMetadata('simple-key')
-  expect(entryMetadata?.metadata).toEqual(metadata)
+    await store.set('simple-key', 'value 2', { metadata })
+    expect(await store.get('simple-key')).toBe('value 2')
 
-  await blobs.delete('simple-key')
-  expect(await blobs.get('simple-key')).toBe(null)
+    const list2 = await store.list()
+    expect(list2.blobs.length).toBe(1)
+    expect(list2.blobs[0].key).toBe('simple-key')
+    expect(list2.directories).toEqual([])
 
-  await server.stop()
-  await fs.rm(directory.path, { force: true, recursive: true })
+    await store.set('parent/child', 'value 3')
+    expect(await store.get('parent/child')).toBe('value 3')
+    expect(await store.get('parent')).toBe(null)
+
+    const entry = await store.getWithMetadata('simple-key')
+    expect(entry?.metadata).toEqual(metadata)
+
+    const entryMetadata = await store.getMetadata('simple-key')
+    expect(entryMetadata?.metadata).toEqual(metadata)
+
+    const childEntryMetdata = await store.getMetadata('parent/child')
+    expect(childEntryMetdata?.metadata).toEqual({})
+
+    expect(await store.getWithMetadata('does-not-exist')).toBe(null)
+    expect(await store.getMetadata('does-not-exist')).toBe(null)
+
+    await store.delete('simple-key')
+    expect(await store.get('simple-key')).toBe(null)
+    expect(await store.getMetadata('simple-key')).toBe(null)
+    expect(await store.getWithMetadata('simple-key')).toBe(null)
+
+    const list3 = await store.list()
+    expect(list3.blobs.length).toBe(1)
+    expect(list3.blobs[0].key).toBe('parent/child')
+    expect(list3.directories).toEqual([])
+  }
+
+  await server1.stop()
+  await fs.rm(directory1.path, { force: true, recursive: true })
+
+  await server2.stop()
+  await fs.rm(directory2.path, { force: true, recursive: true })
 })
 
 test('Separates keys from different stores', async () => {
@@ -217,45 +260,4 @@ test('Lists entries', async () => {
   }
 
   expect(parachutesSongs2.directories).toEqual([])
-})
-
-test('Supports the API access interface', async () => {
-  const directory = await tmp.dir()
-  const server = new BlobsServer({
-    directory: directory.path,
-    token,
-  })
-  const { port } = await server.start()
-  const blobs = getStore({
-    apiURL: `http://localhost:${port}`,
-    name: 'mystore',
-    token,
-    siteID,
-  })
-  const metadata = {
-    features: {
-      blobs: true,
-      functions: true,
-    },
-    name: 'Netlify',
-  }
-
-  await blobs.set('simple-key', 'value 1')
-  expect(await blobs.get('simple-key')).toBe('value 1')
-
-  await blobs.set('simple-key', 'value 2', { metadata })
-  expect(await blobs.get('simple-key')).toBe('value 2')
-
-  await blobs.set('parent/child', 'value 3')
-  expect(await blobs.get('parent/child')).toBe('value 3')
-  expect(await blobs.get('parent')).toBe(null)
-
-  const entry = await blobs.getWithMetadata('simple-key')
-  expect(entry?.metadata).toEqual(metadata)
-
-  await blobs.delete('simple-key')
-  expect(await blobs.get('simple-key')).toBe(null)
-
-  await server.stop()
-  await fs.rm(directory.path, { force: true, recursive: true })
 })
