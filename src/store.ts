@@ -18,13 +18,13 @@ interface NamedStoreOptions extends BaseStoreOptions {
   name: string
 }
 
-type StoreOptions = DeployStoreOptions | NamedStoreOptions
+export type StoreOptions = DeployStoreOptions | NamedStoreOptions
 
-interface GetWithMetadataOptions {
+export interface GetWithMetadataOptions {
   etag?: string
 }
 
-interface GetWithMetadataResult {
+export interface GetWithMetadataResult {
   etag?: string
   metadata: Metadata
 }
@@ -34,18 +34,18 @@ export interface ListResult {
   directories: string[]
 }
 
-interface ListResultBlob {
+export interface ListResultBlob {
   etag: string
   key: string
 }
 
-interface ListOptions {
+export interface ListOptions {
   directories?: boolean
   paginate?: boolean
   prefix?: string
 }
 
-interface SetOptions {
+export interface SetOptions {
   /**
    * Arbitrary metadata object to associate with an entry. Must be seralizable
    * to JSON.
@@ -53,7 +53,7 @@ interface SetOptions {
   metadata?: Metadata
 }
 
-type BlobResponseType = 'arrayBuffer' | 'blob' | 'json' | 'stream' | 'text'
+export type BlobResponseType = 'arrayBuffer' | 'blob' | 'json' | 'stream' | 'text'
 
 export class Store {
   private client: Client
