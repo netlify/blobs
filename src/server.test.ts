@@ -215,3 +215,44 @@ test('Lists entries', async () => {
 
   expect(parachutesSongs2.directories).toEqual([])
 })
+
+test('Supports the API access interface', async () => {
+  const directory = await tmp.dir()
+  const server = new BlobsServer({
+    directory: directory.path,
+    token,
+  })
+  const { port } = await server.start()
+  const blobs = getStore({
+    apiURL: `http://localhost:${port}`,
+    name: 'mystore',
+    token,
+    siteID,
+  })
+  const metadata = {
+    features: {
+      blobs: true,
+      functions: true,
+    },
+    name: 'Netlify',
+  }
+
+  await blobs.set('simple-key', 'value 1')
+  expect(await blobs.get('simple-key')).toBe('value 1')
+
+  await blobs.set('simple-key', 'value 2', { metadata })
+  expect(await blobs.get('simple-key')).toBe('value 2')
+
+  await blobs.set('parent/child', 'value 3')
+  expect(await blobs.get('parent/child')).toBe('value 3')
+  expect(await blobs.get('parent')).toBe(null)
+
+  const entry = await blobs.getWithMetadata('simple-key')
+  expect(entry?.metadata).toEqual(metadata)
+
+  await blobs.delete('simple-key')
+  expect(await blobs.get('simple-key')).toBe(null)
+
+  await server.stop()
+  await fs.rm(directory.path, { force: true, recursive: true })
+})

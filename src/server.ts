@@ -1,3 +1,4 @@
+import { createHmac } from 'node:crypto'
 import { createReadStream, createWriteStream, promises as fs } from 'node:fs'
 import http from 'node:http'
 import { tmpdir } from 'node:os'
@@ -6,6 +7,9 @@ import { dirname, join, relative, resolve, sep } from 'node:path'
 import { ListResponse } from './backend/list.ts'
 import { decodeMetadata, encodeMetadata, METADATA_HEADER_INTERNAL } from './metadata.ts'
 import { isNodeError, Logger } from './util.ts'
+
+const API_URL_PATH = /\/api\/v1\/sites\/(?<site_id>[^/]+)\/blobs\/?(?<key>[^?]*)/
+const DEFAULT_STORE = 'production'
 
 interface BlobsServerOptions {
   /**
@@ -44,6 +48,7 @@ export class BlobsServer {
   private port: number
   private server?: http.Server
   private token?: string
+  private tokenHash: string
 
   constructor({ debug, directory, logger, port, token }: BlobsServerOptions) {
     this.address = ''
@@ -52,6 +57,9 @@ export class BlobsServer {
     this.logger = logger ?? console.log
     this.port = port || 0
     this.token = token
+    this.tokenHash = createHmac('sha256', Math.random.toString())
+      .update(token ?? Math.random.toString())
+      .digest('hex')
   }
 
   logDebug(...message: unknown[]) {
@@ -222,8 +230,21 @@ export class BlobsServer {
   }
 
   handleRequest(req: http.IncomingMessage, res: http.ServerResponse) {
-    if (!this.validateAccess(req)) {
+    if (!req.url || !this.validateAccess(req)) {
       return this.sendResponse(req, res, 403)
+    }
+
+    const apiURLMatch = req.url.match(API_URL_PATH)
+
+    // If this matches an API URL, return a signed URL.
+    if (apiURLMatch) {
+      const fullURL = new URL(req.url, this.address)
+      const storeName = fullURL.searchParams.get('context') ?? DEFAULT_STORE
+      const key = apiURLMatch.groups?.key as string
+      const siteID = apiURLMatch.groups?.site_id as string
+      const url = `${this.address}/${siteID}/${storeName}/${key}?signature=${this.tokenHash}`
+
+      return this.sendResponse(req, res, 200, JSON.stringify({ url }))
     }
 
     switch (req.method) {
@@ -294,11 +315,22 @@ export class BlobsServer {
     const { authorization = '' } = req.headers
     const parts = authorization.split(' ')
 
-    if (parts.length !== 2 || parts[0].toLowerCase() !== 'bearer') {
+    if (parts.length === 2 || (parts[0].toLowerCase() === 'bearer' && parts[1] === this.token)) {
+      return true
+    }
+
+    if (!req.url) {
       return false
     }
 
-    return parts[1] === this.token
+    const url = new URL(req.url, this.address)
+    const signature = url.searchParams.get('signature')
+
+    if (signature === this.tokenHash) {
+      return true
+    }
+
+    return false
   }
 
   /**
