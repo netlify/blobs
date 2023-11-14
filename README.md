@@ -23,6 +23,34 @@ To start reading and writing data, you must first get a reference to a store usi
 
 This method takes an options object that lets you configure the store for different access modes.
 
+### Environment-based configuration
+
+Rather than explicitly passing the configuration context to the `getStore` method, it can be read from the execution
+environment. This is particularly useful for setups where the configuration data is held by one system and the data
+needs to be accessed in another system, with no direct communication between the two.
+
+To do this, the system that holds the configuration data should set a global variable called `netlifyBlobsContext` or an
+environment variable called `NETLIFY_BLOBS_CONTEXT` with a Base64-encoded, JSON-stringified representation of an object
+with the following properties:
+
+- `apiURL` (optional) or `edgeURL`: URL of the Netlify API (for [API access](#api-access)) or the edge endpoint (for
+  [Edge access](#edge-access))
+- `token`: Access token for the corresponding access mode
+- `siteID`: ID of the Netlify site
+
+This data is automatically populated by Netlify in the execution environment for both serverless and edge functions.
+
+With this in place, the `getStore` method can be called just with the store name. No configuration object is required,
+since it'll be read from the environment.
+
+```ts
+import { getStore } from '@netlify/blobs'
+
+const store = getStore('my-store')
+
+console.log(await store.get('my-key'))
+```
+
 ### API access
 
 You can interact with the blob store through the [Netlify API](https://docs.netlify.com/api/get-started). This is the
@@ -59,8 +87,7 @@ Create a store for edge access by calling `getStore` with the following paramete
 
 - `name` (string): Name of the store
 - `siteID` (string): ID of the Netlify site
-- `token` (string): [Personal access token](https://docs.netlify.com/api/get-started/#authentication) to access the
-  Netlify API
+- `token` (string): Access token to the edge endpoint
 - `edgeURL` (string): URL of the edge endpoint
 
 ```ts
@@ -69,8 +96,8 @@ import { Buffer } from 'node:buffer'
 import { getStore } from '@netlify/blobs'
 
 // Serverless function using the Lambda compatibility mode
-export const handler = async (event, context) => {
-  const rawData = Buffer.from(context.clientContext.custom.blobs, 'base64')
+export const handler = async (event) => {
+  const rawData = Buffer.from(event.blobs, 'base64')
   const data = JSON.parse(rawData.toString('ascii'))
   const store = getStore({
     edgeURL: data.url,
@@ -85,34 +112,6 @@ export const handler = async (event, context) => {
     body: item,
   }
 }
-```
-
-### Environment-based configuration
-
-Rather than explicitly passing the configuration context to the `getStore` method, it can be read from the execution
-environment. This is particularly useful for setups where the configuration data is held by one system and the data
-needs to be accessed in another system, with no direct communication between the two.
-
-To do this, the system that holds the configuration data should set a global variable called `netlifyBlobsContext` or an
-environment variable called `NETLIFY_BLOBS_CONTEXT` with a Base64-encoded, JSON-stringified representation of an object
-with the following properties:
-
-- `apiURL` (optional) or `edgeURL`: URL of the Netlify API (for [API access](#api-access)) or the edge endpoint (for
-  [Edge access](#edge-access))
-- `token`: Access token for the corresponding access mode
-- `siteID`: ID of the Netlify site
-
-This data is automatically populated by Netlify in the execution environment for both serverless and edge functions.
-
-With this in place, the `getStore` method can be called just with the store name. No configuration object is required,
-since it'll be read from the environment.
-
-```ts
-import { getStore } from '@netlify/blobs'
-
-const store = getStore('my-store')
-
-console.log(await store.get('my-key'))
 ```
 
 ### Deploy scope
