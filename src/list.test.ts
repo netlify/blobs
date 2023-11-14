@@ -31,7 +31,7 @@ const siteID = '9a003659-aaaa-0000-aaaa-63d3720d8621'
 const storeName = 'mystore'
 const apiToken = 'some token'
 const edgeToken = 'some other token'
-const edgeURL = 'https://cloudfront.url'
+const edgeURL = 'https://edge.netlify'
 
 describe('list', () => {
   describe('With API credentials', () => {

@@ -378,6 +378,42 @@ for await (const entry of store.list({ paginate: true })) {
 console.log(blobs)
 ```
 
+## Server API reference
+
+We provide a Node.js server that implements the Netlify Blobs server interface backed by the local filesystem. This is
+useful if you want to write automated tests that involve the Netlify Blobs API without interacting with a live store.
+
+The `BlobsServer` export lets you construct and initialize a server. You can then use its address to initialize a store.
+
+```ts
+import { BlobsServer, getStore } from '@netlify/blobs'
+
+// Choose any token for protecting your local server from
+// extraneous requests
+const token = 'some-token'
+
+// Create a server by providing a local directory where all
+// blobs and metadata should be persisted
+const server = new BlobsServer({
+  directory: '/path/to/blobs/directory',
+  port: 1234,
+  token,
+})
+
+await server.start()
+
+// Get a store and provide the address of the local server
+const store = getStore({
+  edgeURL: 'http://localhost:1234',
+  name: 'my-store',
+  token,
+})
+
+await store.set('my-key', 'This is a local blob')
+
+console.log(await store.get('my-key'))
+```
+
 ## Contributing
 
 Contributions are welcome! If you encounter any issues or have suggestions for improvements, please open an issue or

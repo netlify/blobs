@@ -38,7 +38,7 @@ const value = 'some value'
 const apiToken = 'some token'
 const signedURL = 'https://signed.url/123456789'
 const edgeToken = 'some other token'
-const edgeURL = 'https://cloudfront.url'
+const edgeURL = 'https://edge.netlify'
 
 describe('get', () => {
   describe('With API credentials', () => {
