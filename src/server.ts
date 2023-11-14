@@ -135,7 +135,9 @@ export class BlobsServer {
         headers[METADATA_HEADER_INTERNAL] = encodedMetadata
       }
     } catch (error) {
-      this.logDebug('Could not read metadata file:', error)
+      if (!isNodeError(error) || error.code !== 'ENOENT') {
+        this.logDebug('Could not read metadata file:', error)
+      }
     }
 
     for (const name in headers) {
