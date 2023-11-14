@@ -134,6 +134,35 @@ export class BlobsServer {
     stream.pipe(res)
   }
 
+  async head(req: http.IncomingMessage, res: http.ServerResponse) {
+    const url = new URL(req.url ?? '', this.address)
+    const { dataPath, key, metadataPath } = this.getLocalPaths(url)
+
+    if (!dataPath || !metadataPath || !key) {
+      return this.sendResponse(req, res, 400)
+    }
+
+    const headers: Record<string, string> = {}
+
+    try {
+      const rawData = await fs.readFile(metadataPath, 'utf8')
+      const metadata = JSON.parse(rawData)
+      const encodedMetadata = encodeMetadata(metadata)
+
+      if (encodedMetadata) {
+        headers[METADATA_HEADER_INTERNAL] = encodedMetadata
+      }
+    } catch (error) {
+      this.logDebug('Could not read metadata file:', error)
+    }
+
+    for (const name in headers) {
+      res.setHeader(name, headers[name])
+    }
+
+    res.end()
+  }
+
   async list(options: {
     dataPath: string
     metadataPath: string
@@ -256,6 +285,10 @@ export class BlobsServer {
 
       case 'PUT':
         return this.put(req, res)
+
+      case 'HEAD': {
+        return this.head(req, res)
+      }
 
       default:
         return this.sendResponse(req, res, 405)

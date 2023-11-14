@@ -64,6 +64,9 @@ test('Reads and writes from the file system', async () => {
   const entry = await blobs.getWithMetadata('simple-key')
   expect(entry?.metadata).toEqual(metadata)
 
+  const entryMetadata = await blobs.getMetadata('simple-key')
+  expect(entryMetadata?.metadata).toEqual(metadata)
+
   await blobs.delete('simple-key')
   expect(await blobs.get('simple-key')).toBe(null)
 
