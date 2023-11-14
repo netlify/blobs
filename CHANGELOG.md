@@ -1,5 +1,17 @@
 # Changelog
 
+## [6.2.0](https://github.com/netlify/blobs/compare/v6.1.0...v6.2.0) (2023-11-14)
+
+
+### Features
+
+* export Store types ([#110](https://github.com/netlify/blobs/issues/110)) ([f04eaa5](https://github.com/netlify/blobs/commit/f04eaa566ef2ebc95328d1d54d4e8222e7b6eb5d))
+
+
+### Bug Fixes
+
+* fix metadata in local server ([#112](https://github.com/netlify/blobs/issues/112)) ([9646519](https://github.com/netlify/blobs/commit/96465198a790c2c3acf9b4569cc05928126ee0be))
+
 ## [6.1.0](https://github.com/netlify/blobs/compare/v6.0.1...v6.1.0) (2023-11-14)
 
 
