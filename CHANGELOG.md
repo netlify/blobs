@@ -1,5 +1,18 @@
 # Changelog
 
+## [6.1.0](https://github.com/netlify/blobs/compare/v6.0.1...v6.1.0) (2023-11-14)
+
+
+### Features
+
+* support API access in local server ([#108](https://github.com/netlify/blobs/issues/108)) ([bea8874](https://github.com/netlify/blobs/commit/bea88742cdd868ef797ef88bf63fec778307d504))
+* support HEAD requests in local server ([#109](https://github.com/netlify/blobs/issues/109)) ([25ff62c](https://github.com/netlify/blobs/commit/25ff62c054c3fe6f223abd8523ae1af8d76295f3))
+
+
+### Bug Fixes
+
+* update repo url in package.json ([#106](https://github.com/netlify/blobs/issues/106)) ([84e4e58](https://github.com/netlify/blobs/commit/84e4e58d06dd4d890e10a1e41285fbc567194ae5))
+
 ## [6.0.1](https://github.com/netlify/blobs/compare/v6.0.0...v6.0.1) (2023-11-13)
 
 
