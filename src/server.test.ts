@@ -40,11 +40,14 @@ test('Reads and writes from the file system', async () => {
   }
 
   // Store #1: Edge access
+  const server1Ops: string[] = []
   const directory1 = await tmp.dir()
   const server1 = new BlobsServer({
     directory: directory1.path,
+    onRequest: ({ type }) => server1Ops.push(type),
     token,
   })
+
   const { port: port1 } = await server1.start()
   const store1 = getStore({
     edgeURL: `http://localhost:${port1}`,
@@ -109,6 +112,28 @@ test('Reads and writes from the file system', async () => {
     expect(list3.blobs[0].key).toBe('parent/child')
     expect(list3.directories).toEqual([])
   }
+
+  expect(server1Ops).toEqual([
+    'list',
+    'set',
+    'get',
+    'set',
+    'get',
+    'list',
+    'set',
+    'get',
+    'get',
+    'get',
+    'getMetadata',
+    'getMetadata',
+    'get',
+    'getMetadata',
+    'delete',
+    'get',
+    'getMetadata',
+    'get',
+    'list',
+  ])
 
   await server1.stop()
   await fs.rm(directory1.path, { force: true, recursive: true })
