@@ -24,7 +24,8 @@
         "default": "./dist/main.js"
       }
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./server": "./dist/server.js"
   },
   "files": [
     "dist/**/*"

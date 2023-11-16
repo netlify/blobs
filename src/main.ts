@@ -1,12 +1,11 @@
 export { getDeployStore, getStore } from './store_factory.ts'
-export { BlobsServer } from './server.ts'
 export type {
-  Store,
-  StoreOptions,
+  BlobResponseType,
   GetWithMetadataOptions,
   GetWithMetadataResult,
   ListOptions,
   ListResultBlob,
   SetOptions,
-  BlobResponseType,
+  Store,
+  StoreOptions,
 } from './store.ts'
