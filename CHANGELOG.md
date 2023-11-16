@@ -1,5 +1,17 @@
 # Changelog
 
+## [6.3.0](https://github.com/netlify/blobs/compare/v6.2.0...v6.3.0) (2023-11-16)
+
+
+### Features
+
+* add `onRequest` callback to server ([#116](https://github.com/netlify/blobs/issues/116)) ([35629fd](https://github.com/netlify/blobs/commit/35629fd81a434be24d2248516593dcbe1fbdccb7))
+
+
+### Bug Fixes
+
+* stop logging metadata not found error ([#114](https://github.com/netlify/blobs/issues/114)) ([0fb9ab6](https://github.com/netlify/blobs/commit/0fb9ab650b7bdfcb7b25c4a0ff706f8e20e44ad8))
+
 ## [6.2.0](https://github.com/netlify/blobs/compare/v6.1.0...v6.2.0) (2023-11-14)
 
 
