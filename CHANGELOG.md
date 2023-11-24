@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.3.1](https://github.com/netlify/blobs/compare/v6.3.0...v6.3.1) (2023-11-24)
+
+
+### Bug Fixes
+
+* handle deploy-scoped stores on Windows ([#119](https://github.com/netlify/blobs/issues/119)) ([e96286d](https://github.com/netlify/blobs/commit/e96286d5d0182e99bc7ec2a6f440bf44f1cb347b))
+
 ## [6.3.0](https://github.com/netlify/blobs/compare/v6.2.0...v6.3.0) (2023-11-16)
 
 
