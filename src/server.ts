@@ -3,6 +3,7 @@ import { createReadStream, createWriteStream, promises as fs } from 'node:fs'
 import http from 'node:http'
 import { tmpdir } from 'node:os'
 import { dirname, join, relative, resolve, sep } from 'node:path'
+import { platform } from 'node:process'
 
 import { ListResponse } from './backend/list.ts'
 import { decodeMetadata, encodeMetadata, METADATA_HEADER_INTERNAL } from './metadata.ts'
@@ -301,12 +302,15 @@ export class BlobsServer {
       return {}
     }
 
-    const [, siteID, storeName, ...key] = url.pathname.split('/')
+    const [, siteID, rawStoreName, ...key] = url.pathname.split('/')
 
-    if (!siteID || !storeName) {
+    if (!siteID || !rawStoreName) {
       return {}
     }
 
+    // On Windows, file paths can't include the `:` character, which is used in
+    // deploy-scoped stores.
+    const storeName = platform === 'win32' ? encodeURIComponent(rawStoreName) : rawStoreName
     const rootPath = resolve(this.directory, 'entries', siteID, storeName)
     const dataPath = resolve(rootPath, ...key)
     const metadataPath = resolve(this.directory, 'metadata', siteID, storeName, ...key)
