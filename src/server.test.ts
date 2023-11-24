@@ -5,7 +5,7 @@ import semver from 'semver'
 import tmp from 'tmp-promise'
 import { test, expect, beforeAll, afterEach } from 'vitest'
 
-import { getStore } from './main.js'
+import { getDeployStore, getStore } from './main.js'
 import { BlobsServer } from './server.js'
 
 beforeAll(async () => {
@@ -285,4 +285,29 @@ test('Lists entries', async () => {
   }
 
   expect(parachutesSongs2.directories).toEqual([])
+})
+
+test('Works with a deploy-scoped store', async () => {
+  const deployID = '655f77a1b48f470008e5879a'
+  const directory = await tmp.dir()
+  const server = new BlobsServer({
+    directory: directory.path,
+    token,
+  })
+  const { port } = await server.start()
+
+  const store = getDeployStore({
+    deployID,
+    edgeURL: `http://localhost:${port}`,
+    token,
+    siteID,
+  })
+  const key = 'my-key'
+
+  await store.set(key, 'value 1 for store 1')
+
+  expect(await store.get(key)).toBe('value 1 for store 1')
+
+  await server.stop()
+  await fs.rm(directory.path, { force: true, recursive: true })
 })
