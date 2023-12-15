@@ -51,6 +51,30 @@ const store = getStore('my-store')
 console.log(await store.get('my-key'))
 ```
 
+#### Lambda compatibility mode
+
+The environment is not configured automatically when running functions in the
+[Lambda compatibility mode](https://docs.netlify.com/functions/lambda-compatibility). To use Netlify Blobs, you must
+initialize the environment manually by calling the `connectLambda` method with the Lambda event as a parameter.
+
+You should call this method immediately before calling `getStore` or `getDeployStore`.
+
+```ts
+import { connectLambda, getStore } from '@netlify/blobs'
+
+export const handler = async (event) => {
+  connectLambda(event)
+
+  const store = getStore('my-store')
+  const value = await store.get('my-key')
+
+  return {
+    statusCode: 200,
+    body: value,
+  }
+}
+```
+
 ### API access
 
 You can interact with the blob store through the [Netlify API](https://docs.netlify.com/api/get-started). This is the
@@ -143,6 +167,8 @@ const store2 = getDeployStore()
 
 assert.equal(await store2.get('my-key'), 'my value')
 ```
+
+### Lambda compatibility mode
 
 ### Custom `fetch`
 

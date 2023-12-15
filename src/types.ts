@@ -8,3 +8,9 @@ export enum HTTPMethod {
   HEAD = 'head',
   PUT = 'put',
 }
+
+// TODO: Import the full type from `@netlify/functions`.
+export interface LambdaEvent {
+  blobs: string
+  headers: Record<string, string>
+}
