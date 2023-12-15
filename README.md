@@ -168,8 +168,6 @@ const store2 = getDeployStore()
 assert.equal(await store2.get('my-key'), 'my value')
 ```
 
-### Lambda compatibility mode
-
 ### Custom `fetch`
 
 The client uses [the web platform `fetch()`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) to make HTTP
