@@ -37,6 +37,12 @@ export const getEnvironmentContext = (): EnvironmentContext => {
   return {}
 }
 
+export const setEnvironmentContext = (context: EnvironmentContext) => {
+  const encodedContext = Buffer.from(JSON.stringify(context)).toString('base64')
+
+  env.NETLIFY_BLOBS_CONTEXT = encodedContext
+}
+
 export class MissingBlobsEnvironmentError extends Error {
   constructor(requiredProperties: string[]) {
     super(
