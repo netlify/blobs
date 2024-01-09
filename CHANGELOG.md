@@ -1,5 +1,17 @@
 # Changelog
 
+## [6.4.0](https://github.com/netlify/blobs/compare/v6.3.1...v6.4.0) (2024-01-09)
+
+
+### Features
+
+* add `connectLambda` method ([#128](https://github.com/netlify/blobs/issues/128)) ([d1061b4](https://github.com/netlify/blobs/commit/d1061b4e559865557f1ebc758e09a4ac35ade209))
+
+
+### Bug Fixes
+
+* copy temp file to prevent `EXDEV: cross-device link not permitted` ([#132](https://github.com/netlify/blobs/issues/132)) ([61b4ee6](https://github.com/netlify/blobs/commit/61b4ee668381dbf7e83179f93cd42a20f412b892))
+
 ## [6.3.1](https://github.com/netlify/blobs/compare/v6.3.0...v6.3.1) (2023-11-24)
 
 
