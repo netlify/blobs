@@ -279,7 +279,7 @@ export class BlobsServer {
       })
 
       await fs.mkdir(dirname(dataPath), { recursive: true })
-      await fs.rename(tempDataPath, dataPath)
+      await fs.copyFile(tempDataPath, dataPath)
       await fs.rm(tempDirectory, { force: true, recursive: true })
 
       await fs.mkdir(dirname(metadataPath), { recursive: true })
