@@ -307,6 +307,10 @@ export class Store {
   }
 
   private static validateKey(key: string) {
+    if (key === '') {
+      throw new Error('Blob key must not be empty.')
+    }
+
     if (key.startsWith('/') || key.startsWith('%2F')) {
       throw new Error('Blob key must not start with forward slash (/).')
     }
