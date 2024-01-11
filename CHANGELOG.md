@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.4.1](https://github.com/netlify/blobs/compare/v6.4.0...v6.4.1) (2024-01-11)
+
+
+### Bug Fixes
+
+* disallow empty key ([#134](https://github.com/netlify/blobs/issues/134)) ([a8b4a23](https://github.com/netlify/blobs/commit/a8b4a23b8414dceb8cc623e511f623ab72cd06ad))
+
 ## [6.4.0](https://github.com/netlify/blobs/compare/v6.3.1...v6.4.0) (2024-01-09)
 
 
