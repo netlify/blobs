@@ -781,7 +781,9 @@ describe('set', () => {
         siteID,
       })
 
+      // @ts-expect-error The `key` paramater is typed to not allow this
       expect(async () => await blobs.set('', 'value')).rejects.toThrowError('Blob key must not be empty.')
+      // @ts-expect-error The `key` paramater is typed to not allow this
       expect(async () => await blobs.set('/key', 'value')).rejects.toThrowError(
         'Blob key must not start with forward slash (/).',
       )
