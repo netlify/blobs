@@ -781,6 +781,7 @@ describe('set', () => {
         siteID,
       })
 
+      expect(async () => await blobs.set('', 'value')).rejects.toThrowError('Blob key must not be empty.')
       expect(async () => await blobs.set('/key', 'value')).rejects.toThrowError(
         'Blob key must not start with forward slash (/).',
       )
