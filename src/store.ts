@@ -19,6 +19,7 @@ interface NamedStoreOptions extends BaseStoreOptions {
 }
 
 export type StoreOptions = DeployStoreOptions | NamedStoreOptions
+type Key<T> = T extends string ? (T extends '' | `/${string}` ? never : T) : never
 
 export interface GetWithMetadataOptions {
   etag?: string
@@ -257,7 +258,7 @@ export class Store {
     )
   }
 
-  async set(key: string, data: BlobInput, { metadata }: SetOptions = {}) {
+  async set<K>(key: Key<K>, data: BlobInput, { metadata }: SetOptions = {}) {
     Store.validateKey(key)
 
     const res = await this.client.makeRequest({
@@ -273,7 +274,7 @@ export class Store {
     }
   }
 
-  async setJSON(key: string, data: unknown, { metadata }: SetOptions = {}) {
+  async setJSON<K>(key: Key<K>, data: unknown, { metadata }: SetOptions = {}) {
     Store.validateKey(key)
 
     const payload = JSON.stringify(data)
@@ -306,7 +307,7 @@ export class Store {
     }
   }
 
-  private static validateKey(key: string) {
+  private static validateKey<K>(key: Key<K>) {
     if (key === '') {
       throw new Error('Blob key must not be empty.')
     }
