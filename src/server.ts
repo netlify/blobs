@@ -4,6 +4,7 @@ import http from 'node:http'
 import { tmpdir } from 'node:os'
 import { dirname, join, relative, resolve, sep } from 'node:path'
 import { platform } from 'node:process'
+import { promises as stream } from 'node:stream'
 
 import { ListResponse } from './backend/list.ts'
 import { decodeMetadata, encodeMetadata, METADATA_HEADER_INTERNAL } from './metadata.ts'
@@ -271,12 +272,7 @@ export class BlobsServer {
       const tempDataPath = join(tempDirectory, relativeDataPath)
 
       await fs.mkdir(dirname(tempDataPath), { recursive: true })
-
-      await new Promise((resolve, reject) => {
-        req.pipe(createWriteStream(tempDataPath))
-        req.on('end', resolve)
-        req.on('error', reject)
-      })
+      await stream.pipeline(req, createWriteStream(tempDataPath))
 
       await fs.mkdir(dirname(dataPath), { recursive: true })
       await fs.copyFile(tempDataPath, dataPath)
