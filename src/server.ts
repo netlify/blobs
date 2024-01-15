@@ -4,7 +4,8 @@ import http from 'node:http'
 import { tmpdir } from 'node:os'
 import { dirname, join, relative, resolve, sep } from 'node:path'
 import { platform } from 'node:process'
-import { promises as stream } from 'node:stream'
+import stream from 'node:stream'
+import { promisify } from 'node:util'
 
 import { ListResponse } from './backend/list.ts'
 import { decodeMetadata, encodeMetadata, METADATA_HEADER_INTERNAL } from './metadata.ts'
@@ -21,6 +22,10 @@ export enum Operation {
   LIST = 'list',
   SET = 'set',
 }
+
+// TODO: Replace with `promises` import of `node:stream` once we can drop
+// support for Node 14.
+const pipeline = promisify(stream.pipeline)
 
 interface BlobsServerOptions {
   /**
@@ -272,7 +277,7 @@ export class BlobsServer {
       const tempDataPath = join(tempDirectory, relativeDataPath)
 
       await fs.mkdir(dirname(tempDataPath), { recursive: true })
-      await stream.pipeline(req, createWriteStream(tempDataPath))
+      await pipeline(req, createWriteStream(tempDataPath))
 
       await fs.mkdir(dirname(dataPath), { recursive: true })
       await fs.copyFile(tempDataPath, dataPath)
