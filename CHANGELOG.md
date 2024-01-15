@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.4.2](https://github.com/netlify/blobs/compare/v6.4.1...v6.4.2) (2024-01-15)
+
+
+### Bug Fixes
+
+* simplify streaming of server writes ([#137](https://github.com/netlify/blobs/issues/137)) ([ae5bdf9](https://github.com/netlify/blobs/commit/ae5bdf9637a6bf1a8eaa08aabdd7ada77b63c7e0))
+
 ## [6.4.1](https://github.com/netlify/blobs/compare/v6.4.0...v6.4.1) (2024-01-11)
 
 
