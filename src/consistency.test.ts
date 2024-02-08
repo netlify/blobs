@@ -146,7 +146,7 @@ describe('Consistency configuration', () => {
     expect(mockStore.fulfilled).toBeTruthy()
   })
 
-  test.only('Respects the consistency mode supplied in the `getDeployStore()` constructor', async () => {
+  test('Respects the consistency mode supplied in the `getDeployStore()` constructor', async () => {
     const mockMetadata = {
       name: 'Netlify',
       cool: true,
