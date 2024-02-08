@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.5.0](https://github.com/netlify/blobs/compare/v6.4.2...v6.5.0) (2024-02-08)
+
+
+### Features
+
+* add `consistency` configuration property ([#143](https://github.com/netlify/blobs/issues/143)) ([febd736](https://github.com/netlify/blobs/commit/febd736b6e4f7760f9b09f663348cce7c478335e))
+
 ## [6.4.2](https://github.com/netlify/blobs/compare/v6.4.1...v6.4.2) (2024-01-15)
 
 
