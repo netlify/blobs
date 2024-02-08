@@ -2,12 +2,14 @@ import { Buffer } from 'node:buffer'
 
 import { ListResponse, ListResponseBlob } from './backend/list.ts'
 import { Client } from './client.ts'
+import type { ConsistencyMode } from './consistency.ts'
 import { getMetadataFromResponse, Metadata } from './metadata.ts'
 import { BlobInput, HTTPMethod } from './types.ts'
 import { BlobsInternalError, collectIterator } from './util.ts'
 
 interface BaseStoreOptions {
   client: Client
+  consistency?: ConsistencyMode
 }
 
 interface DeployStoreOptions extends BaseStoreOptions {
@@ -20,7 +22,12 @@ interface NamedStoreOptions extends BaseStoreOptions {
 
 export type StoreOptions = DeployStoreOptions | NamedStoreOptions
 
+export interface GetOptions {
+  consistency?: ConsistencyMode
+}
+
 export interface GetWithMetadataOptions {
+  consistency?: ConsistencyMode
   etag?: string
 }
 
@@ -57,10 +64,12 @@ export type BlobResponseType = 'arrayBuffer' | 'blob' | 'json' | 'stream' | 'tex
 
 export class Store {
   private client: Client
+  private consistency: ConsistencyMode
   private name: string
 
   constructor(options: StoreOptions) {
     this.client = options.client
+    this.consistency = options.consistency ?? 'eventual'
 
     if ('deployID' in options) {
       Store.validateDeployID(options.deployID)
@@ -82,18 +91,19 @@ export class Store {
   }
 
   async get(key: string): Promise<string>
-  async get(key: string, { type }: { type: 'arrayBuffer' }): Promise<ArrayBuffer>
-  async get(key: string, { type }: { type: 'blob' }): Promise<Blob>
+  async get(key: string, opts: GetOptions): Promise<string>
+  async get(key: string, { type }: GetOptions & { type: 'arrayBuffer' }): Promise<ArrayBuffer>
+  async get(key: string, { type }: GetOptions & { type: 'blob' }): Promise<Blob>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async get(key: string, { type }: { type: 'json' }): Promise<any>
-  async get(key: string, { type }: { type: 'stream' }): Promise<ReadableStream>
-  async get(key: string, { type }: { type: 'text' }): Promise<string>
+  async get(key: string, { type }: GetOptions & { type: 'json' }): Promise<any>
+  async get(key: string, { type }: GetOptions & { type: 'stream' }): Promise<ReadableStream>
+  async get(key: string, { type }: GetOptions & { type: 'text' }): Promise<string>
   async get(
     key: string,
-    options?: { type: BlobResponseType },
+    options?: GetOptions & { type?: BlobResponseType },
   ): Promise<ArrayBuffer | Blob | ReadableStream | string | null> {
-    const { type } = options ?? {}
-    const res = await this.client.makeRequest({ key, method: HTTPMethod.GET, storeName: this.name })
+    const { consistency, type } = options ?? {}
+    const res = await this.client.makeRequest({ consistency, key, method: HTTPMethod.GET, storeName: this.name })
 
     if (res.status === 404) {
       return null
@@ -126,8 +136,8 @@ export class Store {
     throw new BlobsInternalError(res.status)
   }
 
-  async getMetadata(key: string) {
-    const res = await this.client.makeRequest({ key, method: HTTPMethod.HEAD, storeName: this.name })
+  async getMetadata(key: string, { consistency }: { consistency?: ConsistencyMode } = {}) {
+    const res = await this.client.makeRequest({ consistency, key, method: HTTPMethod.HEAD, storeName: this.name })
 
     if (res.status === 404) {
       return null
@@ -190,9 +200,15 @@ export class Store {
       } & GetWithMetadataResult)
     | null
   > {
-    const { etag: requestETag, type } = options ?? {}
+    const { consistency, etag: requestETag, type } = options ?? {}
     const headers = requestETag ? { 'if-none-match': requestETag } : undefined
-    const res = await this.client.makeRequest({ headers, key, method: HTTPMethod.GET, storeName: this.name })
+    const res = await this.client.makeRequest({
+      consistency,
+      headers,
+      key,
+      method: HTTPMethod.GET,
+      storeName: this.name,
+    })
 
     if (res.status === 404) {
       return null

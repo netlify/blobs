@@ -1,3 +1,4 @@
+import { BlobsConsistencyError, ConsistencyMode } from './consistency.ts'
 import { EnvironmentContext, getEnvironmentContext, MissingBlobsEnvironmentError } from './environment.ts'
 import { encodeMetadata, Metadata, METADATA_HEADER_EXTERNAL, METADATA_HEADER_INTERNAL } from './metadata.ts'
 import { fetchAndRetry } from './retry.ts'
@@ -5,6 +6,7 @@ import { BlobInput, Fetcher, HTTPMethod } from './types.ts'
 
 interface MakeStoreRequestOptions {
   body?: BlobInput | null
+  consistency?: ConsistencyMode
   headers?: Record<string, string>
   key?: string
   metadata?: Metadata
@@ -15,13 +17,16 @@ interface MakeStoreRequestOptions {
 
 export interface ClientOptions {
   apiURL?: string
+  consistency?: ConsistencyMode
   edgeURL?: string
   fetch?: Fetcher
   siteID: string
   token: string
+  uncachedEdgeURL?: string
 }
 
 interface GetFinalRequestOptions {
+  consistency?: ConsistencyMode
   key: string | undefined
   metadata?: Metadata
   method: string
@@ -31,17 +36,21 @@ interface GetFinalRequestOptions {
 
 export class Client {
   private apiURL?: string
+  private consistency: ConsistencyMode
   private edgeURL?: string
   private fetch: Fetcher
   private siteID: string
   private token: string
+  private uncachedEdgeURL?: string
 
-  constructor({ apiURL, edgeURL, fetch, siteID, token }: ClientOptions) {
+  constructor({ apiURL, consistency, edgeURL, fetch, siteID, token, uncachedEdgeURL }: ClientOptions) {
     this.apiURL = apiURL
+    this.consistency = consistency ?? 'eventual'
     this.edgeURL = edgeURL
     this.fetch = fetch ?? globalThis.fetch
     this.siteID = siteID
     this.token = token
+    this.uncachedEdgeURL = uncachedEdgeURL
 
     if (!this.fetch) {
       throw new Error(
@@ -50,10 +59,22 @@ export class Client {
     }
   }
 
-  private async getFinalRequest({ key, metadata, method, parameters = {}, storeName }: GetFinalRequestOptions) {
+  private async getFinalRequest({
+    consistency: opConsistency,
+    key,
+    metadata,
+    method,
+    parameters = {},
+    storeName,
+  }: GetFinalRequestOptions) {
     const encodedMetadata = encodeMetadata(metadata)
+    const consistency = opConsistency ?? this.consistency
 
     if (this.edgeURL) {
+      if (consistency === 'strong' && !this.uncachedEdgeURL) {
+        throw new BlobsConsistencyError()
+      }
+
       const headers: Record<string, string> = {
         authorization: `Bearer ${this.token}`,
       }
@@ -63,7 +84,7 @@ export class Client {
       }
 
       const path = key ? `/${this.siteID}/${storeName}/${key}` : `/${this.siteID}/${storeName}`
-      const url = new URL(path, this.edgeURL)
+      const url = new URL(path, consistency === 'strong' ? this.uncachedEdgeURL : this.edgeURL)
 
       for (const key in parameters) {
         url.searchParams.set(key, parameters[key])
@@ -124,6 +145,7 @@ export class Client {
 
   async makeRequest({
     body,
+    consistency,
     headers: extraHeaders,
     key,
     metadata,
@@ -132,6 +154,7 @@ export class Client {
     storeName,
   }: MakeStoreRequestOptions) {
     const { headers: baseHeaders = {}, url } = await this.getFinalRequest({
+      consistency,
       key,
       metadata,
       method,
@@ -184,10 +207,12 @@ export const getClientOptions = (
 
   const clientOptions = {
     apiURL: context.apiURL ?? options.apiURL,
+    consistency: options.consistency,
     edgeURL: context.edgeURL ?? options.edgeURL,
     fetch: options.fetch,
     siteID,
     token,
+    uncachedEdgeURL: context.uncachedEdgeURL ?? options.uncachedEdgeURL,
   }
 
   return clientOptions

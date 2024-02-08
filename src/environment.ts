@@ -17,6 +17,7 @@ export interface EnvironmentContext {
   edgeURL?: string
   siteID?: string
   token?: string
+  uncachedEdgeURL?: string
 }
 
 export const getEnvironmentContext = (): EnvironmentContext => {
