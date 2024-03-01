@@ -12,8 +12,7 @@ import { decodeMetadata, encodeMetadata, METADATA_HEADER_INTERNAL } from './meta
 import { HTTPMethod } from './types.ts'
 import { isNodeError, Logger } from './util.ts'
 
-const API_URL_PATH = /\/api\/v1\/sites\/(?<site_id>[^/]+)\/blobs\/?(?<key>[^?]*)/
-const DEFAULT_STORE = 'production'
+const API_URL_PATH = /\/api\/v1\/blobs\/(?<site_id>[^/]+)\/(?<store_name>[^/]+)\/?(?<key>[^?]*)/
 
 export enum Operation {
   DELETE = 'delete',
@@ -367,10 +366,9 @@ export class BlobsServer {
       return null
     }
 
-    const fullURL = new URL(req.url, this.address)
-    const storeName = fullURL.searchParams.get('context') ?? DEFAULT_STORE
     const key = apiURLMatch.groups?.key
     const siteID = apiURLMatch.groups?.site_id as string
+    const storeName = apiURLMatch.groups?.store_name as string
     const urlPath = [siteID, storeName, key].filter(Boolean) as string[]
     const url = new URL(`/${urlPath.join('/')}?signature=${this.tokenHash}`, this.address)
 

@@ -47,7 +47,7 @@ describe('get', () => {
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
         })
         .get({
           response: new Response(value),
@@ -56,7 +56,7 @@ describe('get', () => {
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
         })
         .get({
           response: new Response(value),
@@ -65,7 +65,7 @@ describe('get', () => {
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${complexKey}?context=production`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${complexKey}`,
         })
         .get({
           response: new Response(value),
@@ -97,7 +97,7 @@ describe('get', () => {
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
         })
         .get({
           response: new Response('Something went wrong', { status: 404 }),
@@ -120,7 +120,7 @@ describe('get', () => {
       const mockStore = new MockFetch().get({
         headers: { authorization: `Bearer ${apiToken}` },
         response: new Response(null, { status: 401 }),
-        url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
+        url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
       })
 
       globalThis.fetch = mockStore.fetch
@@ -142,7 +142,7 @@ describe('get', () => {
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
         })
         .get({
           response: new Response('Something went wrong', { status: 401 }),
@@ -361,7 +361,7 @@ describe('getMetadata', () => {
       const mockStore = new MockFetch().head({
         headers: { authorization: `Bearer ${apiToken}` },
         response: new Response(null, { headers }),
-        url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
+        url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
       })
 
       globalThis.fetch = mockStore.fetch
@@ -383,7 +383,7 @@ describe('getMetadata', () => {
       const mockStore = new MockFetch().head({
         headers: { authorization: `Bearer ${apiToken}` },
         response: new Response(null, { status: 404 }),
-        url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
+        url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
       })
 
       globalThis.fetch = mockStore.fetch
@@ -406,7 +406,7 @@ describe('getMetadata', () => {
       const mockStore = new MockFetch().head({
         headers: { authorization: `Bearer ${apiToken}` },
         response: new Response(null, { headers }),
-        url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
+        url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
       })
 
       globalThis.fetch = mockStore.fetch
@@ -476,7 +476,7 @@ describe('getWithMetadata', () => {
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
         })
         .get({
           response: new Response(value, { headers: responseHeaders }),
@@ -485,7 +485,7 @@ describe('getWithMetadata', () => {
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
         })
         .get({
           response: new Response(value, { headers: responseHeaders }),
@@ -518,7 +518,7 @@ describe('getWithMetadata', () => {
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
         })
         .get({
           response: new Response('Something went wrong', { status: 404 }),
@@ -546,7 +546,7 @@ describe('getWithMetadata', () => {
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
         })
         .get({
           response: new Response(value, { headers: responseHeaders }),
@@ -585,7 +585,7 @@ describe('getWithMetadata', () => {
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: `${signedURL}b` })),
-          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
         })
         .get({
           headers: { 'if-none-match': etags.wrong },
@@ -595,7 +595,7 @@ describe('getWithMetadata', () => {
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: `${signedURL}a` })),
-          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
         })
         .get({
           headers: { 'if-none-match': etags.right },
@@ -679,7 +679,7 @@ describe('set', () => {
         .put({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
         })
         .put({
           body: value,
@@ -690,7 +690,7 @@ describe('set', () => {
         .put({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${complexKey}?context=production`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${complexKey}`,
         })
         .put({
           body: value,
@@ -724,7 +724,7 @@ describe('set', () => {
         .put({
           headers: { authorization: `Bearer ${apiToken}`, 'netlify-blobs-metadata': encodedMetadata },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
         })
         .put({
           body: value,
@@ -753,7 +753,7 @@ describe('set', () => {
       const mockStore = new MockFetch().put({
         headers: { authorization: `Bearer ${apiToken}` },
         response: new Response(null, { status: 401 }),
-        url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
+        url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
       })
 
       globalThis.fetch = mockStore.fetch
@@ -795,7 +795,7 @@ describe('set', () => {
         .put({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
         })
         .put({
           body: value,
@@ -949,7 +949,7 @@ describe('setJSON', () => {
         .put({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
         })
         .put({
           body: JSON.stringify({ value }),
@@ -1058,7 +1058,7 @@ describe('delete', () => {
         .delete({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
         })
         .delete({
           response: new Response(null),
@@ -1067,7 +1067,7 @@ describe('delete', () => {
         .delete({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${complexKey}?context=production`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${complexKey}`,
         })
         .delete({
           response: new Response(null),
@@ -1093,7 +1093,7 @@ describe('delete', () => {
         .delete({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
         })
         .delete({
           response: new Response(null, { status: 404 }),
@@ -1117,7 +1117,7 @@ describe('delete', () => {
       const mockStore = new MockFetch().delete({
         headers: { authorization: `Bearer ${apiToken}` },
         response: new Response(null, { status: 401 }),
-        url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=production`,
+        url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
       })
 
       globalThis.fetch = mockStore.fetch
@@ -1244,7 +1244,7 @@ describe('Deploy scope', () => {
       .get({
         headers: { authorization: `Bearer ${apiToken}` },
         response: new Response(JSON.stringify({ url: signedURL })),
-        url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=deploy%3A${deployID}`,
+        url: `https://api.netlify.com/api/v1/blobs/${siteID}/deploy:${deployID}/${key}`,
       })
       .get({
         response: new Response(value),
@@ -1253,7 +1253,7 @@ describe('Deploy scope', () => {
       .get({
         headers: { authorization: `Bearer ${apiToken}` },
         response: new Response(JSON.stringify({ url: signedURL })),
-        url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=deploy%3A${deployID}`,
+        url: `https://api.netlify.com/api/v1/blobs/${siteID}/deploy:${deployID}/${key}`,
       })
       .get({
         response: new Response(value),
@@ -1314,7 +1314,7 @@ describe('Deploy scope', () => {
       .get({
         headers: { authorization: `Bearer ${apiToken}` },
         response: new Response(JSON.stringify({ url: signedURL })),
-        url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=deploy%3A${deployID}`,
+        url: `https://api.netlify.com/api/v1/blobs/${siteID}/deploy:${deployID}/${key}`,
       })
       .get({
         response: new Response(value),
@@ -1323,7 +1323,7 @@ describe('Deploy scope', () => {
       .get({
         headers: { authorization: `Bearer ${apiToken}` },
         response: new Response(JSON.stringify({ url: signedURL })),
-        url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs/${key}?context=deploy%3A${deployID}`,
+        url: `https://api.netlify.com/api/v1/blobs/${siteID}/deploy:${deployID}/${key}`,
       })
       .get({
         response: new Response(value),

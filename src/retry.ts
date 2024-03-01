@@ -1,6 +1,8 @@
+import { env } from 'node:process'
+
 import type { Fetcher } from './types.ts'
 
-const DEFAULT_RETRY_DELAY = 5000
+const DEFAULT_RETRY_DELAY = env.NODE_ENV === 'test' ? 1 : 5000
 const MIN_RETRY_DELAY = 1000
 const MAX_RETRY = 5
 const RATE_LIMIT_HEADER = 'X-RateLimit-Reset'
