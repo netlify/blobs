@@ -59,7 +59,7 @@ describe('list', () => {
               next_cursor: 'cursor_1',
             }),
           ),
-          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs?context=${storeName}`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/${storeName}`,
         })
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
@@ -83,7 +83,7 @@ describe('list', () => {
               next_cursor: 'cursor_2',
             }),
           ),
-          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs?cursor=cursor_1&context=${storeName}`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/${storeName}?cursor=cursor_1`,
         })
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
@@ -100,7 +100,7 @@ describe('list', () => {
               directories: [],
             }),
           ),
-          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs?cursor=cursor_2&context=${storeName}`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/${storeName}?cursor=cursor_2`,
         })
 
       globalThis.fetch = mockStore.fetch
@@ -148,7 +148,7 @@ describe('list', () => {
               next_cursor: 'cursor_1',
             }),
           ),
-          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs?directories=true&context=${storeName}`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/${storeName}?directories=true`,
         })
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
@@ -172,7 +172,7 @@ describe('list', () => {
               next_cursor: 'cursor_2',
             }),
           ),
-          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs?directories=true&cursor=cursor_1&context=${storeName}`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/${storeName}?directories=true&cursor=cursor_1`,
         })
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
@@ -189,7 +189,7 @@ describe('list', () => {
               directories: ['dir3'],
             }),
           ),
-          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs?directories=true&cursor=cursor_2&context=${storeName}`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/${storeName}?directories=true&cursor=cursor_2`,
         })
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
@@ -206,7 +206,7 @@ describe('list', () => {
               directories: [],
             }),
           ),
-          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs?prefix=dir2%2F&directories=true&context=${storeName}`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/${storeName}?prefix=dir2%2F&directories=true`,
         })
 
       globalThis.fetch = mockStore.fetch
@@ -258,7 +258,7 @@ describe('list', () => {
             ],
           }),
         ),
-        url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs?prefix=group%2F&context=${storeName}`,
+        url: `https://api.netlify.com/api/v1/blobs/${siteID}/${storeName}?prefix=group%2F`,
       })
 
       globalThis.fetch = mockStore.fetch
@@ -303,7 +303,7 @@ describe('list', () => {
               next_cursor: 'cursor_2',
             }),
           ),
-          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs?context=${storeName}`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/${storeName}`,
         })
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
@@ -319,7 +319,7 @@ describe('list', () => {
               ],
             }),
           ),
-          url: `https://api.netlify.com/api/v1/sites/${siteID}/blobs?cursor=cursor_2&context=${storeName}`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/${storeName}?cursor=cursor_2`,
         })
 
       globalThis.fetch = mockStore.fetch

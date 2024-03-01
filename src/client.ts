@@ -97,13 +97,11 @@ export class Client {
     }
 
     const apiHeaders: Record<string, string> = { authorization: `Bearer ${this.token}` }
-    const url = new URL(`/api/v1/sites/${this.siteID}/blobs`, this.apiURL ?? 'https://api.netlify.com')
+    const url = new URL(`/api/v1/blobs/${this.siteID}/${storeName}`, this.apiURL ?? 'https://api.netlify.com')
 
     for (const key in parameters) {
       url.searchParams.set(key, parameters[key])
     }
-
-    url.searchParams.set('context', storeName)
 
     // If there is no key, we're dealing with the list endpoint, which is
     // implemented directly in the Netlify API.
