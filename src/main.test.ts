@@ -247,22 +247,22 @@ describe('get', () => {
           .get({
             headers: { authorization: `Bearer ${tokens[0]}` },
             response: new Response(value),
-            url: `${edgeURL}/${siteID}/images/${key}`,
+            url: `${edgeURL}/${siteID}/site:images/${key}`,
           })
           .get({
             headers: { authorization: `Bearer ${tokens[0]}` },
             response: new Response(value),
-            url: `${edgeURL}/${siteID}/images/${key}`,
+            url: `${edgeURL}/${siteID}/site:images/${key}`,
           })
           .get({
             headers: { authorization: `Bearer ${tokens[1]}` },
             response: new Response(value),
-            url: `${edgeURL}/${siteID}/images/${key}`,
+            url: `${edgeURL}/${siteID}/site:images/${key}`,
           })
           .get({
             headers: { authorization: `Bearer ${tokens[1]}` },
             response: new Response(value),
-            url: `${edgeURL}/${siteID}/images/${key}`,
+            url: `${edgeURL}/${siteID}/site:images/${key}`,
           })
 
         globalThis.fetch = mockStore.fetch
@@ -294,22 +294,22 @@ describe('get', () => {
           .get({
             headers: { authorization: `Bearer ${tokens[0]}` },
             response: new Response(value),
-            url: `${edgeURL}/${siteID}/images/${key}`,
+            url: `${edgeURL}/${siteID}/site:images/${key}`,
           })
           .get({
             headers: { authorization: `Bearer ${tokens[0]}` },
             response: new Response(value),
-            url: `${edgeURL}/${siteID}/images/${key}`,
+            url: `${edgeURL}/${siteID}/site:images/${key}`,
           })
           .get({
             headers: { authorization: `Bearer ${tokens[1]}` },
             response: new Response(value),
-            url: `${edgeURL}/${siteID}/images/${key}`,
+            url: `${edgeURL}/${siteID}/site:images/${key}`,
           })
           .get({
             headers: { authorization: `Bearer ${tokens[1]}` },
             response: new Response(value),
-            url: `${edgeURL}/${siteID}/images/${key}`,
+            url: `${edgeURL}/${siteID}/site:images/${key}`,
           })
 
         globalThis.fetch = mockStore.fetch
@@ -1383,7 +1383,7 @@ describe('Custom `fetch`', () => {
     const mockStore = new MockFetch().get({
       headers: { authorization: `Bearer ${mockToken}` },
       response: new Response(value),
-      url: `${edgeURL}/${siteID}/images/${key}`,
+      url: `${edgeURL}/${siteID}/site:images/${key}`,
     })
     const context = {
       edgeURL,
@@ -1459,14 +1459,6 @@ describe(`getStore`, () => {
       }),
     ).toThrowError(`Store name must be a sequence of Unicode characters whose UTF-8 encoding is at most 64 bytes long.`)
 
-    expect(() =>
-      getStore({
-        name: 'deploy:foo',
-        token: apiToken,
-        siteID,
-      }),
-    ).toThrowError('Store name must not start with the `deploy:` reserved keyword.')
-
     const context = {
       siteID,
       token: apiToken,
@@ -1474,7 +1466,7 @@ describe(`getStore`, () => {
 
     env.NETLIFY_BLOBS_CONTEXT = Buffer.from(JSON.stringify(context)).toString('base64')
 
-    expect(() => getStore('deploy:foo')).toThrowError('Store name must not start with the `deploy:` reserved keyword.')
+    expect(() => getStore('some/store')).toThrowError('Store name must not contain forward slashes (/).')
   })
 
   test('Throws when there is no `fetch` implementation available', async () => {
