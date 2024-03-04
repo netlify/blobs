@@ -70,7 +70,7 @@ describe('listStores', () => {
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(
             JSON.stringify({
-              stores: ['site:store3', 'site:store4', 'deploy: 6527dfab35be400008332a1b'],
+              stores: ['site:store3', 'site:store4', 'deploy:6527dfab35be400008332a1b'],
               next_cursor: 'cursor_2',
             }),
           ),
@@ -109,7 +109,7 @@ describe('listStores', () => {
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(
             JSON.stringify({
-              stores: ['site:store3', 'site:store4', 'deploy: 6527dfab35be400008332a1b'],
+              stores: ['site:store3', 'site:store4', 'deploy:6527dfab35be400008332a1b'],
               next_cursor: 'cursor_2',
             }),
           ),
@@ -195,7 +195,7 @@ describe('listStores', () => {
           headers: { authorization: `Bearer ${edgeToken}` },
           response: new Response(
             JSON.stringify({
-              stores: ['site:store3', 'site:store4', 'deploy: 6527dfab35be400008332a1b'],
+              stores: ['site:store3', 'site:store4', 'deploy:6527dfab35be400008332a1b'],
               next_cursor: 'cursor_2',
             }),
           ),
@@ -239,7 +239,7 @@ describe('listStores', () => {
           headers: { authorization: `Bearer ${edgeToken}` },
           response: new Response(
             JSON.stringify({
-              stores: ['site:store3', 'site:store4', 'deploy: 6527dfab35be400008332a1b'],
+              stores: ['site:store3', 'site:store4', 'deploy:6527dfab35be400008332a1b'],
               next_cursor: 'cursor_2',
             }),
           ),
