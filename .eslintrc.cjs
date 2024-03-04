@@ -23,6 +23,7 @@ module.exports = {
     'unicorn/prefer-ternary': 'off',
     'no-unused-vars': 'off',
     '@typescript-eslint/no-unused-vars': ['error', { ignoreRestSiblings: true }],
+    'func-style': 'off',
   },
   overrides: [
     ...overrides,

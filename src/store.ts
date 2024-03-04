@@ -7,6 +7,9 @@ import { getMetadataFromResponse, Metadata } from './metadata.ts'
 import { BlobInput, HTTPMethod } from './types.ts'
 import { BlobsInternalError, collectIterator } from './util.ts'
 
+export const DEPLOY_STORE_PREFIX = 'deploy:'
+export const SITE_STORE_PREFIX = 'site:'
+
 interface BaseStoreOptions {
   client: Client
   consistency?: ConsistencyMode
@@ -64,21 +67,19 @@ export type BlobResponseType = 'arrayBuffer' | 'blob' | 'json' | 'stream' | 'tex
 
 export class Store {
   private client: Client
-  private consistency: ConsistencyMode
   private name: string
 
   constructor(options: StoreOptions) {
     this.client = options.client
-    this.consistency = options.consistency ?? 'eventual'
 
     if ('deployID' in options) {
       Store.validateDeployID(options.deployID)
 
-      this.name = `deploy:${options.deployID}`
+      this.name = DEPLOY_STORE_PREFIX + options.deployID
     } else {
       Store.validateStoreName(options.name)
 
-      this.name = options.name
+      this.name = SITE_STORE_PREFIX + options.name
     }
   }
 
@@ -261,6 +262,8 @@ export class Store {
       return iterator
     }
 
+    // We can't use `async/await` here because that would make the signature
+    // incompatible with one of the overloads.
     // eslint-disable-next-line promise/prefer-await-to-then
     return collectIterator(iterator).then((items) =>
       items.reduce(
@@ -349,10 +352,6 @@ export class Store {
   }
 
   private static validateStoreName(name: string) {
-    if (name.startsWith('deploy:') || name.startsWith('deploy%3A1')) {
-      throw new Error('Store name must not start with the `deploy:` reserved keyword.')
-    }
-
     if (name.includes('/') || name.includes('%2F')) {
       throw new Error('Store name must not contain forward slashes (/).')
     }

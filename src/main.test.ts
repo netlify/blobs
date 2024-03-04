@@ -47,7 +47,7 @@ describe('get', () => {
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${key}`,
         })
         .get({
           response: new Response(value),
@@ -56,7 +56,7 @@ describe('get', () => {
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${key}`,
         })
         .get({
           response: new Response(value),
@@ -65,7 +65,7 @@ describe('get', () => {
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${complexKey}`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${complexKey}`,
         })
         .get({
           response: new Response(value),
@@ -97,7 +97,7 @@ describe('get', () => {
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${key}`,
         })
         .get({
           response: new Response('Something went wrong', { status: 404 }),
@@ -120,7 +120,7 @@ describe('get', () => {
       const mockStore = new MockFetch().get({
         headers: { authorization: `Bearer ${apiToken}` },
         response: new Response(null, { status: 401 }),
-        url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
+        url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${key}`,
       })
 
       globalThis.fetch = mockStore.fetch
@@ -142,7 +142,7 @@ describe('get', () => {
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${key}`,
         })
         .get({
           response: new Response('Something went wrong', { status: 401 }),
@@ -171,12 +171,12 @@ describe('get', () => {
         .get({
           headers: { authorization: `Bearer ${edgeToken}` },
           response: new Response(value),
-          url: `${edgeURL}/${siteID}/production/${key}`,
+          url: `${edgeURL}/${siteID}/site:production/${key}`,
         })
         .get({
           headers: { authorization: `Bearer ${edgeToken}` },
           response: new Response(value),
-          url: `${edgeURL}/${siteID}/production/${key}`,
+          url: `${edgeURL}/${siteID}/site:production/${key}`,
         })
 
       globalThis.fetch = mockStore.fetch
@@ -201,7 +201,7 @@ describe('get', () => {
       const mockStore = new MockFetch().get({
         headers: { authorization: `Bearer ${edgeToken}` },
         response: new Response(null, { status: 404 }),
-        url: `${edgeURL}/${siteID}/production/${key}`,
+        url: `${edgeURL}/${siteID}/site:production/${key}`,
       })
 
       globalThis.fetch = mockStore.fetch
@@ -221,7 +221,7 @@ describe('get', () => {
       const mockStore = new MockFetch().get({
         headers: { authorization: `Bearer ${edgeToken}` },
         response: new Response(null, { status: 401 }),
-        url: `${edgeURL}/${siteID}/production/${key}`,
+        url: `${edgeURL}/${siteID}/site:production/${key}`,
       })
 
       globalThis.fetch = mockStore.fetch
@@ -247,22 +247,22 @@ describe('get', () => {
           .get({
             headers: { authorization: `Bearer ${tokens[0]}` },
             response: new Response(value),
-            url: `${edgeURL}/${siteID}/images/${key}`,
+            url: `${edgeURL}/${siteID}/site:images/${key}`,
           })
           .get({
             headers: { authorization: `Bearer ${tokens[0]}` },
             response: new Response(value),
-            url: `${edgeURL}/${siteID}/images/${key}`,
+            url: `${edgeURL}/${siteID}/site:images/${key}`,
           })
           .get({
             headers: { authorization: `Bearer ${tokens[1]}` },
             response: new Response(value),
-            url: `${edgeURL}/${siteID}/images/${key}`,
+            url: `${edgeURL}/${siteID}/site:images/${key}`,
           })
           .get({
             headers: { authorization: `Bearer ${tokens[1]}` },
             response: new Response(value),
-            url: `${edgeURL}/${siteID}/images/${key}`,
+            url: `${edgeURL}/${siteID}/site:images/${key}`,
           })
 
         globalThis.fetch = mockStore.fetch
@@ -294,22 +294,22 @@ describe('get', () => {
           .get({
             headers: { authorization: `Bearer ${tokens[0]}` },
             response: new Response(value),
-            url: `${edgeURL}/${siteID}/images/${key}`,
+            url: `${edgeURL}/${siteID}/site:images/${key}`,
           })
           .get({
             headers: { authorization: `Bearer ${tokens[0]}` },
             response: new Response(value),
-            url: `${edgeURL}/${siteID}/images/${key}`,
+            url: `${edgeURL}/${siteID}/site:images/${key}`,
           })
           .get({
             headers: { authorization: `Bearer ${tokens[1]}` },
             response: new Response(value),
-            url: `${edgeURL}/${siteID}/images/${key}`,
+            url: `${edgeURL}/${siteID}/site:images/${key}`,
           })
           .get({
             headers: { authorization: `Bearer ${tokens[1]}` },
             response: new Response(value),
-            url: `${edgeURL}/${siteID}/images/${key}`,
+            url: `${edgeURL}/${siteID}/site:images/${key}`,
           })
 
         globalThis.fetch = mockStore.fetch
@@ -361,7 +361,7 @@ describe('getMetadata', () => {
       const mockStore = new MockFetch().head({
         headers: { authorization: `Bearer ${apiToken}` },
         response: new Response(null, { headers }),
-        url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
+        url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${key}`,
       })
 
       globalThis.fetch = mockStore.fetch
@@ -383,7 +383,7 @@ describe('getMetadata', () => {
       const mockStore = new MockFetch().head({
         headers: { authorization: `Bearer ${apiToken}` },
         response: new Response(null, { status: 404 }),
-        url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
+        url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${key}`,
       })
 
       globalThis.fetch = mockStore.fetch
@@ -406,7 +406,7 @@ describe('getMetadata', () => {
       const mockStore = new MockFetch().head({
         headers: { authorization: `Bearer ${apiToken}` },
         response: new Response(null, { headers }),
-        url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
+        url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${key}`,
       })
 
       globalThis.fetch = mockStore.fetch
@@ -439,7 +439,7 @@ describe('getMetadata', () => {
       const mockStore = new MockFetch().head({
         headers: { authorization: `Bearer ${edgeToken}` },
         response: new Response(null, { headers }),
-        url: `${edgeURL}/${siteID}/production/${key}`,
+        url: `${edgeURL}/${siteID}/site:production/${key}`,
       })
 
       globalThis.fetch = mockStore.fetch
@@ -476,7 +476,7 @@ describe('getWithMetadata', () => {
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${key}`,
         })
         .get({
           response: new Response(value, { headers: responseHeaders }),
@@ -485,7 +485,7 @@ describe('getWithMetadata', () => {
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${key}`,
         })
         .get({
           response: new Response(value, { headers: responseHeaders }),
@@ -518,7 +518,7 @@ describe('getWithMetadata', () => {
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${key}`,
         })
         .get({
           response: new Response('Something went wrong', { status: 404 }),
@@ -546,7 +546,7 @@ describe('getWithMetadata', () => {
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${key}`,
         })
         .get({
           response: new Response(value, { headers: responseHeaders }),
@@ -585,7 +585,7 @@ describe('getWithMetadata', () => {
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: `${signedURL}b` })),
-          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${key}`,
         })
         .get({
           headers: { 'if-none-match': etags.wrong },
@@ -595,7 +595,7 @@ describe('getWithMetadata', () => {
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: `${signedURL}a` })),
-          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${key}`,
         })
         .get({
           headers: { 'if-none-match': etags.right },
@@ -640,12 +640,12 @@ describe('getWithMetadata', () => {
         .get({
           headers: { authorization: `Bearer ${edgeToken}` },
           response: new Response(value, { headers: responseHeaders }),
-          url: `${edgeURL}/${siteID}/production/${key}`,
+          url: `${edgeURL}/${siteID}/site:production/${key}`,
         })
         .get({
           headers: { authorization: `Bearer ${edgeToken}` },
           response: new Response(value, { headers: responseHeaders }),
-          url: `${edgeURL}/${siteID}/production/${key}`,
+          url: `${edgeURL}/${siteID}/site:production/${key}`,
         })
 
       globalThis.fetch = mockStore.fetch
@@ -679,7 +679,7 @@ describe('set', () => {
         .put({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${key}`,
         })
         .put({
           body: value,
@@ -690,7 +690,7 @@ describe('set', () => {
         .put({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${complexKey}`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${complexKey}`,
         })
         .put({
           body: value,
@@ -724,7 +724,7 @@ describe('set', () => {
         .put({
           headers: { authorization: `Bearer ${apiToken}`, 'netlify-blobs-metadata': encodedMetadata },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${key}`,
         })
         .put({
           body: value,
@@ -753,7 +753,7 @@ describe('set', () => {
       const mockStore = new MockFetch().put({
         headers: { authorization: `Bearer ${apiToken}` },
         response: new Response(null, { status: 401 }),
-        url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
+        url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${key}`,
       })
 
       globalThis.fetch = mockStore.fetch
@@ -795,7 +795,7 @@ describe('set', () => {
         .put({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${key}`,
         })
         .put({
           body: value,
@@ -851,13 +851,13 @@ describe('set', () => {
           body: value,
           headers: { authorization: `Bearer ${edgeToken}`, 'cache-control': 'max-age=0, stale-while-revalidate=60' },
           response: new Response(null),
-          url: `${edgeURL}/${siteID}/production/${key}`,
+          url: `${edgeURL}/${siteID}/site:production/${key}`,
         })
         .put({
           body: value,
           headers: { authorization: `Bearer ${edgeToken}`, 'cache-control': 'max-age=0, stale-while-revalidate=60' },
           response: new Response(null),
-          url: `${edgeURL}/${siteID}/production/${complexKey}`,
+          url: `${edgeURL}/${siteID}/site:production/${complexKey}`,
         })
 
       globalThis.fetch = mockStore.fetch
@@ -880,7 +880,7 @@ describe('set', () => {
         body: value,
         headers: { authorization: `Bearer ${edgeToken}`, 'cache-control': 'max-age=0, stale-while-revalidate=60' },
         response: new Response(null, { status: 401 }),
-        url: `${edgeURL}/${siteID}/production/${key}`,
+        url: `${edgeURL}/${siteID}/site:production/${key}`,
       })
 
       globalThis.fetch = mockStore.fetch
@@ -905,25 +905,25 @@ describe('set', () => {
           body: value,
           headers: { authorization: `Bearer ${edgeToken}`, 'cache-control': 'max-age=0, stale-while-revalidate=60' },
           response: new Response(null, { status: 500 }),
-          url: `${edgeURL}/${siteID}/production/${key}`,
+          url: `${edgeURL}/${siteID}/site:production/${key}`,
         })
         .put({
           body: value,
           headers: { authorization: `Bearer ${edgeToken}`, 'cache-control': 'max-age=0, stale-while-revalidate=60' },
           response: new Error('Some network problem'),
-          url: `${edgeURL}/${siteID}/production/${key}`,
+          url: `${edgeURL}/${siteID}/site:production/${key}`,
         })
         .put({
           body: value,
           headers: { authorization: `Bearer ${edgeToken}`, 'cache-control': 'max-age=0, stale-while-revalidate=60' },
           response: new Response(null, { headers: { 'X-RateLimit-Reset': '10' }, status: 429 }),
-          url: `${edgeURL}/${siteID}/production/${key}`,
+          url: `${edgeURL}/${siteID}/site:production/${key}`,
         })
         .put({
           body: value,
           headers: { authorization: `Bearer ${edgeToken}`, 'cache-control': 'max-age=0, stale-while-revalidate=60' },
           response: new Response(null),
-          url: `${edgeURL}/${siteID}/production/${key}`,
+          url: `${edgeURL}/${siteID}/site:production/${key}`,
         })
 
       globalThis.fetch = mockStore.fetch
@@ -949,7 +949,7 @@ describe('setJSON', () => {
         .put({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${key}`,
         })
         .put({
           body: JSON.stringify({ value }),
@@ -980,7 +980,7 @@ describe('setJSON', () => {
         body: JSON.stringify({ value }),
         headers: { authorization: `Bearer ${edgeToken}`, 'cache-control': 'max-age=0, stale-while-revalidate=60' },
         response: new Response(null),
-        url: `${edgeURL}/${siteID}/production/${key}`,
+        url: `${edgeURL}/${siteID}/site:production/${key}`,
       })
 
       globalThis.fetch = mockStore.fetch
@@ -1012,7 +1012,7 @@ describe('setJSON', () => {
           'x-amz-meta-user': encodedMetadata,
         },
         response: new Response(null),
-        url: `${edgeURL}/${siteID}/production/${key}`,
+        url: `${edgeURL}/${siteID}/site:production/${key}`,
       })
 
       globalThis.fetch = mockStore.fetch
@@ -1058,7 +1058,7 @@ describe('delete', () => {
         .delete({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${key}`,
         })
         .delete({
           response: new Response(null),
@@ -1067,7 +1067,7 @@ describe('delete', () => {
         .delete({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${complexKey}`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${complexKey}`,
         })
         .delete({
           response: new Response(null),
@@ -1093,7 +1093,7 @@ describe('delete', () => {
         .delete({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${key}`,
         })
         .delete({
           response: new Response(null, { status: 404 }),
@@ -1117,7 +1117,7 @@ describe('delete', () => {
       const mockStore = new MockFetch().delete({
         headers: { authorization: `Bearer ${apiToken}` },
         response: new Response(null, { status: 401 }),
-        url: `https://api.netlify.com/api/v1/blobs/${siteID}/production/${key}`,
+        url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${key}`,
       })
 
       globalThis.fetch = mockStore.fetch
@@ -1140,7 +1140,7 @@ describe('delete', () => {
       const mockStore = new MockFetch().delete({
         headers: { authorization: `Bearer ${edgeToken}` },
         response: new Response(null, { status: 204 }),
-        url: `${edgeURL}/${siteID}/production/${key}`,
+        url: `${edgeURL}/${siteID}/site:production/${key}`,
       })
 
       globalThis.fetch = mockStore.fetch
@@ -1161,7 +1161,7 @@ describe('delete', () => {
       const mockStore = new MockFetch().delete({
         headers: { authorization: `Bearer ${edgeToken}` },
         response: new Response(null, { status: 404 }),
-        url: `${edgeURL}/${siteID}/production/${key}`,
+        url: `${edgeURL}/${siteID}/site:production/${key}`,
       })
 
       globalThis.fetch = mockStore.fetch
@@ -1182,7 +1182,7 @@ describe('delete', () => {
       const mockStore = new MockFetch().delete({
         headers: { authorization: `Bearer ${edgeToken}` },
         response: new Response(null, { status: 401 }),
-        url: `${edgeURL}/${siteID}/production/${key}`,
+        url: `${edgeURL}/${siteID}/site:production/${key}`,
       })
 
       globalThis.fetch = mockStore.fetch
@@ -1383,7 +1383,7 @@ describe('Custom `fetch`', () => {
     const mockStore = new MockFetch().get({
       headers: { authorization: `Bearer ${mockToken}` },
       response: new Response(value),
-      url: `${edgeURL}/${siteID}/images/${key}`,
+      url: `${edgeURL}/${siteID}/site:images/${key}`,
     })
     const context = {
       edgeURL,
@@ -1459,14 +1459,6 @@ describe(`getStore`, () => {
       }),
     ).toThrowError(`Store name must be a sequence of Unicode characters whose UTF-8 encoding is at most 64 bytes long.`)
 
-    expect(() =>
-      getStore({
-        name: 'deploy:foo',
-        token: apiToken,
-        siteID,
-      }),
-    ).toThrowError('Store name must not start with the `deploy:` reserved keyword.')
-
     const context = {
       siteID,
       token: apiToken,
@@ -1474,7 +1466,7 @@ describe(`getStore`, () => {
 
     env.NETLIFY_BLOBS_CONTEXT = Buffer.from(JSON.stringify(context)).toString('base64')
 
-    expect(() => getStore('deploy:foo')).toThrowError('Store name must not start with the `deploy:` reserved keyword.')
+    expect(() => getStore('some/store')).toThrowError('Store name must not contain forward slashes (/).')
   })
 
   test('Throws when there is no `fetch` implementation available', async () => {
