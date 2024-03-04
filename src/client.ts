@@ -134,7 +134,10 @@ export class Client {
       }
     }
 
-    const res = await this.fetch(url.toString(), { headers: apiHeaders, method })
+    const res = await this.fetch(url.toString(), {
+      headers: { ...apiHeaders, accept: `application/json;type=signed-url` },
+      method,
+    })
 
     if (res.status !== 200) {
       throw new Error(`Netlify Blobs has generated an internal error: ${res.status} response`)

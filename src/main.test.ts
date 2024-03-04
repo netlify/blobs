@@ -45,7 +45,7 @@ describe('get', () => {
     test('Reads from the blob store', async () => {
       const mockStore = new MockFetch()
         .get({
-          headers: { authorization: `Bearer ${apiToken}` },
+          headers: { accept: 'application/json;type=signed-url', authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
           url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${key}`,
         })
@@ -54,7 +54,7 @@ describe('get', () => {
           url: signedURL,
         })
         .get({
-          headers: { authorization: `Bearer ${apiToken}` },
+          headers: { accept: 'application/json;type=signed-url', authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
           url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${key}`,
         })
@@ -63,7 +63,7 @@ describe('get', () => {
           url: signedURL,
         })
         .get({
-          headers: { authorization: `Bearer ${apiToken}` },
+          headers: { accept: 'application/json;type=signed-url', authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
           url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${complexKey}`,
         })
@@ -95,7 +95,7 @@ describe('get', () => {
     test('Returns `null` when the pre-signed URL returns a 404', async () => {
       const mockStore = new MockFetch()
         .get({
-          headers: { authorization: `Bearer ${apiToken}` },
+          headers: { accept: 'application/json;type=signed-url', authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
           url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${key}`,
         })
@@ -118,7 +118,7 @@ describe('get', () => {
 
     test('Throws when the API returns a non-200 status code', async () => {
       const mockStore = new MockFetch().get({
-        headers: { authorization: `Bearer ${apiToken}` },
+        headers: { accept: 'application/json;type=signed-url', authorization: `Bearer ${apiToken}` },
         response: new Response(null, { status: 401 }),
         url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${key}`,
       })
@@ -140,7 +140,7 @@ describe('get', () => {
     test('Throws when a pre-signed URL returns a non-200 status code', async () => {
       const mockStore = new MockFetch()
         .get({
-          headers: { authorization: `Bearer ${apiToken}` },
+          headers: { accept: 'application/json;type=signed-url', authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
           url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${key}`,
         })
