@@ -22,29 +22,13 @@ export function listStores(
   // We can't use `async/await` here because that would make the signature
   // incompatible with one of the overloads.
   // eslint-disable-next-line promise/prefer-await-to-then
-  return collectIterator(iterator).then((results) =>
-    results.reduce(
-      (acc, item) => ({
-        ...acc,
-        stores: [...acc.stores, ...item.stores],
-      }),
-      { stores: [] },
-    ),
-  )
+  return collectIterator(iterator).then((results) => ({ stores: results.flatMap((page) => page.stores) }))
 }
 
-const formatListStoreResponse = (rawStores: string[]) =>
-  rawStores.reduce((acc, rawStore) => {
-    if (rawStore.startsWith(DEPLOY_STORE_PREFIX)) {
-      return acc
-    }
-
-    if (rawStore.startsWith(SITE_STORE_PREFIX)) {
-      return [...acc, rawStore.slice(SITE_STORE_PREFIX.length)]
-    }
-
-    return [...acc, rawStore]
-  }, [] as string[])
+const formatListStoreResponse = (stores: string[]) =>
+  stores
+    .filter((store) => !store.startsWith(DEPLOY_STORE_PREFIX))
+    .map((store) => (store.startsWith(SITE_STORE_PREFIX) ? store.slice(SITE_STORE_PREFIX.length) : store))
 
 const getListIterator = (client: Client, prefix: string): AsyncIterable<ListStoresResponse> => {
   const parameters: Record<string, string> = {
