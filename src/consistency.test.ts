@@ -52,17 +52,17 @@ describe('Consistency configuration', () => {
       .get({
         headers: { authorization: `Bearer ${edgeToken}` },
         response: new Response(value),
-        url: `${uncachedEdgeURL}/${siteID}/production/${key}`,
+        url: `${uncachedEdgeURL}/${siteID}/site:production/${key}`,
       })
       .head({
         headers: { authorization: `Bearer ${edgeToken}` },
         response: new Response(null, { headers }),
-        url: `${uncachedEdgeURL}/${siteID}/production/${key}`,
+        url: `${uncachedEdgeURL}/${siteID}/site:production/${key}`,
       })
       .get({
         headers: { authorization: `Bearer ${edgeToken}` },
         response: new Response(value, { headers }),
-        url: `${uncachedEdgeURL}/${siteID}/production/${key}`,
+        url: `${uncachedEdgeURL}/${siteID}/site:production/${key}`,
       })
 
     globalThis.fetch = mockStore.fetch
@@ -107,17 +107,17 @@ describe('Consistency configuration', () => {
       .get({
         headers: { authorization: `Bearer ${edgeToken}` },
         response: new Response(value),
-        url: `${uncachedEdgeURL}/${siteID}/production/${key}`,
+        url: `${uncachedEdgeURL}/${siteID}/site:production/${key}`,
       })
       .head({
         headers: { authorization: `Bearer ${edgeToken}` },
         response: new Response(null, { headers }),
-        url: `${uncachedEdgeURL}/${siteID}/production/${key}`,
+        url: `${uncachedEdgeURL}/${siteID}/site:production/${key}`,
       })
       .get({
         headers: { authorization: `Bearer ${edgeToken}` },
         response: new Response(value, { headers }),
-        url: `${uncachedEdgeURL}/${siteID}/production/${key}`,
+        url: `${uncachedEdgeURL}/${siteID}/site:production/${key}`,
       })
 
     globalThis.fetch = mockStore.fetch
@@ -213,17 +213,17 @@ describe('Consistency configuration', () => {
       .get({
         headers: { authorization: `Bearer ${edgeToken}` },
         response: new Response(value),
-        url: `${uncachedEdgeURL}/${siteID}/production/${key}`,
+        url: `${uncachedEdgeURL}/${siteID}/site:production/${key}`,
       })
       .head({
         headers: { authorization: `Bearer ${edgeToken}` },
         response: new Response(null, { headers }),
-        url: `${edgeURL}/${siteID}/production/${key}`,
+        url: `${edgeURL}/${siteID}/site:production/${key}`,
       })
       .get({
         headers: { authorization: `Bearer ${edgeToken}` },
         response: new Response(value, { headers }),
-        url: `${edgeURL}/${siteID}/production/${key}`,
+        url: `${edgeURL}/${siteID}/site:production/${key}`,
       })
 
     globalThis.fetch = mockStore.fetch

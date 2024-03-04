@@ -48,12 +48,12 @@ describe('With edge credentials', () => {
       .get({
         headers: { authorization: `Bearer ${edgeToken}` },
         response: new Response(value),
-        url: `${edgeURL}/${siteID}/production/${key}`,
+        url: `${edgeURL}/${siteID}/site:production/${key}`,
       })
       .get({
         headers: { authorization: `Bearer ${edgeToken}` },
         response: new Response(value),
-        url: `${edgeURL}/${siteID}/production/${key}`,
+        url: `${edgeURL}/${siteID}/site:production/${key}`,
       })
 
     globalThis.fetch = mockStore.fetch
