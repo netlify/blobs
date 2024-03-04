@@ -12,7 +12,7 @@ interface MakeStoreRequestOptions {
   metadata?: Metadata
   method: HTTPMethod
   parameters?: Record<string, string>
-  storeName: string
+  storeName?: string
 }
 
 export interface ClientOptions {
@@ -31,7 +31,7 @@ interface GetFinalRequestOptions {
   metadata?: Metadata
   method: string
   parameters?: Record<string, string>
-  storeName: string
+  storeName?: string
 }
 
 export class Client {
@@ -70,6 +70,16 @@ export class Client {
     const encodedMetadata = encodeMetadata(metadata)
     const consistency = opConsistency ?? this.consistency
 
+    let urlPath = `/${this.siteID}`
+
+    if (storeName) {
+      urlPath += `/${storeName}`
+    }
+
+    if (key) {
+      urlPath += `/${key}`
+    }
+
     if (this.edgeURL) {
       if (consistency === 'strong' && !this.uncachedEdgeURL) {
         throw new BlobsConsistencyError()
@@ -83,8 +93,7 @@ export class Client {
         headers[METADATA_HEADER_INTERNAL] = encodedMetadata
       }
 
-      const path = key ? `/${this.siteID}/${storeName}/${key}` : `/${this.siteID}/${storeName}`
-      const url = new URL(path, consistency === 'strong' ? this.uncachedEdgeURL : this.edgeURL)
+      const url = new URL(urlPath, consistency === 'strong' ? this.uncachedEdgeURL : this.edgeURL)
 
       for (const key in parameters) {
         url.searchParams.set(key, parameters[key])
@@ -97,22 +106,21 @@ export class Client {
     }
 
     const apiHeaders: Record<string, string> = { authorization: `Bearer ${this.token}` }
-    const url = new URL(`/api/v1/blobs/${this.siteID}/${storeName}`, this.apiURL ?? 'https://api.netlify.com')
+    const url = new URL(`/api/v1/blobs${urlPath}`, this.apiURL ?? 'https://api.netlify.com')
 
     for (const key in parameters) {
       url.searchParams.set(key, parameters[key])
     }
 
-    // If there is no key, we're dealing with the list endpoint, which is
-    // implemented directly in the Netlify API.
-    if (key === undefined) {
+    // If there is no store name, we're listing stores. If there's no key,
+    // we're listing blobs. Both operations are implemented directly in the
+    // Netlify API.
+    if (storeName === undefined || key === undefined) {
       return {
         headers: apiHeaders,
         url: url.toString(),
       }
     }
-
-    url.pathname += `/${key}`
 
     if (encodedMetadata) {
       apiHeaders[METADATA_HEADER_EXTERNAL] = encodedMetadata
