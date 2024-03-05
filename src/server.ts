@@ -141,13 +141,19 @@ export class BlobsServer {
 
     const { dataPath, key, metadataPath, rootPath } = this.getLocalPaths(url)
 
-    if (!dataPath || !metadataPath) {
+    // If there's no root path, the request is invalid.
+    if (!rootPath) {
       return this.sendResponse(req, res, 400)
+    }
+
+    // If there's no data or metadata paths, it means we're listing stores.
+    if (!dataPath || !metadataPath) {
+      return this.listStores(req, res, rootPath, url.searchParams.get('prefix') ?? '')
     }
 
     // If there is no key in the URL, it means a `list` operation.
     if (!key) {
-      return this.list({ dataPath, metadataPath, rootPath, req, res, url })
+      return this.listBlobs({ dataPath, metadataPath, rootPath, req, res, url })
     }
 
     this.onRequest({ type: Operation.GET })
@@ -213,7 +219,7 @@ export class BlobsServer {
     res.end()
   }
 
-  async list(options: {
+  async listBlobs(options: {
     dataPath: string
     metadataPath: string
     rootPath: string
@@ -246,6 +252,19 @@ export class BlobsServer {
     res.setHeader('content-type', 'application/json')
 
     return this.sendResponse(req, res, 200, JSON.stringify(result))
+  }
+
+  async listStores(req: http.IncomingMessage, res: http.ServerResponse, rootPath: string, prefix: string) {
+    try {
+      const allStores = await fs.readdir(rootPath)
+      const filteredStores = allStores.filter((store) => store.startsWith(prefix))
+
+      return this.sendResponse(req, res, 200, JSON.stringify({ stores: filteredStores }))
+    } catch (error) {
+      this.logDebug('Could not list stores:', error)
+
+      return this.sendResponse(req, res, 500)
+    }
   }
 
   async put(req: http.IncomingMessage, res: http.ServerResponse) {
@@ -304,18 +323,24 @@ export class BlobsServer {
 
     const [, siteID, rawStoreName, ...key] = url.pathname.split('/')
 
-    if (!siteID || !rawStoreName) {
+    if (!siteID) {
       return {}
+    }
+
+    const rootPath = resolve(this.directory, 'entries', siteID)
+
+    if (!rawStoreName) {
+      return { rootPath }
     }
 
     // On Windows, file paths can't include the `:` character, which is used in
     // deploy-scoped stores.
     const storeName = platform === 'win32' ? encodeURIComponent(rawStoreName) : rawStoreName
-    const rootPath = resolve(this.directory, 'entries', siteID, storeName)
-    const dataPath = resolve(rootPath, ...key)
+    const storePath = resolve(rootPath, storeName)
+    const dataPath = resolve(storePath, ...key)
     const metadataPath = resolve(this.directory, 'metadata', siteID, storeName, ...key)
 
-    return { dataPath, key: key.join('/'), metadataPath, rootPath }
+    return { dataPath, key: key.join('/'), metadataPath, rootPath: storePath }
   }
 
   handleRequest(req: http.IncomingMessage, res: http.ServerResponse) {
