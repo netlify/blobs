@@ -361,5 +361,8 @@ test('Lists site stores', async () => {
     siteID,
   })
 
+  await server.stop()
+  await fs.rm(directory.path, { force: true, recursive: true })
+
   expect(stores).toStrictEqual(['coldplay', 'phoenix'])
 })
