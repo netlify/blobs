@@ -258,6 +258,7 @@ export class BlobsServer {
     try {
       const allStores = await fs.readdir(rootPath)
       const filteredStores = allStores
+        // Store names are URI-encoded on Windows, so we must decode them first.
         .map((store) => (platform === 'win32' ? decodeURIComponent(store) : store))
         .filter((store) => store.startsWith(prefix))
 
@@ -335,8 +336,8 @@ export class BlobsServer {
       return { rootPath }
     }
 
-    // On Windows, file paths can't include the `:` character, which is used in
-    // deploy-scoped stores.
+    // On Windows, file paths can't include the `:` character, so we URI-encode
+    // them.
     const storeName = platform === 'win32' ? encodeURIComponent(rawStoreName) : rawStoreName
     const storePath = resolve(rootPath, storeName)
     const dataPath = resolve(storePath, ...key)
