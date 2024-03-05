@@ -257,7 +257,9 @@ export class BlobsServer {
   async listStores(req: http.IncomingMessage, res: http.ServerResponse, rootPath: string, prefix: string) {
     try {
       const allStores = await fs.readdir(rootPath)
-      const filteredStores = allStores.filter((store) => store.startsWith(prefix))
+      const filteredStores = allStores.filter((store) =>
+        store.startsWith(platform === 'win32' ? encodeURIComponent(prefix) : prefix),
+      )
 
       return this.sendResponse(req, res, 200, JSON.stringify({ stores: filteredStores }))
     } catch (error) {
