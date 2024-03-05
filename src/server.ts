@@ -151,7 +151,7 @@ export class BlobsServer {
       return this.listStores(req, res, rootPath, url.searchParams.get('prefix') ?? '')
     }
 
-    // If there is no key in the URL, it means a `list` operation.
+    // If there is no key in the URL, it means we're listing blobs.
     if (!key) {
       return this.listBlobs({ dataPath, metadataPath, rootPath, req, res, url })
     }
