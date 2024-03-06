@@ -41,7 +41,8 @@
     }
   },
   "files": [
-    "dist/**/*"
+    "dist/**/*",
+    "server.d.ts"
   ],
   "scripts": {
     "build": "run-s build:*",
