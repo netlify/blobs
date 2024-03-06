@@ -5,7 +5,7 @@ import semver from 'semver'
 import tmp from 'tmp-promise'
 import { test, expect, beforeAll, afterEach } from 'vitest'
 
-import { getDeployStore, getStore } from './main.js'
+import { getDeployStore, getStore, listStores } from './main.js'
 import { BlobsServer } from './server.js'
 
 beforeAll(async () => {
@@ -310,4 +310,59 @@ test('Works with a deploy-scoped store', async () => {
 
   await server.stop()
   await fs.rm(directory.path, { force: true, recursive: true })
+})
+
+test('Lists site stores', async () => {
+  const directory = await tmp.dir()
+  const server = new BlobsServer({
+    directory: directory.path,
+    token,
+  })
+  const { port } = await server.start()
+
+  const store1 = getStore({
+    edgeURL: `http://localhost:${port}`,
+    name: 'coldplay',
+    token,
+    siteID,
+  })
+
+  await store1.set('parachutes/shiver', "I'll always be waiting for you")
+  await store1.set('parachutes/spies', 'And the spies came out of the water')
+  await store1.set('parachutes/trouble', 'And I:I never meant to cause you trouble')
+  await store1.set('a-rush-of-blood-to-the-head/politik', 'Give me heart and give me soul')
+  await store1.set('a-rush-of-blood-to-the-head/in-my-place', 'How long must you wait for it?')
+  await store1.set('a-rush-of-blood-to-the-head/the-scientist', 'Questions of science, science and progress')
+
+  const store2 = getStore({
+    edgeURL: `http://localhost:${port}`,
+    name: 'phoenix',
+    token,
+    siteID,
+  })
+
+  await store2.set('united/too-young', "Oh rainfalls and hard times coming they won't leave me tonight")
+  await store2.set('united/party-time', 'Summertime is gone')
+  await store2.set('ti-amo/j-boy', 'Something in the middle of the side of the store')
+  await store2.set('ti-amo/fleur-de-lys', 'No rest till I get to you, no rest till I get to you')
+
+  const store3 = getDeployStore({
+    deployID: '655f77a1b48f470008e5879a',
+    edgeURL: `http://localhost:${port}`,
+    token,
+    siteID,
+  })
+
+  await store3.set('not-a-song', "I'm a deploy, not a song")
+
+  const { stores } = await listStores({
+    edgeURL: `http://localhost:${port}`,
+    token,
+    siteID,
+  })
+
+  await server.stop()
+  await fs.rm(directory.path, { force: true, recursive: true })
+
+  expect(stores).toStrictEqual(['coldplay', 'phoenix'])
 })
