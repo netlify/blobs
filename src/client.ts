@@ -4,6 +4,8 @@ import { encodeMetadata, Metadata, METADATA_HEADER_EXTERNAL, METADATA_HEADER_INT
 import { fetchAndRetry } from './retry.ts'
 import { BlobInput, Fetcher, HTTPMethod } from './types.ts'
 
+export const SIGNED_URL_ACCEPT_HEADER = 'application/json;type=signed-url'
+
 interface MakeStoreRequestOptions {
   body?: BlobInput | null
   consistency?: ConsistencyMode
@@ -135,7 +137,7 @@ export class Client {
     }
 
     const res = await this.fetch(url.toString(), {
-      headers: { ...apiHeaders, accept: `application/json;type=signed-url` },
+      headers: { ...apiHeaders, accept: SIGNED_URL_ACCEPT_HEADER },
       method,
     })
 

@@ -8,6 +8,7 @@ import stream from 'node:stream'
 import { promisify } from 'node:util'
 
 import { ListResponse } from './backend/list.ts'
+import { SIGNED_URL_ACCEPT_HEADER } from './client.ts'
 import { decodeMetadata, encodeMetadata, METADATA_HEADER_INTERNAL } from './metadata.ts'
 import { HTTPMethod } from './types.ts'
 import { isNodeError, Logger } from './util.ts'
@@ -137,11 +138,11 @@ export class BlobsServer {
     const apiMatch = this.parseAPIRequest(req)
     const url = apiMatch?.url ?? new URL(req.url ?? '', this.address)
 
-    if (apiMatch?.key) {
+    if (apiMatch?.key && apiMatch?.useSignedURL) {
       return this.sendResponse(req, res, 200, JSON.stringify({ url: apiMatch.url.toString() }))
     }
 
-    const { dataPath, key, metadataPath, rootPath } = this.getLocalPaths(url)
+    const { dataPath, key, metadataPath, rootPath } = this.getLocalPaths(apiMatch?.url ?? url)
 
     // If there's no root path, the request is invalid.
     if (!rootPath) {
@@ -404,7 +405,7 @@ export class BlobsServer {
         siteID,
         storeName,
         url,
-        useSignedURL: req.headers.accept === 'application/json;type=signed-url',
+        useSignedURL: req.headers.accept === SIGNED_URL_ACCEPT_HEADER,
       }
     }
 
@@ -481,9 +482,8 @@ export class BlobsServer {
     }
 
     const { authorization = '' } = req.headers
-    const parts = authorization.split(' ')
 
-    if (parts.length === 2 || (parts[0].toLowerCase() === 'bearer' && parts[1] === this.token)) {
+    if (authorization.toLowerCase().startsWith('bearer ') && authorization.slice('bearer '.length) === this.token) {
       return true
     }
 
