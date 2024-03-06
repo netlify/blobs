@@ -1,4 +1,4 @@
-import { Buffer } from 'node:buffer'
+import { base64Decode, base64Encode } from './util.ts'
 
 export type Metadata = Record<string, unknown>
 
@@ -12,7 +12,7 @@ export const encodeMetadata = (metadata?: Metadata) => {
     return null
   }
 
-  const encodedObject = Buffer.from(JSON.stringify(metadata)).toString('base64')
+  const encodedObject = base64Encode(JSON.stringify(metadata))
   const payload = `b64;${encodedObject}`
 
   if (METADATA_HEADER_EXTERNAL.length + payload.length > METADATA_MAX_SIZE) {
@@ -28,7 +28,7 @@ export const decodeMetadata = (header: string | null): Metadata => {
   }
 
   const encodedData = header.slice(BASE64_PREFIX.length)
-  const decodedData = Buffer.from(encodedData, 'base64').toString()
+  const decodedData = base64Decode(encodedData)
   const metadata = JSON.parse(decodedData)
 
   return metadata

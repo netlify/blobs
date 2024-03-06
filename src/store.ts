@@ -1,5 +1,3 @@
-import { Buffer } from 'node:buffer'
-
 import { ListResponse, ListResponseBlob } from './backend/list.ts'
 import { Client } from './client.ts'
 import type { ConsistencyMode } from './consistency.ts'
@@ -341,7 +339,7 @@ export class Store {
       throw new Error('Blob key must not start with forward slash (/).')
     }
 
-    if (Buffer.byteLength(key, 'utf8') > 600) {
+    if (new TextEncoder().encode(key).length > 600) {
       throw new Error(
         'Blob key must be a sequence of Unicode characters whose UTF-8 encoding is at most 600 bytes long.',
       )
@@ -363,7 +361,7 @@ export class Store {
       throw new Error('Store name must not contain forward slashes (/).')
     }
 
-    if (Buffer.byteLength(name, 'utf8') > 64) {
+    if (new TextEncoder().encode(name).length > 64) {
       throw new Error(
         'Store name must be a sequence of Unicode characters whose UTF-8 encoding is at most 64 bytes long.',
       )
