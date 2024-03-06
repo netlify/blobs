@@ -163,6 +163,56 @@ describe('get', () => {
 
       expect(mockStore.fulfilled).toBeTruthy()
     })
+
+    test('Reads from a store with a legacy namespace', async () => {
+      const mockStore = new MockFetch()
+        .get({
+          headers: { accept: 'application/json;type=signed-url', authorization: `Bearer ${apiToken}` },
+          response: new Response(JSON.stringify({ url: signedURL })),
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/oldie/${key}`,
+        })
+        .get({
+          response: new Response(value),
+          url: signedURL,
+        })
+        .get({
+          headers: { accept: 'application/json;type=signed-url', authorization: `Bearer ${apiToken}` },
+          response: new Response(JSON.stringify({ url: signedURL })),
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/oldie/${key}`,
+        })
+        .get({
+          response: new Response(value),
+          url: signedURL,
+        })
+        .get({
+          headers: { accept: 'application/json;type=signed-url', authorization: `Bearer ${apiToken}` },
+          response: new Response(JSON.stringify({ url: signedURL })),
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/oldie/${complexKey}`,
+        })
+        .get({
+          response: new Response(value),
+          url: signedURL,
+        })
+
+      globalThis.fetch = mockStore.fetch
+
+      const blobs = getStore({
+        name: 'netlify-internal/legacy-namespace/oldie',
+        token: apiToken,
+        siteID,
+      })
+
+      const string = await blobs.get(key)
+      expect(string).toBe(value)
+
+      const stream = await blobs.get(key, { type: 'stream' })
+      expect(await streamToString(stream as unknown as NodeJS.ReadableStream)).toBe(value)
+
+      const string2 = await blobs.get(complexKey)
+      expect(string2).toBe(value)
+
+      expect(mockStore.fulfilled).toBeTruthy()
+    })
   })
 
   describe('With edge credentials', () => {
