@@ -24,10 +24,25 @@
         "default": "./dist/main.js"
       }
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./server": {
+      "require": {
+        "types": "./dist/server.d.cts",
+        "default": "./dist/server.cjs"
+      },
+      "import": {
+        "types": "./dist/server.d.ts",
+        "default": "./dist/server.js"
+      },
+      "default": {
+        "types": "./dist/server.d.ts",
+        "default": "./dist/server.js"
+      }
+    }
   },
   "files": [
-    "dist/**/*"
+    "dist/**/*",
+    "server.d.ts"
   ],
   "scripts": {
     "build": "run-s build:*",
