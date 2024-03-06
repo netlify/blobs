@@ -371,11 +371,9 @@ test('Returns a signed URL or the blob directly based on the request parameters'
   const siteID = '9a003659-aaaa-0000-aaaa-63d3720d8621'
   const token = 'some token'
   const value = 'value 1'
-  const server1Ops: string[] = []
   const directory = await tmp.dir()
   const server = new BlobsServer({
     directory: directory.path,
-    onRequest: ({ type }) => server1Ops.push(type),
     token,
   })
 
