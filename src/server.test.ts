@@ -402,14 +402,10 @@ test('Returns a signed URL or the blob directly based on the request parameters'
   // default.
   const res2 = await fetch(`http://localhost:${port}/api/v1/blobs/${siteID}/site:my-store/key-1`, {
     headers: {
-      accept: 'application/json;type=signed-url',
       authorization: `Bearer ${token}`,
     },
   })
-  const { url: url2 } = await res2.json()
-  const data2 = await fetch(url2)
-
-  expect(await data2.text()).toBe(value)
+  expect(await res2.text()).toBe(value)
 
   // When reading through a new API endpoint and requesting a signed URL, we
   // should get one.
