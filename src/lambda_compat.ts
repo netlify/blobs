@@ -1,7 +1,6 @@
-import { Buffer } from 'node:buffer'
-
 import { EnvironmentContext, setEnvironmentContext } from './environment.ts'
 import type { LambdaEvent } from './types.ts'
+import { base64Decode } from './util.ts'
 
 interface BlobsEventData {
   token: string
@@ -9,8 +8,8 @@ interface BlobsEventData {
 }
 
 export const connectLambda = (event: LambdaEvent) => {
-  const rawData = Buffer.from(event.blobs, 'base64')
-  const data = JSON.parse(rawData.toString('ascii')) as BlobsEventData
+  const rawData = base64Decode(event.blobs)
+  const data = JSON.parse(rawData) as BlobsEventData
   const environmentContext: EnvironmentContext = {
     deployID: event.headers['x-nf-deploy-id'],
     edgeURL: data.url,
