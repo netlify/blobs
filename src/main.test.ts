@@ -1107,21 +1107,13 @@ describe('delete', () => {
       const mockStore = new MockFetch()
         .delete({
           headers: { authorization: `Bearer ${apiToken}` },
-          response: new Response(JSON.stringify({ url: signedURL })),
+          response: new Response(null, { status: 204 }),
           url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${key}`,
         })
         .delete({
-          response: new Response(null),
-          url: signedURL,
-        })
-        .delete({
           headers: { authorization: `Bearer ${apiToken}` },
-          response: new Response(JSON.stringify({ url: signedURL })),
+          response: new Response(null, { status: 204 }),
           url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${complexKey}`,
-        })
-        .delete({
-          response: new Response(null),
-          url: signedURL,
         })
 
       globalThis.fetch = mockStore.fetch
@@ -1139,16 +1131,11 @@ describe('delete', () => {
     })
 
     test('Does not throw when the blob does not exist', async () => {
-      const mockStore = new MockFetch()
-        .delete({
-          headers: { authorization: `Bearer ${apiToken}` },
-          response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${key}`,
-        })
-        .delete({
-          response: new Response(null, { status: 404 }),
-          url: signedURL,
-        })
+      const mockStore = new MockFetch().delete({
+        headers: { authorization: `Bearer ${apiToken}` },
+        response: new Response(null, { status: 404 }),
+        url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${key}`,
+      })
 
       globalThis.fetch = mockStore.fetch
 
@@ -1178,7 +1165,7 @@ describe('delete', () => {
         siteID,
       })
 
-      expect(async () => await blobs.delete(key)).rejects.toThrowError(
+      await expect(async () => await blobs.delete(key)).rejects.toThrowError(
         `Netlify Blobs has generated an internal error: 401 response`,
       )
       expect(mockStore.fulfilled).toBeTruthy()

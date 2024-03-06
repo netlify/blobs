@@ -126,8 +126,8 @@ export class Client {
       apiHeaders[METADATA_HEADER_EXTERNAL] = encodedMetadata
     }
 
-    // HEAD requests are implemented directly in the Netlify API.
-    if (method === HTTPMethod.HEAD) {
+    // HEAD and DELETE requests are implemented directly in the Netlify API.
+    if (method === HTTPMethod.HEAD || method === HTTPMethod.DELETE) {
       return {
         headers: apiHeaders,
         url: url.toString(),
