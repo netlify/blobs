@@ -366,3 +366,66 @@ test('Lists site stores', async () => {
 
   expect(stores).toStrictEqual(['coldplay', 'phoenix'])
 })
+
+test('Returns a signed URL or the blob directly based on the request parameters', async () => {
+  const siteID = '9a003659-aaaa-0000-aaaa-63d3720d8621'
+  const token = 'some token'
+  const value = 'value 1'
+  const server1Ops: string[] = []
+  const directory = await tmp.dir()
+  const server = new BlobsServer({
+    directory: directory.path,
+    onRequest: ({ type }) => server1Ops.push(type),
+    token,
+  })
+
+  const { port } = await server.start()
+  const store = getStore({
+    edgeURL: `http://localhost:${port}`,
+    name: 'my-store',
+    token,
+    siteID,
+  })
+
+  await store.set('key-1', value)
+
+  // When reading through a legacy API endpoint, we should get a signed URL.
+  const res1 = await fetch(`http://localhost:${port}/api/v1/sites/${siteID}/blobs/key-1?context=site:my-store`, {
+    headers: {
+      authorization: `Bearer ${token}`,
+    },
+  })
+  const { url: url1 } = await res1.json()
+  const data1 = await fetch(url1)
+
+  expect(await data1.text()).toBe(value)
+
+  // When reading through a new API endpoint, we should get the blob data by
+  // default.
+  const res2 = await fetch(`http://localhost:${port}/api/v1/blobs/${siteID}/site:my-store/key-1`, {
+    headers: {
+      accept: 'application/json;type=signed-url',
+      authorization: `Bearer ${token}`,
+    },
+  })
+  const { url: url2 } = await res2.json()
+  const data2 = await fetch(url2)
+
+  expect(await data2.text()).toBe(value)
+
+  // When reading through a new API endpoint and requesting a signed URL, we
+  // should get one.
+  const res3 = await fetch(`http://localhost:${port}/api/v1/blobs/${siteID}/site:my-store/key-1`, {
+    headers: {
+      accept: 'application/json;type=signed-url',
+      authorization: `Bearer ${token}`,
+    },
+  })
+  const { url: url3 } = await res3.json()
+  const data3 = await fetch(url3)
+
+  expect(await data3.text()).toBe(value)
+
+  await server.stop()
+  await fs.rm(directory.path, { force: true, recursive: true })
+})
