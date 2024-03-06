@@ -13,6 +13,8 @@ import { HTTPMethod } from './types.ts'
 import { isNodeError, Logger } from './util.ts'
 
 const API_URL_PATH = /\/api\/v1\/blobs\/(?<site_id>[^/]+)\/(?<store_name>[^/]+)\/?(?<key>[^?]*)/
+const LEGACY_API_URL_PATH = /\/api\/v1\/sites\/(?<site_id>[^/]+)\/blobs\/?(?<key>[^?]*)/
+const LEGACY_DEFAULT_STORE = 'production'
 
 export enum Operation {
   DELETE = 'delete',
@@ -99,11 +101,11 @@ export class BlobsServer {
   async delete(req: http.IncomingMessage, res: http.ServerResponse) {
     const apiMatch = this.parseAPIRequest(req)
 
-    if (apiMatch) {
+    if (apiMatch?.useSignedURL) {
       return this.sendResponse(req, res, 200, JSON.stringify({ url: apiMatch.url.toString() }))
     }
 
-    const url = new URL(req.url ?? '', this.address)
+    const url = new URL(apiMatch?.url ?? req.url ?? '', this.address)
     const { dataPath, key, metadataPath } = this.getLocalPaths(url)
 
     if (!dataPath || !key) {
@@ -390,22 +392,42 @@ export class BlobsServer {
 
     const apiURLMatch = req.url.match(API_URL_PATH)
 
-    if (!apiURLMatch) {
-      return null
+    if (apiURLMatch) {
+      const key = apiURLMatch.groups?.key
+      const siteID = apiURLMatch.groups?.site_id as string
+      const storeName = apiURLMatch.groups?.store_name as string
+      const urlPath = [siteID, storeName, key].filter(Boolean) as string[]
+      const url = new URL(`/${urlPath.join('/')}?signature=${this.tokenHash}`, this.address)
+
+      return {
+        key,
+        siteID,
+        storeName,
+        url,
+        useSignedURL: req.headers.accept === 'application/json;type=signed-url',
+      }
     }
 
-    const key = apiURLMatch.groups?.key
-    const siteID = apiURLMatch.groups?.site_id as string
-    const storeName = apiURLMatch.groups?.store_name as string
-    const urlPath = [siteID, storeName, key].filter(Boolean) as string[]
-    const url = new URL(`/${urlPath.join('/')}?signature=${this.tokenHash}`, this.address)
+    const legacyAPIURLMatch = req.url.match(LEGACY_API_URL_PATH)
 
-    return {
-      key,
-      siteID,
-      storeName,
-      url,
+    if (legacyAPIURLMatch) {
+      const fullURL = new URL(req.url, this.address)
+      const storeName = fullURL.searchParams.get('context') ?? LEGACY_DEFAULT_STORE
+      const key = legacyAPIURLMatch.groups?.key
+      const siteID = legacyAPIURLMatch.groups?.site_id as string
+      const urlPath = [siteID, storeName, key].filter(Boolean) as string[]
+      const url = new URL(`/${urlPath.join('/')}?signature=${this.tokenHash}`, this.address)
+
+      return {
+        key,
+        siteID,
+        storeName,
+        url,
+        useSignedURL: true,
+      }
     }
+
+    return null
   }
 
   sendResponse(req: http.IncomingMessage, res: http.ServerResponse, status: number, body?: string) {

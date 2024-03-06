@@ -8,6 +8,7 @@ import { BlobInput, HTTPMethod } from './types.ts'
 import { BlobsInternalError, collectIterator } from './util.ts'
 
 export const DEPLOY_STORE_PREFIX = 'deploy:'
+export const LEGACY_STORE_INTERNAL_PREFIX = 'netlify-internal/legacy-namespace/'
 export const SITE_STORE_PREFIX = 'site:'
 
 interface BaseStoreOptions {
@@ -76,6 +77,12 @@ export class Store {
       Store.validateDeployID(options.deployID)
 
       this.name = DEPLOY_STORE_PREFIX + options.deployID
+    } else if (options.name.startsWith(LEGACY_STORE_INTERNAL_PREFIX)) {
+      const storeName = options.name.slice(LEGACY_STORE_INTERNAL_PREFIX.length)
+
+      Store.validateStoreName(storeName)
+
+      this.name = storeName
     } else {
       Store.validateStoreName(options.name)
 

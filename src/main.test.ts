@@ -163,6 +163,56 @@ describe('get', () => {
 
       expect(mockStore.fulfilled).toBeTruthy()
     })
+
+    test('Reads from a store with a legacy namespace', async () => {
+      const mockStore = new MockFetch()
+        .get({
+          headers: { accept: 'application/json;type=signed-url', authorization: `Bearer ${apiToken}` },
+          response: new Response(JSON.stringify({ url: signedURL })),
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/oldie/${key}`,
+        })
+        .get({
+          response: new Response(value),
+          url: signedURL,
+        })
+        .get({
+          headers: { accept: 'application/json;type=signed-url', authorization: `Bearer ${apiToken}` },
+          response: new Response(JSON.stringify({ url: signedURL })),
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/oldie/${key}`,
+        })
+        .get({
+          response: new Response(value),
+          url: signedURL,
+        })
+        .get({
+          headers: { accept: 'application/json;type=signed-url', authorization: `Bearer ${apiToken}` },
+          response: new Response(JSON.stringify({ url: signedURL })),
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/oldie/${complexKey}`,
+        })
+        .get({
+          response: new Response(value),
+          url: signedURL,
+        })
+
+      globalThis.fetch = mockStore.fetch
+
+      const blobs = getStore({
+        name: 'netlify-internal/legacy-namespace/oldie',
+        token: apiToken,
+        siteID,
+      })
+
+      const string = await blobs.get(key)
+      expect(string).toBe(value)
+
+      const stream = await blobs.get(key, { type: 'stream' })
+      expect(await streamToString(stream as unknown as NodeJS.ReadableStream)).toBe(value)
+
+      const string2 = await blobs.get(complexKey)
+      expect(string2).toBe(value)
+
+      expect(mockStore.fulfilled).toBeTruthy()
+    })
   })
 
   describe('With edge credentials', () => {
@@ -1057,21 +1107,13 @@ describe('delete', () => {
       const mockStore = new MockFetch()
         .delete({
           headers: { authorization: `Bearer ${apiToken}` },
-          response: new Response(JSON.stringify({ url: signedURL })),
+          response: new Response(null, { status: 204 }),
           url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${key}`,
         })
         .delete({
-          response: new Response(null),
-          url: signedURL,
-        })
-        .delete({
           headers: { authorization: `Bearer ${apiToken}` },
-          response: new Response(JSON.stringify({ url: signedURL })),
+          response: new Response(null, { status: 204 }),
           url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${complexKey}`,
-        })
-        .delete({
-          response: new Response(null),
-          url: signedURL,
         })
 
       globalThis.fetch = mockStore.fetch
@@ -1089,16 +1131,11 @@ describe('delete', () => {
     })
 
     test('Does not throw when the blob does not exist', async () => {
-      const mockStore = new MockFetch()
-        .delete({
-          headers: { authorization: `Bearer ${apiToken}` },
-          response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${key}`,
-        })
-        .delete({
-          response: new Response(null, { status: 404 }),
-          url: signedURL,
-        })
+      const mockStore = new MockFetch().delete({
+        headers: { authorization: `Bearer ${apiToken}` },
+        response: new Response(null, { status: 404 }),
+        url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${key}`,
+      })
 
       globalThis.fetch = mockStore.fetch
 
@@ -1128,7 +1165,7 @@ describe('delete', () => {
         siteID,
       })
 
-      expect(async () => await blobs.delete(key)).rejects.toThrowError(
+      await expect(async () => await blobs.delete(key)).rejects.toThrowError(
         `Netlify Blobs has generated an internal error: 401 response`,
       )
       expect(mockStore.fulfilled).toBeTruthy()
