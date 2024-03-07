@@ -1,5 +1,24 @@
 # Changelog
 
+## [7.0.0](https://github.com/netlify/blobs/compare/v6.5.0...v7.0.0) (2024-03-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* move server to sub-module export ([#155](https://github.com/netlify/blobs/issues/155))
+* add `listStores` method ([#149](https://github.com/netlify/blobs/issues/149))
+
+### Features
+
+* add `listStores` method ([#149](https://github.com/netlify/blobs/issues/149)) ([3d0a386](https://github.com/netlify/blobs/commit/3d0a386f4ad6a5fe4a19c4e8b8bbef73ddb557a2))
+* allow internal access to legacy stores ([#152](https://github.com/netlify/blobs/issues/152)) ([1b712fe](https://github.com/netlify/blobs/commit/1b712fe52be74e0286bad6bb8d5972ea6a45b4ba))
+* move server to sub-module export ([#155](https://github.com/netlify/blobs/issues/155)) ([4bcfeff](https://github.com/netlify/blobs/commit/4bcfeff5288e1bf0934730bb4c40f3e38ba51892))
+* remove usage of Node built-ins ([#154](https://github.com/netlify/blobs/issues/154)) ([3148833](https://github.com/netlify/blobs/commit/3148833e6e87472fe3252127862b0a8e87e349d6))
+* respect `accept` header in server ([#153](https://github.com/netlify/blobs/issues/153)) ([8259e5e](https://github.com/netlify/blobs/commit/8259e5e7c7b96b9d9db9ff5e8e126f3b6b137d53))
+* support listing stores in local server ([#151](https://github.com/netlify/blobs/issues/151)) ([8820cc8](https://github.com/netlify/blobs/commit/8820cc81322ad1ea29d4b7c3061e57560e26ef02))
+* use `accept` header for signed URL ([#150](https://github.com/netlify/blobs/issues/150)) ([713e2be](https://github.com/netlify/blobs/commit/713e2bef0e105685ccb39604f5fc9c51df85865d))
+* use new API endpoints ([#147](https://github.com/netlify/blobs/issues/147)) ([5ad27eb](https://github.com/netlify/blobs/commit/5ad27ebd6da7dba6264eb2fc5db16bc8aca5d7ba))
+
 ## [6.5.0](https://github.com/netlify/blobs/compare/v6.4.2...v6.5.0) (2024-02-08)
 
 
