@@ -1,3 +1,4 @@
+export { connectLambda } from './lambda_compat.ts'
 export { getDeployStore, getStore } from './store_factory.ts'
 export { listStores } from './store_list.ts'
 export type {
