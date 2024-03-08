@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.0.1](https://github.com/netlify/blobs/compare/v7.0.0...v7.0.1) (2024-03-08)
+
+
+### Bug Fixes
+
+* include connectLambda in dist ([#156](https://github.com/netlify/blobs/issues/156)) ([f7963b8](https://github.com/netlify/blobs/commit/f7963b8af00d6ca1e42650116c8cc27618996fd5))
+
 ## [7.0.0](https://github.com/netlify/blobs/compare/v6.5.0...v7.0.0) (2024-03-06)
 
 
