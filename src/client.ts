@@ -27,6 +27,10 @@ export interface ClientOptions {
   uncachedEdgeURL?: string
 }
 
+interface InternalClientOptions extends ClientOptions {
+  region?: string
+}
+
 interface GetFinalRequestOptions {
   consistency?: ConsistencyMode
   key: string | undefined
@@ -41,15 +45,17 @@ export class Client {
   private consistency: ConsistencyMode
   private edgeURL?: string
   private fetch: Fetcher
+  private region?: string
   private siteID: string
   private token: string
   private uncachedEdgeURL?: string
 
-  constructor({ apiURL, consistency, edgeURL, fetch, siteID, token, uncachedEdgeURL }: ClientOptions) {
+  constructor({ apiURL, consistency, edgeURL, fetch, region, siteID, token, uncachedEdgeURL }: InternalClientOptions) {
     this.apiURL = apiURL
     this.consistency = consistency ?? 'eventual'
     this.edgeURL = edgeURL
     this.fetch = fetch ?? globalThis.fetch
+    this.region = region
     this.siteID = siteID
     this.token = token
     this.uncachedEdgeURL = uncachedEdgeURL
@@ -95,6 +101,10 @@ export class Client {
         headers[METADATA_HEADER_INTERNAL] = encodedMetadata
       }
 
+      if (this.region) {
+        urlPath = `/region:${this.region}${urlPath}`
+      }
+
       const url = new URL(urlPath, consistency === 'strong' ? this.uncachedEdgeURL : this.edgeURL)
 
       for (const key in parameters) {
@@ -112,6 +122,10 @@ export class Client {
 
     for (const key in parameters) {
       url.searchParams.set(key, parameters[key])
+    }
+
+    if (this.region) {
+      url.searchParams.set('region', this.region)
     }
 
     // If there is no store name, we're listing stores. If there's no key,
@@ -205,9 +219,9 @@ export class Client {
  * @param contextOverride Context to be used instead of the environment object
  */
 export const getClientOptions = (
-  options: Partial<ClientOptions>,
+  options: Partial<InternalClientOptions>,
   contextOverride?: EnvironmentContext,
-): ClientOptions => {
+): InternalClientOptions => {
   const context = contextOverride ?? getEnvironmentContext()
   const siteID = context.siteID ?? options.siteID
   const token = context.token ?? options.token
@@ -216,11 +230,12 @@ export const getClientOptions = (
     throw new MissingBlobsEnvironmentError(['siteID', 'token'])
   }
 
-  const clientOptions = {
+  const clientOptions: InternalClientOptions = {
     apiURL: context.apiURL ?? options.apiURL,
     consistency: options.consistency,
     edgeURL: context.edgeURL ?? options.edgeURL,
     fetch: options.fetch,
+    region: options.region,
     siteID,
     token,
     uncachedEdgeURL: context.uncachedEdgeURL ?? options.uncachedEdgeURL,

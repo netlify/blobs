@@ -2,8 +2,16 @@ import { Client, ClientOptions, getClientOptions } from './client.ts'
 import { getEnvironmentContext, MissingBlobsEnvironmentError } from './environment.ts'
 import { Store } from './store.ts'
 
+type ExperimentalRegion =
+  // Sets "region=auto", which is supported by our API in deploy stores.
+  | 'auto'
+
+  // Loads the region from the environment context and throws if not found.
+  | 'context'
+
 interface GetDeployStoreOptions extends Partial<ClientOptions> {
   deployID?: string
+  experimentalRegion?: ExperimentalRegion
 }
 
 /**
@@ -18,6 +26,25 @@ export const getDeployStore = (options: GetDeployStoreOptions = {}): Store => {
   }
 
   const clientOptions = getClientOptions(options, context)
+
+  if (options.experimentalRegion === 'context') {
+    if (!context.primaryRegion) {
+      throw new Error(
+        'The Netlify Blobs client was initialized with `experimentalRegion: "context"` but there is no region configured in the environment',
+      )
+    }
+
+    clientOptions.region = context.primaryRegion
+  } else if (options.experimentalRegion === 'auto') {
+    if (clientOptions.edgeURL) {
+      throw new Error(
+        'The Netlify Blobs client was initialized with `experimentalRegion: "auto"` which is not compatible with the `edgeURL` property; consider using `apiURL` instead',
+      )
+    }
+
+    clientOptions.region = options.experimentalRegion
+  }
+
   const client = new Client(clientOptions)
 
   return new Store({ client, deployID })

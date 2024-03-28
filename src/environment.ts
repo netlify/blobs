@@ -58,6 +58,7 @@ export interface EnvironmentContext {
   apiURL?: string
   deployID?: string
   edgeURL?: string
+  primaryRegion?: string
   siteID?: string
   token?: string
   uncachedEdgeURL?: string
