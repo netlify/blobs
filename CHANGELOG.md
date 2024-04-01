@@ -1,5 +1,13 @@
 # Changelog
 
+## [7.2.0](https://github.com/netlify/blobs/compare/v7.1.0...v7.2.0) (2024-04-01)
+
+
+### Features
+
+* add `url` to server's `onRequest` callback ([#162](https://github.com/netlify/blobs/issues/162)) ([89f5ce4](https://github.com/netlify/blobs/commit/89f5ce4c270d018cf3475faa9920e46ff8cf8860))
+* export `setEnvironmentContext()` ([#160](https://github.com/netlify/blobs/issues/160)) ([90a0412](https://github.com/netlify/blobs/commit/90a0412a2d2b7b7f5113460ca00610dd40c01f76))
+
 ## [7.1.0](https://github.com/netlify/blobs/compare/v7.0.1...v7.1.0) (2024-04-01)
 
 
