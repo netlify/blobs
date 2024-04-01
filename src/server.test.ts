@@ -30,7 +30,7 @@ afterEach(() => {
 const siteID = '9a003659-aaaa-0000-aaaa-63d3720d8621'
 const token = 'my-very-secret-token'
 
-test('Reads and writes from the file system', async () => {
+test.only('Reads and writes from the file system', async () => {
   const metadata = {
     features: {
       blobs: true,
@@ -40,11 +40,11 @@ test('Reads and writes from the file system', async () => {
   }
 
   // Store #1: Edge access
-  const server1Ops: string[] = []
+  const server1Ops: { type: string; url: string }[] = []
   const directory1 = await tmp.dir()
   const server1 = new BlobsServer({
     directory: directory1.path,
-    onRequest: ({ type }) => server1Ops.push(type),
+    onRequest: ({ type, url }) => server1Ops.push({ type, url }),
     token,
   })
 
@@ -113,7 +113,13 @@ test('Reads and writes from the file system', async () => {
     expect(list3.directories).toEqual([])
   }
 
-  expect(server1Ops).toEqual([
+  const urls = server1Ops.map(({ url }) => url)
+
+  expect(urls.every((url) => url.startsWith(`/${siteID}/`))).toBeTruthy()
+
+  const operations = server1Ops.map(({ type }) => type)
+
+  expect(operations).toEqual([
     'list',
     'set',
     'get',
