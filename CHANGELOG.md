@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.1.0](https://github.com/netlify/blobs/compare/v7.0.1...v7.1.0) (2024-04-01)
+
+
+### Features
+
+* add experimental support for region selection ([#158](https://github.com/netlify/blobs/issues/158)) ([6734751](https://github.com/netlify/blobs/commit/673475135a98c4e4b0b98d7a5cc5b26ed813d16c))
+
 ## [7.0.1](https://github.com/netlify/blobs/compare/v7.0.0...v7.0.1) (2024-03-08)
 
 
