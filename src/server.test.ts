@@ -30,7 +30,7 @@ afterEach(() => {
 const siteID = '9a003659-aaaa-0000-aaaa-63d3720d8621'
 const token = 'my-very-secret-token'
 
-test.only('Reads and writes from the file system', async () => {
+test('Reads and writes from the file system', async () => {
   const metadata = {
     features: {
       blobs: true,
