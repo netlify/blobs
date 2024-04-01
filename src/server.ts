@@ -25,6 +25,8 @@ export enum Operation {
   SET = 'set',
 }
 
+export type OnRequestCallback = (parameters: { type: Operation; url: string }) => void
+
 // TODO: Replace with `promises` import of `node:stream` once we can drop
 // support for Node 14.
 const pipeline = promisify(stream.pipeline)
@@ -49,7 +51,7 @@ interface BlobsServerOptions {
   /**
    * Callback function to be called on every request.
    */
-  onRequest?: (parameters: { type: Operation }) => void
+  onRequest?: OnRequestCallback
 
   /**
    * Port to run the server on. Defaults to a random port.
@@ -68,7 +70,7 @@ export class BlobsServer {
   private debug: boolean
   private directory: string
   private logger: Logger
-  private onRequest: (parameters: { type: Operation }) => void
+  private onRequest?: OnRequestCallback
   private port: number
   private server?: http.Server
   private token?: string
@@ -79,16 +81,22 @@ export class BlobsServer {
     this.debug = debug === true
     this.directory = directory
     this.logger = logger ?? console.log
-    this.onRequest =
-      onRequest ??
-      (() => {
-        // no-op
-      })
+    this.onRequest = onRequest
     this.port = port || 0
     this.token = token
     this.tokenHash = createHmac('sha256', Math.random.toString())
       .update(token ?? Math.random.toString())
       .digest('hex')
+  }
+
+  private dispatchOnRequestEvent(type: Operation, url: string | URL) {
+    if (!this.onRequest) {
+      return
+    }
+
+    const urlPath = url instanceof URL ? url.pathname + url.search : url
+
+    this.onRequest({ type, url: urlPath })
   }
 
   logDebug(...message: unknown[]) {
@@ -159,7 +167,7 @@ export class BlobsServer {
       return this.listBlobs({ dataPath, metadataPath, rootPath, req, res, url })
     }
 
-    this.onRequest({ type: Operation.GET })
+    this.dispatchOnRequestEvent(Operation.GET, url)
 
     const headers: Record<string, string> = {}
 
@@ -230,8 +238,6 @@ export class BlobsServer {
     res: http.ServerResponse
     url: URL
   }) {
-    this.onRequest({ type: Operation.LIST })
-
     const { dataPath, rootPath, req, res, url } = options
     const directories = url.searchParams.get('directories') === 'true'
     const prefix = url.searchParams.get('prefix') ?? ''
@@ -239,6 +245,8 @@ export class BlobsServer {
       blobs: [],
       directories: [],
     }
+
+    this.dispatchOnRequestEvent(Operation.LIST, url)
 
     try {
       await BlobsServer.walk({ directories, path: dataPath, prefix, rootPath, result })
@@ -356,7 +364,7 @@ export class BlobsServer {
 
     switch (req.method?.toLowerCase()) {
       case HTTPMethod.DELETE: {
-        this.onRequest({ type: Operation.DELETE })
+        this.dispatchOnRequestEvent(Operation.DELETE, req.url)
 
         return this.delete(req, res)
       }
@@ -366,13 +374,13 @@ export class BlobsServer {
       }
 
       case HTTPMethod.PUT: {
-        this.onRequest({ type: Operation.SET })
+        this.dispatchOnRequestEvent(Operation.SET, req.url)
 
         return this.put(req, res)
       }
 
       case HTTPMethod.HEAD: {
-        this.onRequest({ type: Operation.GET_METADATA })
+        this.dispatchOnRequestEvent(Operation.GET_METADATA, req.url)
 
         return this.head(req, res)
       }
