@@ -8,7 +8,8 @@ import { MockFetch } from '../test/mock_fetch.js'
 import { base64Encode, streamToString } from '../test/util.js'
 
 import { MissingBlobsEnvironmentError } from './environment.js'
-import { getDeployStore, getStore } from './main.js'
+import { getDeployStore, getStore, setEnvironmentContext } from './main.js'
+import { base64Decode } from './util.js'
 
 beforeAll(async () => {
   if (semver.lt(nodeVersion, '18.0.0')) {
@@ -1698,5 +1699,27 @@ describe('Region configuration', () => {
       expect(() => getDeployStore({ experimentalRegion: 'context' })).toThrowError()
       expect(mockStore.fulfilled).toBeFalsy()
     })
+  })
+})
+
+describe('setEnvironmentContext', () => {
+  test('Injects the context object into the environment', () => {
+    expect(env.NETLIFY_BLOBS_CONTEXT).toBeUndefined()
+
+    setEnvironmentContext({
+      deployID,
+      primaryRegion: 'us-east-1',
+      siteID,
+      token: apiToken,
+    })
+
+    expect(env.NETLIFY_BLOBS_CONTEXT).toBeTypeOf('string')
+
+    const context = JSON.parse(base64Decode(env.NETLIFY_BLOBS_CONTEXT as string))
+
+    expect(context.deployID).toBe(deployID)
+    expect(context.primaryRegion).toBe('us-east-1')
+    expect(context.siteID).toBe(siteID)
+    expect(context.token).toBe(apiToken)
   })
 })
