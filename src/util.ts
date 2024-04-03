@@ -1,8 +1,10 @@
-import { NF_REQUEST_ID } from './headers.ts'
+import { NF_ERROR, NF_REQUEST_ID } from './headers.ts'
 
 export class BlobsInternalError extends Error {
   constructor(res: Response) {
-    let message = `Netlify Blobs has generated an internal error: ${res.status} response`
+    const details = res.headers.get(NF_ERROR) ?? `${res.status} response`
+
+    let message = `Netlify Blobs has generated an internal error: ${details}`
 
     if (res.headers.has(NF_REQUEST_ID)) {
       message += ` (ID: ${res.headers.get(NF_REQUEST_ID)})`
