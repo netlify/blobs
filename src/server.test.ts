@@ -452,10 +452,11 @@ test('Accepts stores with `experimentalRegion: "context"`', async () => {
 
   const store = getDeployStore({ experimentalRegion: 'context' })
   const key = 'my-key'
+  const value = 'hello from a deploy store'
 
-  await store.set(key, 'hello from a deploy store')
+  await store.set(key, value)
 
-  expect(await store.get(key)).toBe('hello from a deploy store')
+  expect(await store.get(key)).toBe(value)
 
   await server.stop()
   await fs.rm(directory.path, { force: true, recursive: true })
