@@ -1,5 +1,14 @@
 # Changelog
 
+## [7.3.0](https://github.com/netlify/blobs/compare/v7.2.0...v7.3.0) (2024-04-03)
+
+
+### Features
+
+* add details to error message ([#167](https://github.com/netlify/blobs/issues/167)) ([7367241](https://github.com/netlify/blobs/commit/7367241451dab9be423aa0ca16dae51e827e0f57))
+* add request ID to error messages ([#165](https://github.com/netlify/blobs/issues/165)) ([b560051](https://github.com/netlify/blobs/commit/b5600511faa9503478662c68699996f708eb7b43))
+* handle `region:` prefix in local server ([#164](https://github.com/netlify/blobs/issues/164)) ([fe7d899](https://github.com/netlify/blobs/commit/fe7d89953f369fbe90c911c527d118b655b30b3c))
+
 ## [7.2.0](https://github.com/netlify/blobs/compare/v7.1.0...v7.2.0) (2024-04-01)
 
 
