@@ -431,7 +431,7 @@ test('Returns a signed URL or the blob directly based on the request parameters'
   await fs.rm(directory.path, { force: true, recursive: true })
 })
 
-test('Accepts stores with `experimentalRegion: "context"`', async () => {
+test('Accepts stores with `experimentalRegion`', async () => {
   const deployID = '655f77a1b48f470008e5879a'
   const directory = await tmp.dir()
   const server = new BlobsServer({
