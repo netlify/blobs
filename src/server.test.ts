@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer'
 import { promises as fs } from 'node:fs'
 import { env, version as nodeVersion } from 'node:process'
 
@@ -425,6 +426,37 @@ test('Returns a signed URL or the blob directly based on the request parameters'
   const data3 = await fetch(url3)
 
   expect(await data3.text()).toBe(value)
+
+  await server.stop()
+  await fs.rm(directory.path, { force: true, recursive: true })
+})
+
+test('Accepts stores with `experimentalRegion`', async () => {
+  const deployID = '655f77a1b48f470008e5879a'
+  const directory = await tmp.dir()
+  const server = new BlobsServer({
+    directory: directory.path,
+    token,
+  })
+  const { port } = await server.start()
+
+  const context = {
+    deployID,
+    edgeURL: `http://localhost:${port}`,
+    primaryRegion: 'us-east-1',
+    siteID,
+    token,
+  }
+
+  env.NETLIFY_BLOBS_CONTEXT = Buffer.from(JSON.stringify(context)).toString('base64')
+
+  const store = getDeployStore({ experimentalRegion: 'context' })
+  const key = 'my-key'
+  const value = 'hello from a deploy store'
+
+  await store.set(key, value)
+
+  expect(await store.get(key)).toBe(value)
 
   await server.stop()
   await fs.rm(directory.path, { force: true, recursive: true })
