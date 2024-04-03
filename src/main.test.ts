@@ -8,6 +8,7 @@ import { MockFetch } from '../test/mock_fetch.js'
 import { base64Encode, streamToString } from '../test/util.js'
 
 import { MissingBlobsEnvironmentError } from './environment.js'
+import { NF_REQUEST_ID } from './headers.js'
 import { getDeployStore, getStore, setEnvironmentContext } from './main.js'
 import { base64Decode } from './util.js'
 
@@ -118,9 +119,10 @@ describe('get', () => {
     })
 
     test('Throws when the API returns a non-200 status code', async () => {
+      const mockRequestID = '123456789'
       const mockStore = new MockFetch().get({
         headers: { accept: 'application/json;type=signed-url', authorization: `Bearer ${apiToken}` },
-        response: new Response(null, { status: 401 }),
+        response: new Response(null, { headers: { [NF_REQUEST_ID]: mockRequestID }, status: 401 }),
         url: `https://api.netlify.com/api/v1/blobs/${siteID}/site:production/${key}`,
       })
 
@@ -133,7 +135,7 @@ describe('get', () => {
       })
 
       expect(async () => await blobs.get(key)).rejects.toThrowError(
-        `Netlify Blobs has generated an internal error: 401 response`,
+        `Netlify Blobs has generated an internal error: 401 response (ID: ${mockRequestID})`,
       )
       expect(mockStore.fulfilled).toBeTruthy()
     })

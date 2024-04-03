@@ -92,7 +92,7 @@ export class Store {
     const res = await this.client.makeRequest({ key, method: HTTPMethod.DELETE, storeName: this.name })
 
     if (![200, 204, 404].includes(res.status)) {
-      throw new BlobsInternalError(res.status)
+      throw new BlobsInternalError(res)
     }
   }
 
@@ -116,7 +116,7 @@ export class Store {
     }
 
     if (res.status !== 200) {
-      throw new BlobsInternalError(res.status)
+      throw new BlobsInternalError(res)
     }
 
     if (type === undefined || type === 'text') {
@@ -139,7 +139,7 @@ export class Store {
       return res.body
     }
 
-    throw new BlobsInternalError(res.status)
+    throw new BlobsInternalError(res)
   }
 
   async getMetadata(key: string, { consistency }: { consistency?: ConsistencyMode } = {}) {
@@ -150,7 +150,7 @@ export class Store {
     }
 
     if (res.status !== 200 && res.status !== 304) {
-      throw new BlobsInternalError(res.status)
+      throw new BlobsInternalError(res)
     }
 
     const etag = res?.headers.get('etag') ?? undefined
@@ -221,7 +221,7 @@ export class Store {
     }
 
     if (res.status !== 200 && res.status !== 304) {
-      throw new BlobsInternalError(res.status)
+      throw new BlobsInternalError(res)
     }
 
     const responseETag = res?.headers.get('etag') ?? undefined
@@ -293,7 +293,7 @@ export class Store {
     })
 
     if (res.status !== 200) {
-      throw new BlobsInternalError(res.status)
+      throw new BlobsInternalError(res)
     }
   }
 
@@ -315,7 +315,7 @@ export class Store {
     })
 
     if (res.status !== 200) {
-      throw new BlobsInternalError(res.status)
+      throw new BlobsInternalError(res)
     }
   }
 
