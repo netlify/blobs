@@ -8,7 +8,7 @@ import { MockFetch } from '../test/mock_fetch.js'
 import { base64Encode, streamToString } from '../test/util.js'
 
 import { MissingBlobsEnvironmentError } from './environment.js'
-import { NF_REQUEST_ID } from './headers.js'
+import { NF_ERROR, NF_REQUEST_ID } from './headers.js'
 import { getDeployStore, getStore, setEnvironmentContext } from './main.js'
 import { base64Decode } from './util.js'
 
@@ -135,7 +135,7 @@ describe('get', () => {
       })
 
       expect(async () => await blobs.get(key)).rejects.toThrowError(
-        `Netlify Blobs has generated an internal error: 401 response (ID: ${mockRequestID})`,
+        `Netlify Blobs has generated an internal error (401 status code, ID: ${mockRequestID})`,
       )
       expect(mockStore.fulfilled).toBeTruthy()
     })
@@ -161,7 +161,7 @@ describe('get', () => {
       })
 
       await expect(async () => await blobs.get(key)).rejects.toThrowError(
-        `Netlify Blobs has generated an internal error: 401 response`,
+        `Netlify Blobs has generated an internal error (401 status code)`,
       )
 
       expect(mockStore.fulfilled).toBeTruthy()
@@ -271,9 +271,10 @@ describe('get', () => {
     })
 
     test('Throws when an edge URL returns a non-200 status code', async () => {
+      const errorDetails = 'Failed to decode token: Token expired'
       const mockStore = new MockFetch().get({
         headers: { authorization: `Bearer ${edgeToken}` },
-        response: new Response(null, { status: 401 }),
+        response: new Response(null, { headers: { [NF_ERROR]: errorDetails }, status: 401 }),
         url: `${edgeURL}/${siteID}/site:production/${key}`,
       })
 
@@ -287,7 +288,7 @@ describe('get', () => {
       })
 
       await expect(async () => await blobs.get(key)).rejects.toThrowError(
-        `Netlify Blobs has generated an internal error: 401 response`,
+        `Netlify Blobs has generated an internal error (${errorDetails})`,
       )
 
       expect(mockStore.fulfilled).toBeTruthy()
@@ -818,7 +819,7 @@ describe('set', () => {
       })
 
       expect(async () => await blobs.set(key, 'value')).rejects.toThrowError(
-        `Netlify Blobs has generated an internal error: 401 response`,
+        `Netlify Blobs has generated an internal error (401 status code)`,
       )
       expect(mockStore.fulfilled).toBeTruthy()
     })
@@ -946,7 +947,7 @@ describe('set', () => {
       })
 
       await expect(async () => await blobs.set(key, value)).rejects.toThrowError(
-        `Netlify Blobs has generated an internal error: 401 response`,
+        `Netlify Blobs has generated an internal error (401 status code)`,
       )
 
       expect(mockStore.fulfilled).toBeTruthy()
@@ -1169,7 +1170,7 @@ describe('delete', () => {
       })
 
       await expect(async () => await blobs.delete(key)).rejects.toThrowError(
-        `Netlify Blobs has generated an internal error: 401 response`,
+        `Netlify Blobs has generated an internal error (401 status code)`,
       )
       expect(mockStore.fulfilled).toBeTruthy()
     })
@@ -1235,7 +1236,7 @@ describe('delete', () => {
       })
 
       await expect(async () => await blobs.delete(key)).rejects.toThrowError(
-        `Netlify Blobs has generated an internal error: 401 response`,
+        `Netlify Blobs has generated an internal error (401 status code)`,
       )
 
       expect(mockStore.fulfilled).toBeTruthy()
