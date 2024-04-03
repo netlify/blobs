@@ -715,4 +715,51 @@ describe('list', () => {
       expect(mockStore.fulfilled).toBeTruthy()
     })
   })
+
+  test('Uses the uncached edge URL if `consistency: "strong"`', async () => {
+    const uncachedEdgeURL = 'https://uncached-edge.netlify'
+    const mockStore = new MockFetch().get({
+      headers: { authorization: `Bearer ${edgeToken}` },
+      response: new Response(
+        JSON.stringify({
+          blobs: [
+            {
+              etag: 'etag1',
+              key: 'key1',
+              size: 1,
+              last_modified: '2023-07-18T12:59:06Z',
+            },
+            {
+              etag: 'etag2',
+              key: 'key2',
+              size: 2,
+              last_modified: '2023-07-18T12:59:06Z',
+            },
+          ],
+          directories: [],
+        }),
+      ),
+      url: `${uncachedEdgeURL}/${siteID}/site:${storeName}`,
+    })
+
+    globalThis.fetch = mockStore.fetch
+
+    const store = getStore({
+      consistency: 'strong',
+      edgeURL,
+      name: storeName,
+      token: edgeToken,
+      siteID,
+      uncachedEdgeURL,
+    })
+
+    const { blobs, directories } = await store.list()
+
+    expect(blobs).toEqual([
+      { etag: 'etag1', key: 'key1' },
+      { etag: 'etag2', key: 'key2' },
+    ])
+    expect(directories).toEqual([])
+    expect(mockStore.fulfilled).toBeTruthy()
+  })
 })
