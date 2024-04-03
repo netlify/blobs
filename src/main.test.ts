@@ -135,7 +135,7 @@ describe('get', () => {
       })
 
       expect(async () => await blobs.get(key)).rejects.toThrowError(
-        `Netlify Blobs has generated an internal error: 401 response (ID: ${mockRequestID})`,
+        `Netlify Blobs has generated an internal error (401 status code, ID: ${mockRequestID})`,
       )
       expect(mockStore.fulfilled).toBeTruthy()
     })
@@ -161,7 +161,7 @@ describe('get', () => {
       })
 
       await expect(async () => await blobs.get(key)).rejects.toThrowError(
-        `Netlify Blobs has generated an internal error: 401 response`,
+        `Netlify Blobs has generated an internal error (401 status code)`,
       )
 
       expect(mockStore.fulfilled).toBeTruthy()
@@ -288,7 +288,7 @@ describe('get', () => {
       })
 
       await expect(async () => await blobs.get(key)).rejects.toThrowError(
-        `Netlify Blobs has generated an internal error: ${errorDetails}`,
+        `Netlify Blobs has generated an internal error (${errorDetails})`,
       )
 
       expect(mockStore.fulfilled).toBeTruthy()
@@ -819,7 +819,7 @@ describe('set', () => {
       })
 
       expect(async () => await blobs.set(key, 'value')).rejects.toThrowError(
-        `Netlify Blobs has generated an internal error: 401 response`,
+        `Netlify Blobs has generated an internal error (401 status code)`,
       )
       expect(mockStore.fulfilled).toBeTruthy()
     })
@@ -947,7 +947,7 @@ describe('set', () => {
       })
 
       await expect(async () => await blobs.set(key, value)).rejects.toThrowError(
-        `Netlify Blobs has generated an internal error: 401 response`,
+        `Netlify Blobs has generated an internal error (401 status code)`,
       )
 
       expect(mockStore.fulfilled).toBeTruthy()
@@ -1170,7 +1170,7 @@ describe('delete', () => {
       })
 
       await expect(async () => await blobs.delete(key)).rejects.toThrowError(
-        `Netlify Blobs has generated an internal error: 401 response`,
+        `Netlify Blobs has generated an internal error (401 status code)`,
       )
       expect(mockStore.fulfilled).toBeTruthy()
     })
@@ -1236,7 +1236,7 @@ describe('delete', () => {
       })
 
       await expect(async () => await blobs.delete(key)).rejects.toThrowError(
-        `Netlify Blobs has generated an internal error: 401 response`,
+        `Netlify Blobs has generated an internal error (401 status code)`,
       )
 
       expect(mockStore.fulfilled).toBeTruthy()
