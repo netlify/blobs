@@ -271,7 +271,7 @@ describe('get', () => {
     })
 
     test('Throws when an edge URL returns a non-200 status code', async () => {
-      const errorDetails = 'Missing authorization header'
+      const errorDetails = 'Failed to decode token: Token expired'
       const mockStore = new MockFetch().get({
         headers: { authorization: `Bearer ${edgeToken}` },
         response: new Response(null, { headers: { [NF_ERROR]: errorDetails }, status: 401 }),
