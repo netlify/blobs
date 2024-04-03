@@ -3,6 +3,7 @@ import { EnvironmentContext, getEnvironmentContext, MissingBlobsEnvironmentError
 import { encodeMetadata, Metadata, METADATA_HEADER_EXTERNAL, METADATA_HEADER_INTERNAL } from './metadata.ts'
 import { fetchAndRetry } from './retry.ts'
 import { BlobInput, Fetcher, HTTPMethod } from './types.ts'
+import { BlobsInternalError } from './util.ts'
 
 export const SIGNED_URL_ACCEPT_HEADER = 'application/json;type=signed-url'
 
@@ -156,7 +157,7 @@ export class Client {
     })
 
     if (res.status !== 200) {
-      throw new Error(`Netlify Blobs has generated an internal error: ${res.status} response`)
+      throw new BlobsInternalError(res)
     }
 
     const { url: signedURL } = await res.json()
