@@ -16,6 +16,7 @@ import { isNodeError, Logger } from './util.ts'
 const API_URL_PATH = /\/api\/v1\/blobs\/(?<site_id>[^/]+)\/(?<store_name>[^/]+)\/?(?<key>[^?]*)/
 const LEGACY_API_URL_PATH = /\/api\/v1\/sites\/(?<site_id>[^/]+)\/blobs\/?(?<key>[^?]*)/
 const LEGACY_DEFAULT_STORE = 'production'
+const REGION_PREFIX = 'region:'
 
 export enum Operation {
   DELETE = 'delete',
@@ -335,7 +336,13 @@ export class BlobsServer {
       return {}
     }
 
-    const [, siteID, rawStoreName, ...key] = url.pathname.split('/')
+    let parts = url.pathname.split('/').slice(1)
+
+    if (parts[0].startsWith(REGION_PREFIX)) {
+      parts = parts.slice(1)
+    }
+
+    const [siteID, rawStoreName, ...key] = parts
 
     if (!siteID) {
       return {}
