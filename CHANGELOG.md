@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.4.0](https://github.com/netlify/blobs/compare/v7.3.0...v7.4.0) (2024-07-01)
+
+
+### Features
+
+* support named deploy-scoped stores ([#181](https://github.com/netlify/blobs/issues/181)) ([7b24ef8](https://github.com/netlify/blobs/commit/7b24ef82756f53be89cc22c9ce8dbe1bd66468dc))
+
 ## [7.3.0](https://github.com/netlify/blobs/compare/v7.2.0...v7.3.0) (2024-04-03)
 
 
