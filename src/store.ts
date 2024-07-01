@@ -16,6 +16,7 @@ interface BaseStoreOptions {
 
 interface DeployStoreOptions extends BaseStoreOptions {
   deployID: string
+  name?: string
 }
 
 interface NamedStoreOptions extends BaseStoreOptions {
@@ -74,7 +75,13 @@ export class Store {
     if ('deployID' in options) {
       Store.validateDeployID(options.deployID)
 
-      this.name = DEPLOY_STORE_PREFIX + options.deployID
+      let name = DEPLOY_STORE_PREFIX + options.deployID
+
+      if (options.name) {
+        name += `:${options.name}`
+      }
+
+      this.name = name
     } else if (options.name.startsWith(LEGACY_STORE_INTERNAL_PREFIX)) {
       const storeName = options.name.slice(LEGACY_STORE_INTERNAL_PREFIX.length)
 
