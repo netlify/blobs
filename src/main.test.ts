@@ -1384,7 +1384,7 @@ describe('Deploy scope', () => {
     expect(mockStore.fulfilled).toBeTruthy()
   })
 
-  test('Returns a named deploy-scoped store if `getDeployStore` receives an object with a `name` property', async () => {
+  test('Returns a named deploy-scoped store if `getDeployStore` receives a string parameter', async () => {
     const mockToken = 'some-token'
     const mockStoreName = 'my-store'
     const mockStore = new MockFetch()
@@ -1421,7 +1421,7 @@ describe('Deploy scope', () => {
     expect(mockStore.fulfilled).toBeTruthy()
   })
 
-  test('Returns a named deploy-scoped store if `getDeployStore` receives a string parameter', async () => {
+  test('Returns a named deploy-scoped store if `getDeployStore` receives an object with a `name` property', async () => {
     const mockToken = 'some-token'
     const mockStoreName = 'my-store'
     const mockStore = new MockFetch()
