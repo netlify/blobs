@@ -1384,6 +1384,80 @@ describe('Deploy scope', () => {
     expect(mockStore.fulfilled).toBeTruthy()
   })
 
+  test('Returns a named deploy-scoped store if `getDeployStore` receives an object with a `name` property', async () => {
+    const mockToken = 'some-token'
+    const mockStoreName = 'my-store'
+    const mockStore = new MockFetch()
+      .get({
+        headers: { authorization: `Bearer ${mockToken}` },
+        response: new Response(value),
+        url: `${edgeURL}/${siteID}/deploy:${deployID}:${mockStoreName}/${key}`,
+      })
+      .get({
+        headers: { authorization: `Bearer ${mockToken}` },
+        response: new Response(value),
+        url: `${edgeURL}/${siteID}/deploy:${deployID}:${mockStoreName}/${key}`,
+      })
+
+    globalThis.fetch = mockStore.fetch
+
+    const context = {
+      deployID,
+      edgeURL,
+      siteID,
+      token: mockToken,
+    }
+
+    env.NETLIFY_BLOBS_CONTEXT = Buffer.from(JSON.stringify(context)).toString('base64')
+
+    const deployStore = getDeployStore(mockStoreName)
+
+    const string = await deployStore.get(key)
+    expect(string).toBe(value)
+
+    const stream = await deployStore.get(key, { type: 'stream' })
+    expect(await streamToString(stream as unknown as NodeJS.ReadableStream)).toBe(value)
+
+    expect(mockStore.fulfilled).toBeTruthy()
+  })
+
+  test('Returns a named deploy-scoped store if `getDeployStore` receives a string parameter', async () => {
+    const mockToken = 'some-token'
+    const mockStoreName = 'my-store'
+    const mockStore = new MockFetch()
+      .get({
+        headers: { authorization: `Bearer ${mockToken}` },
+        response: new Response(value),
+        url: `${edgeURL}/${siteID}/deploy:${deployID}:${mockStoreName}/${key}`,
+      })
+      .get({
+        headers: { authorization: `Bearer ${mockToken}` },
+        response: new Response(value),
+        url: `${edgeURL}/${siteID}/deploy:${deployID}:${mockStoreName}/${key}`,
+      })
+
+    globalThis.fetch = mockStore.fetch
+
+    const context = {
+      deployID,
+      edgeURL,
+      siteID,
+      token: mockToken,
+    }
+
+    env.NETLIFY_BLOBS_CONTEXT = Buffer.from(JSON.stringify(context)).toString('base64')
+
+    const deployStore = getDeployStore({ name: mockStoreName })
+
+    const string = await deployStore.get(key)
+    expect(string).toBe(value)
+
+    const stream = await deployStore.get(key, { type: 'stream' })
+    expect(await streamToString(stream as unknown as NodeJS.ReadableStream)).toBe(value)
+
+    expect(mockStore.fulfilled).toBeTruthy()
+  })
+
   test('Throws if the deploy ID fails validation', async () => {
     const mockToken = 'some-token'
     const mockStore = new MockFetch()

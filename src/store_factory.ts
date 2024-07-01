@@ -11,14 +11,16 @@ type ExperimentalRegion =
 
 interface GetDeployStoreOptions extends Partial<ClientOptions> {
   deployID?: string
+  name?: string
   experimentalRegion?: ExperimentalRegion
 }
 
 /**
  * Gets a reference to a deploy-scoped store.
  */
-export const getDeployStore = (options: GetDeployStoreOptions = {}): Store => {
+export const getDeployStore = (input: GetDeployStoreOptions | string = {}): Store => {
   const context = getEnvironmentContext()
+  const options = typeof input === 'string' ? { name: input } : input
   const deployID = options.deployID ?? context.deployID
 
   if (!deployID) {
@@ -47,7 +49,7 @@ export const getDeployStore = (options: GetDeployStoreOptions = {}): Store => {
 
   const client = new Client(clientOptions)
 
-  return new Store({ client, deployID })
+  return new Store({ client, deployID, name: options.name })
 }
 
 interface GetStoreOptions extends Partial<ClientOptions> {
