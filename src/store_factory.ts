@@ -1,6 +1,6 @@
 import { Client, ClientOptions, getClientOptions } from './client.ts'
 import { getEnvironmentContext, MissingBlobsEnvironmentError } from './environment.ts'
-import { Region } from './region.ts'
+import { Region, REGION_AUTO } from './region.ts'
 import { Store } from './store.ts'
 
 interface GetDeployStoreOptions extends Partial<ClientOptions> {
@@ -38,7 +38,7 @@ export const getDeployStore = (input: GetDeployStoreOptions | string = {}): Stor
     } else {
       // For API requests, we can use `auto` and let the API choose the right
       // region.
-      clientOptions.region = 'auto'
+      clientOptions.region = REGION_AUTO
     }
   }
 

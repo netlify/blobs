@@ -1,3 +1,5 @@
+export const REGION_AUTO = 'auto'
+
 const regions = {
   'us-east-1': true,
   'us-east-2': true,
