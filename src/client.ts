@@ -1,6 +1,7 @@
 import { BlobsConsistencyError, ConsistencyMode } from './consistency.ts'
 import { EnvironmentContext, getEnvironmentContext, MissingBlobsEnvironmentError } from './environment.ts'
 import { encodeMetadata, Metadata, METADATA_HEADER_EXTERNAL, METADATA_HEADER_INTERNAL } from './metadata.ts'
+import { InvalidBlobsRegionError, isValidRegion } from './region.ts'
 import { fetchAndRetry } from './retry.ts'
 import { BlobInput, Fetcher, HTTPMethod } from './types.ts'
 import { BlobsInternalError } from './util.ts'
@@ -229,6 +230,10 @@ export const getClientOptions = (
 
   if (!siteID || !token) {
     throw new MissingBlobsEnvironmentError(['siteID', 'token'])
+  }
+
+  if (options.region !== undefined && !isValidRegion(options.region)) {
+    throw new InvalidBlobsRegionError(options.region)
   }
 
   const clientOptions: InternalClientOptions = {

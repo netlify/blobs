@@ -152,6 +152,7 @@ describe('Consistency configuration', () => {
       cool: true,
       functions: ['edge', 'serverless'],
     }
+    const mockRegion = 'us-east-1'
     const headers = {
       etag: '123456789',
       'x-amz-meta-user': `b64;${base64Encode(mockMetadata)}`,
@@ -160,17 +161,17 @@ describe('Consistency configuration', () => {
       .get({
         headers: { authorization: `Bearer ${edgeToken}` },
         response: new Response(value),
-        url: `${uncachedEdgeURL}/${siteID}/deploy:${deployID}/${key}`,
+        url: `${uncachedEdgeURL}/region:${mockRegion}/${siteID}/deploy:${deployID}/${key}`,
       })
       .head({
         headers: { authorization: `Bearer ${edgeToken}` },
         response: new Response(null, { headers }),
-        url: `${uncachedEdgeURL}/${siteID}/deploy:${deployID}/${key}`,
+        url: `${uncachedEdgeURL}/region:${mockRegion}/${siteID}/deploy:${deployID}/${key}`,
       })
       .get({
         headers: { authorization: `Bearer ${edgeToken}` },
         response: new Response(value, { headers }),
-        url: `${uncachedEdgeURL}/${siteID}/deploy:${deployID}/${key}`,
+        url: `${uncachedEdgeURL}/region:${mockRegion}/${siteID}/deploy:${deployID}/${key}`,
       })
 
     globalThis.fetch = mockStore.fetch
@@ -179,6 +180,7 @@ describe('Consistency configuration', () => {
       consistency: 'strong',
       edgeURL,
       deployID,
+      region: mockRegion,
       token: edgeToken,
       siteID,
       uncachedEdgeURL,
