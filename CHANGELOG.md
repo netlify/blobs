@@ -1,5 +1,16 @@
 # Changelog
 
+## [8.0.0](https://github.com/netlify/blobs/compare/v7.4.0...v8.0.0) (2024-07-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* add region parameter ([#183](https://github.com/netlify/blobs/issues/183))
+
+### Features
+
+* add region parameter ([#183](https://github.com/netlify/blobs/issues/183)) ([03187bb](https://github.com/netlify/blobs/commit/03187bb2b5b0a8d6ce1e823f811f168b05635886))
+
 ## [7.4.0](https://github.com/netlify/blobs/compare/v7.3.0...v7.4.0) (2024-07-01)
 
 
