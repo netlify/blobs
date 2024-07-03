@@ -1,18 +1,12 @@
 import { Client, ClientOptions, getClientOptions } from './client.ts'
 import { getEnvironmentContext, MissingBlobsEnvironmentError } from './environment.ts'
+import { Region } from './region.ts'
 import { Store } from './store.ts'
-
-type ExperimentalRegion =
-  // Sets "region=auto", which is supported by our API in deploy stores.
-  | 'auto'
-
-  // Loads the region from the environment context and throws if not found.
-  | 'context'
 
 interface GetDeployStoreOptions extends Partial<ClientOptions> {
   deployID?: string
   name?: string
-  experimentalRegion?: ExperimentalRegion
+  region?: Region
 }
 
 /**
@@ -29,22 +23,23 @@ export const getDeployStore = (input: GetDeployStoreOptions | string = {}): Stor
 
   const clientOptions = getClientOptions(options, context)
 
-  if (options.experimentalRegion === 'context') {
-    if (!context.primaryRegion) {
-      throw new Error(
-        'The Netlify Blobs client was initialized with `experimentalRegion: "context"` but there is no region configured in the environment',
-      )
-    }
+  if (!clientOptions.region) {
+    // If a region hasn't been supplied and we're dealing with an edge request,
+    // use the region from the context if one is defined, otherwise throw.
+    if (clientOptions.edgeURL || clientOptions.uncachedEdgeURL) {
+      // eslint-disable-next-line max-depth
+      if (!context.primaryRegion) {
+        throw new Error(
+          'When accessing a deploy store, the Netlify Blobs client needs to be configured with a region, and one was not found in the environment. To manually set the region, set the `region` property in the `getDeployStore` options.',
+        )
+      }
 
-    clientOptions.region = context.primaryRegion
-  } else if (options.experimentalRegion === 'auto') {
-    if (clientOptions.edgeURL) {
-      throw new Error(
-        'The Netlify Blobs client was initialized with `experimentalRegion: "auto"` which is not compatible with the `edgeURL` property; consider using `apiURL` instead',
-      )
+      clientOptions.region = context.primaryRegion
+    } else {
+      // For API requests, we can use `auto` and let the API choose the right
+      // region.
+      clientOptions.region = 'auto'
     }
-
-    clientOptions.region = options.experimentalRegion
   }
 
   const client = new Client(clientOptions)

@@ -306,6 +306,7 @@ test('Works with a deploy-scoped store', async () => {
   const store = getDeployStore({
     deployID,
     edgeURL: `http://localhost:${port}`,
+    region: 'us-east-1',
     token,
     siteID,
   })
@@ -356,6 +357,7 @@ test('Lists site stores', async () => {
   const store3 = getDeployStore({
     deployID: '655f77a1b48f470008e5879a',
     edgeURL: `http://localhost:${port}`,
+    region: 'us-east-1',
     token,
     siteID,
   })
@@ -431,7 +433,7 @@ test('Returns a signed URL or the blob directly based on the request parameters'
   await fs.rm(directory.path, { force: true, recursive: true })
 })
 
-test('Accepts stores with `experimentalRegion`', async () => {
+test('Accepts deploy-scoped stores with the region defined in the context', async () => {
   const deployID = '655f77a1b48f470008e5879a'
   const directory = await tmp.dir()
   const server = new BlobsServer({
@@ -450,7 +452,7 @@ test('Accepts stores with `experimentalRegion`', async () => {
 
   env.NETLIFY_BLOBS_CONTEXT = Buffer.from(JSON.stringify(context)).toString('base64')
 
-  const store = getDeployStore({ experimentalRegion: 'context' })
+  const store = getDeployStore()
   const key = 'my-key'
   const value = 'hello from a deploy store'
 

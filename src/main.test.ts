@@ -1316,16 +1316,17 @@ describe('Deploy scope', () => {
 
   test('Returns a deploy-scoped store if the `getDeployStore` method is called and the environment context is present', async () => {
     const mockToken = 'some-token'
+    const mockRegion = 'us-east-2'
     const mockStore = new MockFetch()
       .get({
         headers: { authorization: `Bearer ${mockToken}` },
         response: new Response(value),
-        url: `${edgeURL}/${siteID}/deploy:${deployID}/${key}`,
+        url: `${edgeURL}/region:${mockRegion}/${siteID}/deploy:${deployID}/${key}`,
       })
       .get({
         headers: { authorization: `Bearer ${mockToken}` },
         response: new Response(value),
-        url: `${edgeURL}/${siteID}/deploy:${deployID}/${key}`,
+        url: `${edgeURL}/region:${mockRegion}/${siteID}/deploy:${deployID}/${key}`,
       })
 
     globalThis.fetch = mockStore.fetch
@@ -1333,6 +1334,7 @@ describe('Deploy scope', () => {
     const context = {
       deployID,
       edgeURL,
+      primaryRegion: mockRegion,
       siteID,
       token: mockToken,
     }
@@ -1355,7 +1357,7 @@ describe('Deploy scope', () => {
       .get({
         headers: { authorization: `Bearer ${apiToken}` },
         response: new Response(JSON.stringify({ url: signedURL })),
-        url: `https://api.netlify.com/api/v1/blobs/${siteID}/deploy:${deployID}/${key}`,
+        url: `https://api.netlify.com/api/v1/blobs/${siteID}/deploy:${deployID}/${key}?region=auto`,
       })
       .get({
         response: new Response(value),
@@ -1364,7 +1366,7 @@ describe('Deploy scope', () => {
       .get({
         headers: { authorization: `Bearer ${apiToken}` },
         response: new Response(JSON.stringify({ url: signedURL })),
-        url: `https://api.netlify.com/api/v1/blobs/${siteID}/deploy:${deployID}/${key}`,
+        url: `https://api.netlify.com/api/v1/blobs/${siteID}/deploy:${deployID}/${key}?region=auto`,
       })
       .get({
         response: new Response(value),
@@ -1385,18 +1387,19 @@ describe('Deploy scope', () => {
   })
 
   test('Returns a named deploy-scoped store if `getDeployStore` receives a string parameter', async () => {
+    const mockRegion = 'us-east-1'
     const mockToken = 'some-token'
     const mockStoreName = 'my-store'
     const mockStore = new MockFetch()
       .get({
         headers: { authorization: `Bearer ${mockToken}` },
         response: new Response(value),
-        url: `${edgeURL}/${siteID}/deploy:${deployID}:${mockStoreName}/${key}`,
+        url: `${edgeURL}/region:${mockRegion}/${siteID}/deploy:${deployID}:${mockStoreName}/${key}`,
       })
       .get({
         headers: { authorization: `Bearer ${mockToken}` },
         response: new Response(value),
-        url: `${edgeURL}/${siteID}/deploy:${deployID}:${mockStoreName}/${key}`,
+        url: `${edgeURL}/region:${mockRegion}/${siteID}/deploy:${deployID}:${mockStoreName}/${key}`,
       })
 
     globalThis.fetch = mockStore.fetch
@@ -1404,6 +1407,7 @@ describe('Deploy scope', () => {
     const context = {
       deployID,
       edgeURL,
+      primaryRegion: mockRegion,
       siteID,
       token: mockToken,
     }
@@ -1422,18 +1426,19 @@ describe('Deploy scope', () => {
   })
 
   test('Returns a named deploy-scoped store if `getDeployStore` receives an object with a `name` property', async () => {
+    const mockRegion = 'us-east-1'
     const mockToken = 'some-token'
     const mockStoreName = 'my-store'
     const mockStore = new MockFetch()
       .get({
         headers: { authorization: `Bearer ${mockToken}` },
         response: new Response(value),
-        url: `${edgeURL}/${siteID}/deploy:${deployID}:${mockStoreName}/${key}`,
+        url: `${edgeURL}/region:${mockRegion}/${siteID}/deploy:${deployID}:${mockStoreName}/${key}`,
       })
       .get({
         headers: { authorization: `Bearer ${mockToken}` },
         response: new Response(value),
-        url: `${edgeURL}/${siteID}/deploy:${deployID}:${mockStoreName}/${key}`,
+        url: `${edgeURL}/region:${mockRegion}/${siteID}/deploy:${deployID}:${mockStoreName}/${key}`,
       })
 
     globalThis.fetch = mockStore.fetch
@@ -1441,6 +1446,7 @@ describe('Deploy scope', () => {
     const context = {
       deployID,
       edgeURL,
+      primaryRegion: mockRegion,
       siteID,
       token: mockToken,
     }
@@ -1459,13 +1465,14 @@ describe('Deploy scope', () => {
   })
 
   test('Throws if the deploy ID fails validation', async () => {
+    const mockRegion = 'us-east-2'
     const mockToken = 'some-token'
     const mockStore = new MockFetch()
     const longDeployID = 'd'.repeat(80)
 
     globalThis.fetch = mockStore.fetch
 
-    expect(() => getDeployStore({ deployID: 'deploy/ID', siteID, token: apiToken })).toThrowError(
+    expect(() => getDeployStore({ deployID: 'deploy/ID', siteID, region: mockRegion, token: apiToken })).toThrowError(
       `'deploy/ID' is not a valid Netlify deploy ID`,
     )
     expect(() => getStore({ deployID: 'deploy/ID', siteID, token: apiToken })).toThrowError(
@@ -1478,6 +1485,7 @@ describe('Deploy scope', () => {
     const context = {
       deployID: 'uhoh!',
       edgeURL,
+      primaryRegion: mockRegion,
       siteID,
       token: mockToken,
     }
@@ -1601,8 +1609,8 @@ describe(`getStore`, () => {
   })
 })
 
-describe('Region configuration', () => {
-  describe('With `experimentalRegion: "auto"`', () => {
+describe('Region configuration in deploy-scoped stores', () => {
+  describe('Without a `region` option', () => {
     test('The client sends a `region=auto` parameter to API calls', async () => {
       const mockStore = new MockFetch()
         .get({
@@ -1626,7 +1634,7 @@ describe('Region configuration', () => {
 
       globalThis.fetch = mockStore.fetch
 
-      const deployStore = getDeployStore({ deployID, siteID, token: apiToken, experimentalRegion: 'auto' })
+      const deployStore = getDeployStore({ deployID, siteID, token: apiToken })
 
       const string = await deployStore.get(key)
       expect(string).toBe(value)
@@ -1637,7 +1645,45 @@ describe('Region configuration', () => {
       expect(mockStore.fulfilled).toBeTruthy()
     })
 
-    test('Throws when used with `edgeURL`', async () => {
+    test('The client sends the region configured in the context to edge calls', async () => {
+      const mockRegion = 'us-east-2'
+      const mockToken = 'some-token'
+      const mockStore = new MockFetch()
+        .get({
+          headers: { authorization: `Bearer ${mockToken}` },
+          response: new Response(value),
+          url: `${edgeURL}/region:${mockRegion}/${siteID}/deploy:${deployID}/${key}`,
+        })
+        .get({
+          headers: { authorization: `Bearer ${mockToken}` },
+          response: new Response(value),
+          url: `${edgeURL}/region:${mockRegion}/${siteID}/deploy:${deployID}/${key}`,
+        })
+
+      const context = {
+        edgeURL,
+        deployID,
+        siteID,
+        primaryRegion: mockRegion,
+        token: mockToken,
+      }
+
+      env.NETLIFY_BLOBS_CONTEXT = Buffer.from(JSON.stringify(context)).toString('base64')
+
+      globalThis.fetch = mockStore.fetch
+
+      const deployStore = getDeployStore()
+
+      const string = await deployStore.get(key)
+      expect(string).toBe(value)
+
+      const stream = await deployStore.get(key, { type: 'stream' })
+      expect(await streamToString(stream as unknown as NodeJS.ReadableStream)).toBe(value)
+
+      expect(mockStore.fulfilled).toBeTruthy()
+    })
+
+    test('Throws an error if using the edge URL and no region is configured in the context', async () => {
       const mockRegion = 'us-east-2'
       const mockToken = 'some-token'
       const mockStore = new MockFetch()
@@ -1654,20 +1700,19 @@ describe('Region configuration', () => {
 
       globalThis.fetch = mockStore.fetch
 
-      expect(() =>
-        getDeployStore({ deployID, edgeURL, siteID, token: mockToken, experimentalRegion: 'auto' }),
-      ).toThrowError()
+      expect(() => getDeployStore({ deployID, edgeURL, siteID, token: mockToken })).toThrowError()
       expect(mockStore.fulfilled).toBeFalsy()
     })
   })
 
-  describe('With `experimentalRegion: "context"`', () => {
-    test('Adds a `region` parameter to API calls with the value set in the context', async () => {
+  describe('With a `region` option', () => {
+    test('The client sends that region to API calls', async () => {
+      const mockRegion = 'us-east-1'
       const mockStore = new MockFetch()
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/blobs/${siteID}/deploy:${deployID}/${key}?region=us-east-1`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/deploy:${deployID}/${key}?region=${mockRegion}`,
         })
         .get({
           response: new Response(value),
@@ -1676,7 +1721,7 @@ describe('Region configuration', () => {
         .get({
           headers: { authorization: `Bearer ${apiToken}` },
           response: new Response(JSON.stringify({ url: signedURL })),
-          url: `https://api.netlify.com/api/v1/blobs/${siteID}/deploy:${deployID}/${key}?region=us-east-1`,
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/deploy:${deployID}/${key}?region=${mockRegion}`,
         })
         .get({
           response: new Response(value),
@@ -1686,7 +1731,6 @@ describe('Region configuration', () => {
       const context = {
         deployID,
         siteID,
-        primaryRegion: 'us-east-1',
         token: apiToken,
       }
 
@@ -1694,7 +1738,7 @@ describe('Region configuration', () => {
 
       globalThis.fetch = mockStore.fetch
 
-      const deployStore = getDeployStore({ experimentalRegion: 'context' })
+      const deployStore = getDeployStore({ region: mockRegion })
 
       const string = await deployStore.get(key)
       expect(string).toBe(value)
@@ -1705,36 +1749,40 @@ describe('Region configuration', () => {
       expect(mockStore.fulfilled).toBeTruthy()
     })
 
-    test('Adds a `region:` segment to the edge URL path with the value set in the context', async () => {
-      const mockRegion = 'us-east-2'
-      const mockToken = 'some-token'
+    test('The client sends that region to API calls, even if a different region is present in the context', async () => {
+      const mockRegion = 'us-east-1'
       const mockStore = new MockFetch()
         .get({
-          headers: { authorization: `Bearer ${mockToken}` },
-          response: new Response(value),
-          url: `${edgeURL}/region:${mockRegion}/${siteID}/deploy:${deployID}/${key}`,
+          headers: { authorization: `Bearer ${apiToken}` },
+          response: new Response(JSON.stringify({ url: signedURL })),
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/deploy:${deployID}/${key}?region=${mockRegion}`,
         })
         .get({
-          headers: { authorization: `Bearer ${mockToken}` },
           response: new Response(value),
-          url: `${edgeURL}/region:${mockRegion}/${siteID}/deploy:${deployID}/${key}`,
+          url: signedURL,
         })
-
-      globalThis.fetch = mockStore.fetch
+        .get({
+          headers: { authorization: `Bearer ${apiToken}` },
+          response: new Response(JSON.stringify({ url: signedURL })),
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/deploy:${deployID}/${key}?region=${mockRegion}`,
+        })
+        .get({
+          response: new Response(value),
+          url: signedURL,
+        })
 
       const context = {
         deployID,
-        edgeURL,
-        primaryRegion: mockRegion,
         siteID,
-        token: mockToken,
+        primaryRegion: 'us-east-2',
+        token: apiToken,
       }
 
       env.NETLIFY_BLOBS_CONTEXT = Buffer.from(JSON.stringify(context)).toString('base64')
 
       globalThis.fetch = mockStore.fetch
 
-      const deployStore = getDeployStore({ experimentalRegion: 'context' })
+      const deployStore = getDeployStore({ region: mockRegion })
 
       const string = await deployStore.get(key)
       expect(string).toBe(value)
@@ -1745,36 +1793,121 @@ describe('Region configuration', () => {
       expect(mockStore.fulfilled).toBeTruthy()
     })
 
-    test('Throws an error when there is no region set in the context', async () => {
-      const mockRegion = 'us-east-2'
-      const mockToken = 'some-token'
+    test('The client throws an error if the region supplied is not supported', async () => {
+      const mockRegion = 'us-east-1'
       const mockStore = new MockFetch()
         .get({
-          headers: { authorization: `Bearer ${mockToken}` },
-          response: new Response(value),
-          url: `${edgeURL}/region:${mockRegion}/${siteID}/deploy:${deployID}/${key}`,
+          headers: { authorization: `Bearer ${apiToken}` },
+          response: new Response(JSON.stringify({ url: signedURL })),
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/deploy:${deployID}/${key}?region=${mockRegion}`,
         })
         .get({
-          headers: { authorization: `Bearer ${mockToken}` },
           response: new Response(value),
-          url: `${edgeURL}/region:${mockRegion}/${siteID}/deploy:${deployID}/${key}`,
+          url: signedURL,
         })
-
-      globalThis.fetch = mockStore.fetch
+        .get({
+          headers: { authorization: `Bearer ${apiToken}` },
+          response: new Response(JSON.stringify({ url: signedURL })),
+          url: `https://api.netlify.com/api/v1/blobs/${siteID}/deploy:${deployID}/${key}?region=${mockRegion}`,
+        })
+        .get({
+          response: new Response(value),
+          url: signedURL,
+        })
 
       const context = {
         deployID,
-        edgeURL,
         siteID,
-        token: mockToken,
+        primaryRegion: 'us-east-2',
+        token: apiToken,
       }
 
       env.NETLIFY_BLOBS_CONTEXT = Buffer.from(JSON.stringify(context)).toString('base64')
 
       globalThis.fetch = mockStore.fetch
 
-      expect(() => getDeployStore({ experimentalRegion: 'context' })).toThrowError()
+      // @ts-expect-error Knowingly supplying an invalid value to `region`.
+      expect(() => getDeployStore({ deployID, edgeURL, siteID, region: 'eu-west-1' })).toThrowError()
       expect(mockStore.fulfilled).toBeFalsy()
+    })
+
+    test('The client sends that region to edge calls', async () => {
+      const mockRegion = 'us-east-2'
+      const mockToken = 'some-token'
+      const mockStore = new MockFetch()
+        .get({
+          headers: { authorization: `Bearer ${mockToken}` },
+          response: new Response(value),
+          url: `${edgeURL}/region:${mockRegion}/${siteID}/deploy:${deployID}/${key}`,
+        })
+        .get({
+          headers: { authorization: `Bearer ${mockToken}` },
+          response: new Response(value),
+          url: `${edgeURL}/region:${mockRegion}/${siteID}/deploy:${deployID}/${key}`,
+        })
+
+      globalThis.fetch = mockStore.fetch
+
+      const context = {
+        deployID,
+        edgeURL,
+        siteID,
+        token: mockToken,
+      }
+
+      env.NETLIFY_BLOBS_CONTEXT = Buffer.from(JSON.stringify(context)).toString('base64')
+
+      globalThis.fetch = mockStore.fetch
+
+      const deployStore = getDeployStore({ region: mockRegion })
+
+      const string = await deployStore.get(key)
+      expect(string).toBe(value)
+
+      const stream = await deployStore.get(key, { type: 'stream' })
+      expect(await streamToString(stream as unknown as NodeJS.ReadableStream)).toBe(value)
+
+      expect(mockStore.fulfilled).toBeTruthy()
+    })
+
+    test('The client sends that region to edge calls, even if a different region is set in the context', async () => {
+      const mockRegion = 'us-east-2'
+      const mockToken = 'some-token'
+      const mockStore = new MockFetch()
+        .get({
+          headers: { authorization: `Bearer ${mockToken}` },
+          response: new Response(value),
+          url: `${edgeURL}/region:${mockRegion}/${siteID}/deploy:${deployID}/${key}`,
+        })
+        .get({
+          headers: { authorization: `Bearer ${mockToken}` },
+          response: new Response(value),
+          url: `${edgeURL}/region:${mockRegion}/${siteID}/deploy:${deployID}/${key}`,
+        })
+
+      globalThis.fetch = mockStore.fetch
+
+      const context = {
+        deployID,
+        edgeURL,
+        primaryRegion: 'us-east-1',
+        siteID,
+        token: mockToken,
+      }
+
+      env.NETLIFY_BLOBS_CONTEXT = Buffer.from(JSON.stringify(context)).toString('base64')
+
+      globalThis.fetch = mockStore.fetch
+
+      const deployStore = getDeployStore({ region: mockRegion })
+
+      const string = await deployStore.get(key)
+      expect(string).toBe(value)
+
+      const stream = await deployStore.get(key, { type: 'stream' })
+      expect(await streamToString(stream as unknown as NodeJS.ReadableStream)).toBe(value)
+
+      expect(mockStore.fulfilled).toBeTruthy()
     })
   })
 })
