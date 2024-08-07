@@ -56,6 +56,11 @@ const getListIterator = (client: Client, prefix: string): AsyncIterable<ListStor
             method: HTTPMethod.GET,
             parameters: nextParameters,
           })
+
+          if (res.status === 404) {
+            return { done: true, value: undefined }
+          }
+
           const page = (await res.json()) as ListStoresResponse
 
           if (page.next_cursor) {

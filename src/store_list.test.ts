@@ -136,6 +136,45 @@ describe('listStores', () => {
     })
   })
 
+  test('Handles missing content for auto pagination', async () => {
+    const mockStore = new MockFetch().get({
+      headers: { authorization: `Bearer ${apiToken}` },
+      response: new Response('<not found>', { status: 404 }),
+      url: `https://api.netlify.com/api/v1/blobs/${siteID}?prefix=site%3A`,
+    })
+
+    globalThis.fetch = mockStore.fetch
+
+    const { stores } = await listStores({
+      token: apiToken,
+      siteID,
+    })
+
+    expect(stores).toStrictEqual([])
+    expect(mockStore.fulfilled).toBeTruthy()
+  })
+
+  test('Handles missing content with manual pagination', async () => {
+    const mockStore = new MockFetch().get({
+      headers: { authorization: `Bearer ${apiToken}` },
+      response: new Response('<not found>', { status: 404 }),
+      url: `https://api.netlify.com/api/v1/blobs/${siteID}?prefix=site%3A`,
+    })
+
+    globalThis.fetch = mockStore.fetch
+
+    const result: ListStoresResponse = {
+      stores: [],
+    }
+
+    for await (const entry of listStores({ token: apiToken, siteID, paginate: true })) {
+      result.stores.push(...entry.stores)
+    }
+
+    expect(result.stores).toStrictEqual([])
+    expect(mockStore.fulfilled).toBeTruthy()
+  })
+
   describe('With edge credentials', () => {
     test('Lists site stores', async () => {
       const mockStore = new MockFetch().get({

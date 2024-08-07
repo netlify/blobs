@@ -762,4 +762,58 @@ describe('list', () => {
     expect(directories).toEqual([])
     expect(mockStore.fulfilled).toBeTruthy()
   })
+
+  test('Handles missing content automatic pagination', async () => {
+    const mockStore = new MockFetch().get({
+      headers: { authorization: `Bearer ${edgeToken}` },
+      response: new Response('<not_found>', { status: 404 }),
+      url: `${edgeURL}/${siteID}/site:${storeName}?prefix=group%2F`,
+    })
+
+    globalThis.fetch = mockStore.fetch
+
+    const store = getStore({
+      edgeURL,
+      name: storeName,
+      token: edgeToken,
+      siteID,
+    })
+
+    const { blobs } = await store.list({
+      prefix: 'group/',
+    })
+
+    expect(blobs).toEqual([])
+    expect(mockStore.fulfilled).toBeTruthy()
+  })
+
+  test('Handles missing content manual pagination', async () => {
+    const mockStore = new MockFetch().get({
+      headers: { authorization: `Bearer ${edgeToken}` },
+      response: new Response('<not_found>', { status: 404 }),
+      url: `${edgeURL}/${siteID}/site:${storeName}`,
+    })
+
+    globalThis.fetch = mockStore.fetch
+
+    const store = getStore({
+      edgeURL,
+      name: storeName,
+      token: edgeToken,
+      siteID,
+    })
+    const result: ListResult = {
+      blobs: [],
+      directories: [],
+    }
+
+    for await (const entry of store.list({ paginate: true })) {
+      result.blobs.push(...entry.blobs)
+      result.directories.push(...entry.directories)
+    }
+
+    expect(result.blobs).toEqual([])
+    expect(result.directories).toEqual([])
+    expect(mockStore.fulfilled).toBeTruthy()
+  })
 })
