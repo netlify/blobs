@@ -409,21 +409,34 @@ export class Store {
               parameters: nextParameters,
               storeName,
             })
-            const page = (await res.json()) as ListResponse
 
-            if (page.next_cursor) {
-              currentCursor = page.next_cursor
-            } else {
-              done = true
+            let blobs: ListResponseBlob[] = []
+            let directories: string[] = []
+
+            if (![200, 204, 404].includes(res.status)) {
+              throw new BlobsInternalError(res)
             }
 
-            const blobs = (page.blobs ?? []).map(Store.formatListResultBlob).filter(Boolean) as ListResponseBlob[]
+            if (res.status === 404) {
+              done = true
+            } else {
+              const page = (await res.json()) as ListResponse
+
+              if (page.next_cursor) {
+                currentCursor = page.next_cursor
+              } else {
+                done = true
+              }
+
+              blobs = (page.blobs ?? []).map(Store.formatListResultBlob).filter(Boolean) as ListResponseBlob[]
+              directories = page.directories ?? []
+            }
 
             return {
               done: false,
               value: {
                 blobs,
-                directories: page.directories ?? [],
+                directories,
               },
             }
           },
