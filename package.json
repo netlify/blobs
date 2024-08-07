@@ -1,6 +1,6 @@
 {
   "name": "@netlify/blobs",
-  "version": "8.0.0",
+  "version": "8.0.1",
   "description": "A JavaScript client for the Netlify Blob Store",
   "type": "module",
   "engines": {
