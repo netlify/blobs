@@ -1,5 +1,12 @@
 # Changelog
 
+## [8.0.1](https://github.com/netlify/blobs/compare/v8.0.0...v8.0.1) (2024-08-19)
+
+
+### Bug Fixes
+
+* 404ing list results should return empty iterators, not throw ([#189](https://github.com/netlify/blobs/issues/189)) ([1da860d](https://github.com/netlify/blobs/commit/1da860dcc54cd33dddddcd8a78ea2f68a1cf523e))
+
 ## [8.0.0](https://github.com/netlify/blobs/compare/v7.4.0...v8.0.0) (2024-07-03)
 
 
