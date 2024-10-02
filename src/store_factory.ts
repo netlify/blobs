@@ -3,7 +3,7 @@ import { getEnvironmentContext, MissingBlobsEnvironmentError } from './environme
 import { Region, REGION_AUTO } from './region.ts'
 import { Store } from './store.ts'
 
-interface GetDeployStoreOptions extends Partial<ClientOptions> {
+export interface GetDeployStoreOptions extends Partial<ClientOptions> {
   deployID?: string
   name?: string
   region?: Region
@@ -47,7 +47,7 @@ export const getDeployStore = (input: GetDeployStoreOptions | string = {}): Stor
   return new Store({ client, deployID, name: options.name })
 }
 
-interface GetStoreOptions extends Partial<ClientOptions> {
+export interface GetStoreOptions extends Partial<ClientOptions> {
   deployID?: string
   name?: string
 }
