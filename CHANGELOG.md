@@ -1,5 +1,12 @@
 # Changelog
 
+## [8.1.0](https://github.com/netlify/blobs/compare/v8.0.1...v8.1.0) (2024-10-08)
+
+
+### Features
+
+* **types:** export deploy factory options types ([#196](https://github.com/netlify/blobs/issues/196)) ([29893cb](https://github.com/netlify/blobs/commit/29893cb00f4052f5171f7551711f31d495342cd8))
+
 ## [8.0.1](https://github.com/netlify/blobs/compare/v8.0.0...v8.0.1) (2024-08-19)
 
 
