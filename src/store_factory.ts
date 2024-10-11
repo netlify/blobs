@@ -30,7 +30,7 @@ export const getDeployStore = (input: GetDeployStoreOptions | string = {}): Stor
       // eslint-disable-next-line max-depth
       if (!context.primaryRegion) {
         throw new Error(
-          'When accessing a deploy store, the Netlify Blobs client needs to be configured with a region, and one was not found in the environment. To manually set the region, set the `region` property in the `getDeployStore` options.',
+          'When accessing a deploy store, the Netlify Blobs client needs to be configured with a region, and one was not found in the environment. To manually set the region, set the `region` property in the `getDeployStore` options. If you are using the Netlify CLI, you may have an outdated version; run `npm install -g netlify-cli@latest` to update and try again.',
         )
       }
 
