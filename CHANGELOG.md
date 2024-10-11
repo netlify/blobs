@@ -1,5 +1,17 @@
 # Changelog
 
+## [8.1.0](https://github.com/netlify/blobs/compare/v8.0.1...v8.1.0) (2024-10-11)
+
+
+### Features
+
+* **types:** export deploy factory options types ([#196](https://github.com/netlify/blobs/issues/196)) ([29893cb](https://github.com/netlify/blobs/commit/29893cb00f4052f5171f7551711f31d495342cd8))
+
+
+### Bug Fixes
+
+* add more actionable info for missing primaryRegion ([#195](https://github.com/netlify/blobs/issues/195)) ([dd517dc](https://github.com/netlify/blobs/commit/dd517dcf74f1649adadbf7c652e924fcdf065e24))
+
 ## [8.0.1](https://github.com/netlify/blobs/compare/v8.0.0...v8.0.1) (2024-08-19)
 
 
