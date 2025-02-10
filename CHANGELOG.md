@@ -1,5 +1,12 @@
 # Changelog
 
+## [8.1.1](https://github.com/netlify/blobs/compare/v8.1.0...v8.1.1) (2025-02-10)
+
+
+### Bug Fixes
+
+* add missing eu-central-1, ap-southeast-1 and ap-southeast-2 regions ([#214](https://github.com/netlify/blobs/issues/214)) ([0ca340f](https://github.com/netlify/blobs/commit/0ca340f44420210dd4a1daac5bf65a3a1974f92d))
+
 ## [8.1.0](https://github.com/netlify/blobs/compare/v8.0.1...v8.1.0) (2024-10-11)
 
 
