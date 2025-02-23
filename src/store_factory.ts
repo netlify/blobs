@@ -80,9 +80,10 @@ export const getStore: {
 
     return new Store({ client, name })
   }
-  
+
   if (typeof input?.name === 'string') {
     const { name } = input
+
     const clientOptions = getClientOptions(input)
 
     if (!name) {
