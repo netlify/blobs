@@ -82,7 +82,7 @@ export const getStore: {
   }
   
   if (typeof input?.name === 'string') {
-    const { name } = input    
+    const { name } = input
     const clientOptions = getClientOptions(input)
 
     if (!name) {
