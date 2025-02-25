@@ -79,6 +79,7 @@ export class Client {
   }: GetFinalRequestOptions) {
     const encodedMetadata = encodeMetadata(metadata)
     const consistency = opConsistency ?? this.consistency
+    console.log({ storeName })
 
     let urlPath = `/${this.siteID}`
 
@@ -188,6 +189,7 @@ export class Client {
       parameters,
       storeName,
     })
+    console.log({ url })
     const headers: Record<string, string> = {
       ...baseHeaders,
       ...extraHeaders,

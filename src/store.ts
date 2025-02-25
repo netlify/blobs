@@ -268,6 +268,7 @@ export class Store {
   list(options: ListOptions & { paginate: true }): AsyncIterable<ListResult>
   list(options?: ListOptions & { paginate?: false }): Promise<ListResult>
   list(options: ListOptions = {}): Promise<ListResult> | AsyncIterable<ListResult> {
+    console.log('ITERATING')
     const iterator = this.getListIterator(options)
 
     if (options.paginate) {
@@ -397,6 +398,8 @@ export class Store {
             if (done) {
               return { done: true, value: undefined }
             }
+
+            console.log(`iterating at - ${currentCursor}`)
 
             const nextParameters = { ...parameters }
 
