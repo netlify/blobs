@@ -13,7 +13,6 @@ export const fetchAndRetry = async (
   attemptsLeft = MAX_RETRY,
 ): ReturnType<typeof globalThis.fetch> => {
   try {
-    console.log('url', 'retry', url)
     const res = await fetch(url, options)
 
     if (attemptsLeft > 0 && (res.status === 429 || res.status >= 500)) {
