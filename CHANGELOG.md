@@ -1,5 +1,12 @@
 # Changelog
 
+## [8.1.2](https://github.com/netlify/blobs/compare/v8.1.1...v8.1.2) (2025-03-17)
+
+
+### Bug Fixes
+
+* allow siteID and token to be passed in Functions v2 and Edge Fun… ([#217](https://github.com/netlify/blobs/issues/217)) ([4163f6f](https://github.com/netlify/blobs/commit/4163f6f18a14f95df547d27e5f219e40df494e38))
+
 ## [8.1.1](https://github.com/netlify/blobs/compare/v8.1.0...v8.1.1) (2025-02-10)
 
 
