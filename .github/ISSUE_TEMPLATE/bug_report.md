@@ -1,30 +1,12 @@
 ---
-name: Bug report
-about: Create a report to help us improve
-title: 'Please replace with a clear and descriptive title'
-labels: 'type: bug'
-assignees: ''
+name: Bug report of feature request
+about: You want to report a bug or request a feature
+title: "Please refer to our documentation and support forums"
 ---
 
-Thanks for reporting this bug!
-
-Please search other issues to make sure this bug has not already been reported.
-
-Then fill in the sections below.
-
-**Describe the bug**
-
-A clear and concise description of what the bug is.
-
-**Configuration**
-
-Please enter the following command in a terminal and copy/paste its output:
-
-```bash
-npx envinfo --system --binaries
-```
-
-**Pull requests**
-
-Pull requests are welcome! If you would like to help us fix this bug, please check our
-[contributions guidelines](../blob/main/CONTRIBUTING.md).
+> [!IMPORTANT]  
+> This repository does not hold the source code for the `@netlify/blobs` package, and it is not actively monitored by the Netlift team.
+>
+> Please refer to the [Netlify Blobs documentation](https://docs.netlify.com/blobs/overview/) for information about the feature, including the full API reference of `@netlify/blobs`.
+>
+> To report an issue or file a feature request, please visit the [Netlify Support forums](https://answers.netlify.com/).
